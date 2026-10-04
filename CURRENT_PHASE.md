@@ -18,14 +18,15 @@
 **Phase 8 — Projects: IMPLEMENTED 2026-10-04.**
 **Phase 9 — Tasks / Kanban: IMPLEMENTED 2026-10-04.**
 **Phase 10 — Clients / CRM: IMPLEMENTED 2026-10-04.**
+**Phase 11 — Analytics: IMPLEMENTED 2026-10-04.**
 
-A real Next.js application exists with a working shared shell, a complete typed/validated mock-data foundation, a domain layer (risk, workload, client follow-up, project/task queries, selectors, Daily Brief, task/client mutations), `/dashboard`, the complete Projects module, the complete global Tasks module (`/tasks` list + Kanban, `/tasks/:taskId` direct link), and the complete Clients module (`/clients` list, `/clients/:clientId` detail with Overview/Projects/Interactions tabs) — all backed by a server-side in-memory demo-state layer (D-039, extended for clients) so edits are consistent everywhere without a real backend. Team/Analytics/AI business UI (beyond thin link-target placeholders), real auth/backend/billing do not exist yet. `tsc --noEmit`, `eslint`, `next build`, `npm run validate:data`, and `npm test` (84/84) all pass cleanly, and Phase 10 has been through full interactive/visual Playwright verification (list/detail/tabs/add-interaction/not-found/dashboard, dark mode, RTL, mobile). See `PROJECT_PLAN.md` §26 for the full Phase 10 summary and `DECISIONS.md` D-036/D-039/D-040/D-041 for this phase's key decisions (D-040: Overview tab beyond the original IA; D-041: native form over React Hook Form + Zod for Add Interaction).
+A real Next.js application exists with a working shared shell, a complete typed/validated mock-data foundation, a domain layer (risk, workload, client follow-up, project/task queries, selectors, Daily Brief, task/client mutations, analytics), `/dashboard`, the complete Projects module, the complete global Tasks module (`/tasks` list + Kanban, `/tasks/:taskId` direct link), the complete Clients module (`/clients` list, `/clients/:clientId` detail with Overview/Projects/Interactions tabs), and the complete Analytics module (`/analytics` — On-Time Delivery, Overdue Task Trend, Workload/Project-Status/Project-Risk distributions, Insights) — all backed by a server-side in-memory demo-state layer (D-039, extended for clients) so edits are consistent everywhere without a real backend. Team/AI business UI (beyond thin link-target placeholders), real auth/backend/billing do not exist yet. `tsc --noEmit`, `eslint`, `npm run validate:data`, and `npm test` (97/97) all pass cleanly; `next build` passed earlier this session but could not be re-verified after Phase 11's fixture/dependency changes because this environment currently has no network route to `fonts.googleapis.com` (an existing Phase 5/D-026 dependency, unrelated to Phase 11's code) — see `PROJECT_PLAN.md` §27's "Known limitation" for the full explanation and what to re-run once network access returns. Phase 11 has been through full interactive/visual Playwright verification (desktop light/dark/RTL, tablet, mobile, reduced-motion) against a live Turbopack dev server, with zero console errors and one real RTL bug found and fixed before completion (D-044). See `PROJECT_PLAN.md` §26/§27 and `DECISIONS.md` D-036/D-039/D-040/D-041 (Phase 10) and D-042/D-043/D-044 (Phase 11) for this pair of phases' key decisions.
 
-Committed in 5 logical checkpoints (demo-state layer, UI components, routes, tests, docs) — see `git log`.
+Committed in logical checkpoints (Phase 10: demo-state layer, UI components, routes, tests, docs; Phase 11: data-model extension, domain layer, UI components, tests, docs) — see `git log`.
 
 ---
 
-**Approved roadmap (binding, D-024):** Phase 3 — Data Model → Phase 4 — Design System → Phase 5 — Shared Application Shell → Phase 6 — Mock Data Foundation → Phase 7 — Dashboard → Phase 8 — Projects → Phase 9 — Tasks/Kanban → Phase 10+ TBD.
+**Approved roadmap (binding, D-024):** Phase 3 — Data Model → Phase 4 — Design System → Phase 5 — Shared Application Shell → Phase 6 — Mock Data Foundation → Phase 7 — Dashboard → Phase 8 — Projects → Phase 9 — Tasks/Kanban → Phase 10 — Clients/CRM → Phase 11 — Analytics → Phase 12+ TBD.
 
 ## What is approved and locked (Phase 1)
 
@@ -179,9 +180,24 @@ None outstanding.
 
 None outstanding.
 
-## Current phase scope (Phase 11 — not yet proposed)
+## What is approved and locked (Phase 11)
 
-Not started. Natural next candidates per the approved roadmap are the remaining V1 P0 modules (Team, Analytics, AI Assistant, etc.), each of which should consume `domain/selectors.ts` the same way Phases 7-10 did, reuse the D-039 server-side-overrides pattern for any new mutable state, and follow the D-036 not-found guard pattern for any new nested dynamic route — but Phase 11 itself has not been scoped, planned, or approved yet.
+- Complete Analytics module: `/analytics` with a top operational summary, On-Time Delivery, Overdue Task Trend, Workload Distribution, Project Status + Project Risk distributions, and a text-only Insights section (`PROJECT_PLAN.md` §27).
+- D-042: `Project.completedAt` added (mirrors `Task.completedAt`'s invariant) — a genuine Phase 3 data-model extension, stopped-and-reported to the owner before being made. 5 completed-project fixtures added so On-Time Delivery Rate has a real 6-project sample (4 on-time, 2 late) instead of N=1. **Binding**: any future "completed project" feature reads this field, never re-derives a delivery date from elsewhere.
+- `domain/analytics.ts` is the one place analytics math lives — `getOnTimeDeliveryRate`, `getWorkloadDistribution`, `getOverdueTaskTrend`, `getProjectStatusDistribution`, `getProjectRiskDistribution`, `getActiveProjectAverageProgress` — all reading `getDemoDataset()`/existing selectors, never recomputing risk or workload. **Binding** on any future analytics/reporting feature — extend this file, don't compute chart data in components.
+- D-043: Overdue Task Trend is reconstructed from real `Task.dueDate`/`completedAt` fields (no synthetic historical fixture) — proven identical to `getOverdueTasks()` at its last point and live-reactive to task mutations.
+- On-Time Delivery Rate only scores a completed project with BOTH `completedAt` and `dueDate`, and renders an explicit "not enough data" message (never a misleading 0%/100%) when there are zero scoreable completed projects.
+- Recharts (`^3.10.1`) installed per Phase 11 §5 — the only chart library approved; every chart is wrapped behind a FlowPilot component (never raw Recharts in page code), themed only through existing semantic tokens (`analyticsColors.ts`), with a shared `ChartTooltip` and a `useReducedMotion` hook (`useSyncExternalStore`-based) disabling entrance animation under reduced motion.
+- D-044: every chart's SVG container is forced `dir="ltr"` regardless of page direction — Recharts is not RTL-aware and without this the Workload Distribution Y-axis labels overlapped the bars in RTL (found and fixed via visual verification). **Binding** on any future Recharts/SVG-chart component.
+- Validation: `tsc --noEmit`, `eslint` clean; `npm test` 97/97 (13 new); `npm run validate:data` clean; whole-app route smoke check all 200 (no regressions); Playwright visual verification across desktop light/dark/RTL, tablet, mobile (no horizontal overflow), and `prefers-reduced-motion: reduce`, zero console errors. `next build` passed earlier in the session but could not be re-verified after this phase's changes due to a network route to `fonts.googleapis.com` being unavailable in this environment (unrelated to Phase 11's code — see `PROJECT_PLAN.md` §27's "Known limitation"). Re-run `next build` once that network access returns, before treating this phase's build status as fully re-confirmed.
+
+## Phase 11 open items
+
+`next build` needs one more clean run once this environment has network access to `fonts.googleapis.com` again — not expected to fail (nothing in Phase 11 touches font loading), but not yet directly re-confirmed after this phase's fixture/dependency changes.
+
+## Current phase scope (Phase 12 — not yet proposed)
+
+Not started. Natural next candidates per the approved roadmap are the remaining V1 P0 modules (Team, AI Assistant, etc.), each of which should consume `domain/selectors.ts`/`domain/analytics.ts` the same way Phases 7-11 did, reuse the D-039 server-side-overrides pattern for any new mutable state, and follow the D-036 not-found guard pattern for any new nested dynamic route — but Phase 12 itself has not been scoped, planned, or approved yet.
 
 ## Session checklist (do this before any new work)
 

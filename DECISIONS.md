@@ -221,11 +221,26 @@ All changes verified in both light and dark themes after the fix. Primary text, 
 **Decision:** `AddInteractionForm.tsx` is a plain React-state controlled form (a native `<select>` for type, a native `<textarea>` for summary, `useState` + `useTransition`), submitting via the `addClientInteractionAction` Server Action — the same native-input pattern already established in `TaskDetailContent.tsx`. React Hook Form and Zod were not added as dependencies.
 **Why:** The Phase 10 brief required RHF+Zod "only if genuinely justified." The form has two fields and exactly one validation rule (summary required, already enforced server-side in `domain/clientMutations.ts`); a form library's value (schema-driven validation, field-array handling, uncontrolled-input performance) has no leverage at this scale, and the codebase already has a working native pattern for exactly this shape of form. Revisit only if a future phase adds materially more fields/validation to this form.
 
+### D-042 — Project.completedAt added (owner-approved); 5 completed-project fixtures added
+**Date:** 2026-10-04
+**Decision:** `Project` gains an optional `completedAt?: string` field (`src/types/entities.ts`), set only when `status === "completed"` — the exact same invariant `Task.completedAt` already has, now enforced for `Project` too in `domain/validation.ts`. Five new completed projects were added to `data/mock/projects.ts` (`proj_pixel_delivered`, `proj_hearthstone_delivered`, `proj_solstice_delivered`, `proj_verdant_delivered`, `proj_mariner_delivered`), each with zero tasks, deliberately authored 4-on-time/2-late so On-Time Delivery Rate has a real 6-project sample instead of N=1. The one pre-existing completed project (`proj_harbor_lookbook`) also got a `completedAt` backfilled.
+**Why:** Phase 11 required On-Time Delivery Rate to compare a real delivery date against `dueDate`, but the Phase 3 `Project` model never recorded one (only `Task` did), and the Phase 6 fixtures had exactly 1 completed project — not enough data to compute the metric honestly even with the field added. This is a genuine Phase 3 data-model extension, so it was stopped-and-reported to the owner rather than decided unilaterally; the owner chose "add the field + expand the fixtures" over "field only, N=1" or "no model change, show insufficient-data." The exclusion-from-risk invariant for completed projects (already enforced) is unaffected — all 6 completed projects still compute risk `none`.
+
+### D-043 — Overdue Task Trend: reconstructed from real fields, no synthetic history fixture
+**Date:** 2026-10-04
+**Decision:** `getOverdueTaskTrend` (`domain/analytics.ts`) does NOT read from a new historical-fixture file. It reconstructs a real trend by evaluating, at each weekly checkpoint `d` in the past, whether each task's own `dueDate`/`completedAt` fields imply it was overdue-and-unresolved as of `d` — the same rule `getOverdueTasks()` already applies at `d = today` (proven identical at the last trend point by `analytics.test.ts`). One documented simplification: it uses each task's and project's CURRENT `dueDate`/status, not a full field-change history, since V1 stores no such history (a task whose due date was edited after the fact is reconstructed using its latest value for every past point).
+**Why:** Phase 11 explicitly offered two paths for the "no stored history" problem: derive a defensible trend from existing timestamps, or add a documented synthetic analytics-history fixture. The existing `Task.dueDate`/`completedAt` fields turned out to make a real reconstruction possible without inventing any numbers — the more honest option whenever it's available, and it stays automatically in sync with every future task mutation with zero added fixture-maintenance burden (proven by `analytics.integration.test.ts`: completing a currently-overdue task immediately reduces today's trend point).
+
+### D-044 — Analytics charts are forced `dir="ltr"` internally regardless of page direction
+**Date:** 2026-10-04
+**Decision:** Every Recharts chart container in `components/analytics/` (`WorkloadDistributionChart`, `ProjectStatusChart`, `ProjectRiskChart`, `OverdueTrendChart`) wraps its `ResponsiveContainer` in a `dir="ltr"` div, independent of the page's own direction. The surrounding page chrome (Section headers, the two-column grid, legends, the `sr-only` text summaries, Insights) still follows the page's real direction normally — only the SVG chart canvas itself is pinned.
+**Why:** Found via Phase 11 RTL visual verification: Recharts' SVG text-anchor/positioning math is not RTL-aware, and without this fix the Workload Distribution chart's Y-axis category labels rendered overlapping the bars when the page was RTL — unreadable, not just visually off. Pinning the SVG to `ltr` avoids that breakage; the chart's meaning is preserved for RTL users via the always-present text equivalents (Phase 11 §7), which already follow the page's real direction. **Binding** on any future Recharts (or other SVG-chart-library) component — wrap it the same way rather than rediscovering this per chart.
+
 ---
 
 ## Open
 
-As of 2026-10-04: none outstanding. D-033 through D-041 are all resolved above.
+As of 2026-10-04: none outstanding. D-033 through D-044 are all resolved above.
 
 ---
 
