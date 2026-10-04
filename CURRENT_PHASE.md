@@ -15,9 +15,10 @@
 **Phase 5 — Shared Application Shell: IMPLEMENTED 2026-10-04.**
 **Phase 6 — Mock Data Foundation: IMPLEMENTED 2026-10-04.**
 **Phase 7 — Dashboard: IMPLEMENTED 2026-10-04.**
-**Phase 8 — NOT STARTED, not yet proposed.**
+**Phase 8 — Projects: IMPLEMENTED 2026-10-04.**
+**Phase 9 — NOT STARTED, not yet proposed.**
 
-A real Next.js application exists with a working shared shell, a complete typed/validated mock-data foundation, a domain layer (risk, workload, client follow-up, selectors, Daily Brief), and now the first real business screen: `/dashboard`, consuming only `src/domain` selectors. Projects/Tasks/Clients/Team/Analytics/AI business UI, real auth/backend/billing do not exist yet — those are later phases. `tsc --noEmit`, `eslint`, `next build`, `npm run validate:data`, and `npm test` (33/33) all pass cleanly. A real WCAG AA contrast audit against rendered Dashboard content found and fixed 4 token issues (D-035). See `PROJECT_PLAN.md` §20 for the full Phase 7 summary and `DECISIONS.md` D-032/D-035 for build-time findings.
+A real Next.js application exists with a working shared shell, a complete typed/validated mock-data foundation, a domain layer (risk, workload, client follow-up, project queries, selectors, Daily Brief), `/dashboard`, and now the complete Projects module (`/projects` list + `/projects/:projectId` detail with Overview/Tasks/Team/Activity tabs). Tasks/Clients/Team/Analytics/AI business UI (beyond the Projects module and thin link-target placeholders), real auth/backend/billing do not exist yet — those are later phases. `tsc --noEmit`, `eslint`, `next build`, `npm run validate:data`, and `npm test` (43/43, now correctly discovering all 5 test files — see D-037) all pass cleanly. See `PROJECT_PLAN.md` §22 for the full Phase 8 summary and `DECISIONS.md` D-036/D-037 for two real build-time findings (a Next.js not-found routing gotcha, and the test-runner glob bug).
 
 **Approved roadmap (binding, D-024):** Phase 3 — Data Model → Phase 4 — Design System → Phase 5 — Shared Application Shell → Phase 6 — Mock Data Foundation → Phase 7 — Dashboard → Phase 8+ TBD.
 
@@ -126,9 +127,24 @@ None. Both resolved in Phase 7 (D-033 approved, D-034 performed as D-035).
 
 None outstanding.
 
-## Current phase scope (Phase 8 — not yet proposed)
+## What is approved and locked (Phase 8)
 
-Not started. Natural next candidates per the approved roadmap are the remaining V1 P0 modules (Projects, Tasks, Clients, Team, etc.), each of which should consume `domain/selectors.ts` the same way Phase 7 did — but Phase 8 itself has not been scoped, planned, or approved yet.
+- Complete Projects module: `/projects` (filterable/sortable dense list) and `/projects/:projectId` with a shared header + route-backed tabs (Overview/Tasks/Team/Activity) (`PROJECT_PLAN.md` §22).
+- Filters/sort reflected in the URL (deep-linkable, Back-restorable); filtering/sorting rules live in `domain/selectors.ts` (`getFilteredProjects`), not in the filter component.
+- Project Team tab: membership derived from task assignments, never a separately authored list; project-scoped hours explicitly distinct from "Global workload" — binding pattern for any future per-project member view.
+- Project Tasks tab reads the same `Task` records the future global Tasks module will use — no duplicated data. List/Kanban toggle present with Kanban genuinely disabled and labeled "(Phase 9)."
+- Thin link-target placeholders at `/tasks/:taskId`, `/team/:memberId`, `/clients/:clientId` so Project Detail's links resolve — ID-validated, 404 on a genuinely bad ID.
+- D-036: shared `requireProject()` not-found guard required at every project-scoped entry point (layout + all 4 tabs), and `not-found.tsx` placed in the *parent* segment — binding pattern for any future nested dynamic route. Known limitation: not-found responses return HTTP 200 (Phase 5's loading.tsx streaming boundary), not 404 — content is correct, status code is not; not pursued further.
+- D-037: `npm test` was silently running only 1 of 5 test files since Phase 6 (no globstar support in npm's script shell) — fixed with `find | xargs`; confirmed 43/43 actually run now.
+- Validation: `tsc --noEmit`, `eslint`, `next build` clean; `npm test` 43/43; `npm run validate:data` clean; whole-app route smoke check all 200; Playwright visual verification at desktop/tablet/mobile × light/dark + live RTL, zero console errors, zero horizontal overflow.
+
+## Phase 8 open items
+
+None outstanding. D-036's HTTP-200-on-not-found is a documented limitation, not an open item requiring action.
+
+## Current phase scope (Phase 9 — not yet proposed)
+
+Not started. Natural next candidates per the approved roadmap are the remaining V1 P0 modules (Tasks, Kanban, Clients, Team, etc.), each of which should consume `domain/selectors.ts` the same way Phases 7-8 did, and any new nested dynamic route should follow the D-036 not-found guard pattern — but Phase 9 itself has not been scoped, planned, or approved yet.
 
 ## Session checklist (do this before any new work)
 

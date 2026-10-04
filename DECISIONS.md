@@ -189,11 +189,22 @@
 All changes verified in both light and dark themes after the fix. Primary text, secondary text, light-mode accent/info, and dark-mode warning/danger/success/info were already compliant and left unchanged. Full before/after values and reasoning are recorded as comments directly in `src/styles/tokens.css`.
 **Why:** Resolves the D-034 checklist. This is not a palette redesign — every adjustment is a minimal shift of one existing token's lightness, chosen by computing the smallest change that clears the relevant WCAG threshold.
 
+### D-036 — Shared not-found guard for project-scoped routes; not-found.tsx placement corrected
+**Date:** 2026-10-04
+**Decision:** Every project-scoped entry point (the `[projectId]/layout.tsx` and all four tab components — Overview/Tasks/Team/Activity) calls one shared `requireProject(projectId)` guard (`components/projects/requireProject.ts`) that calls Next's `notFound()` for an unknown ID. `src/app/(app)/projects/not-found.tsx` lives in the *parent* `projects/` segment, not inside `[projectId]/`.
+**Why:** Found via Phase 8 visual verification: an invalid `projectId` rendered a silent blank page (no crash, no message) with a server-side error logged (`getProjectRisk: unknown projectId "..."`). Root cause had two parts — (1) Next.js App Router only lets a segment's own `not-found.tsx` catch `notFound()` calls from that segment's *children*, not from the segment's own layout, so it was rendering the *root* `app/not-found.tsx` instead of a project-specific message; (2) Next can render a layout and its page concurrently, so the layout alone calling `notFound()` did not reliably stop a child tab component from independently calling a selector that throws on an unknown ID. Both are now fixed structurally (guard called everywhere; not-found.tsx in the correct segment) rather than patched case by case. **Binding on any future nested dynamic route** (e.g. a future `/clients/:clientId/...` or `/team/:memberId/...` detail section) — use the same `requireProjectId`-style guard-in-every-entry-point pattern, not a layout-only check.
+**Known limitation (not fixed, documented):** the not-found response returns HTTP 200, not 404, because the `(app)/loading.tsx` Suspense boundary (Phase 5, D- already approved) begins streaming the response before the nested `notFound()` fires. Content is correct; only the HTTP status is affected. Not pursued further — fixing it would require revisiting the Phase 5 streaming/loading-boundary architecture for a dev-tooling/SEO nicety with no user-visible impact in a demo app with mocked auth.
+
+### D-037 — `npm test` was silently running only 1 of 5 test files since Phase 6
+**Date:** 2026-10-04
+**Decision:** `package.json`'s `test` script changed from `node --import ./scripts/alias-loader.mjs --test src/**/*.test.ts` to `find src -name '*.test.ts' | xargs node --import ./scripts/alias-loader.mjs --test`.
+**Why:** Found during Phase 8: npm executes package.json scripts via `sh`, which does not support bash's `globstar` (`**`) — the glob silently degraded to matching only `src/domain/selectors.test.ts` (the one file exactly one directory level deep in a way the degraded pattern happened to match), while `followUp.test.ts`, `risk.test.ts`, `workload.test.ts`, and `index.test.ts` were never actually executed by `npm test`, despite every prior phase's final report claiming "N/N passing." Running the test files explicitly (as done manually during Phase 6/7 verification) always worked correctly — only the `npm test` convenience script was affected. `find | xargs` is shell-portable and was verified to correctly discover and run all 5 files (43 tests). **No evidence any previously-reported passing test was actually failing** — spot-checked by running all 5 files explicitly before this fix, which also passed — but this should have been caught sooner, and is logged so a future session doesn't trust an `npm test` pass without also confirming the discovered test count looks right for the number of `*.test.ts` files that actually exist.
+
 ---
 
 ## Open
 
-As of 2026-10-04: none outstanding. D-033 through D-035 are all resolved above. Phase 8 decisions, if any, will be logged as they arise during that phase's build.
+As of 2026-10-04: none outstanding. D-033 through D-037 are all resolved above. Phase 9 decisions, if any, will be logged as they arise during that phase's build.
 
 ---
 

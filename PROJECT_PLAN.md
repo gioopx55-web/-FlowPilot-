@@ -2,7 +2,7 @@
 
 > Read `PROJECT_CONSTITUTION.md` first. This file tracks personas, workflows, V1 scope, exclusions, AI scope, demo content, and success criteria as approved in Phase 1. Treat this as the working spec future sessions build against.
 
-**Status:** Phase 1 (Product Definition & V1 Scope) approved, final decisions locked. Phase 2 (Information Architecture) approved, final decisions locked. Phase 3 (Data Model) approved, final decisions locked. Phase 4 (Design System) approved, final decisions locked. Phase 5 (Shared Application Shell) implemented. Phase 6 (Mock Data Foundation) implemented. Phase 7 (Dashboard) implemented.
+**Status:** Phase 1 (Product Definition & V1 Scope) approved, final decisions locked. Phase 2 (Information Architecture) approved, final decisions locked. Phase 3 (Data Model) approved, final decisions locked. Phase 4 (Design System) approved, final decisions locked. Phase 5 (Shared Application Shell) implemented. Phase 6 (Mock Data Foundation) implemented. Phase 7 (Dashboard) implemented. Phase 8 (Projects) implemented.
 **Last updated:** 2026-10-04
 
 ---
@@ -1044,13 +1044,44 @@ The first real FlowPilot AI business screen, at `/dashboard`, replacing its Phas
 
 **No Recharts, no new dependencies.** No Projects/Tasks/Clients/Team/Analytics/AI business UI built — placeholders remain for those routes.
 
-## 21. Phase Roadmap (corrected — see DECISIONS.md D-024)
+## 22. Phase 8 — Projects (IMPLEMENTED)
+
+The complete Projects module: `/projects` (list), `/projects/:projectId` with a shared header + route-backed tabs, and `/projects/:projectId/{tasks,team,activity}`.
+
+**List (`/projects`):** a dense table (md+) / stacked list (mobile) — both renderings built from the start, not retrofitted after a breakpoint bug like Phase 7's. Filters (status, client, risk, search) and sort live in the URL query string via `router.replace`, so filtered views are deep-linkable and browser Back restores the prior filter state; no new dependency (native `<select>`/`<input>`, no component library). Filtering/sorting rules live in `domain/selectors.ts` (`getFilteredProjects`), not in the filter component.
+
+**Detail header + tabs:** shared across all four tabs via `[projectId]/layout.tsx`. Tabs are real routes (`ProjectTabs`, click = navigation), not a client-state panel switcher — satisfies "no second sub-sidebar" and keeps each tab deep-linkable. Risk comes from the same `getProjectRisk`/`RiskBadge`/`ConditionsDisclosure` Phase 7 already built — no second risk-explanation system.
+
+**Overview tab:** timeline, full risk-condition list (not just the header's popover — this tab is the one-page summary), task/team/activity summaries, each linking to its full tab.
+
+**Tasks tab:** reads the same `Task` records the future global Tasks module will use (`getTasksForProject` filters the one shared dataset — no duplicated per-project task data). A List/Kanban toggle exists with Kanban genuinely disabled and labeled "(Phase 9)" — not faked.
+
+**Team tab:** membership is *derived* from task assignments (`getProjectAssignedMembers`) — there is no separately authored project-team list. Project-scoped hours/task-count are shown distinctly from a member's "Global workload" badge, explicitly labeled, per the binding instruction not to conflate the two.
+
+**Activity tab:** full chronological feed from existing `Activity` records, nothing invented.
+
+**New domain selectors:** `getProjectsWithRisk`, `getFilteredProjects`, `getProjectTaskSummary`, `getProjectAssignedMembers`, `getProjectActivity`, `getUserById`. `workload.ts` refactored to expose `sumAssignedHours` so the fallback-hours rule has exactly one implementation shared by global and project-scoped workload math.
+
+**Link-target placeholders:** thin stub routes for `/tasks/:taskId`, `/team/:memberId`, `/clients/:clientId` (each validates its ID and 404s on a genuinely bad one) so Project Detail's outbound links resolve instead of 404ing — these are plumbing, not early feature builds of those modules.
+
+**Two real bugs found via visual verification, both fixed:**
+1. `notFound()` thrown from `[projectId]/layout.tsx` was caught by the *root* not-found page instead of a project-specific one — a documented Next.js App Router behavior (a segment's own `not-found.tsx` only catches `notFound()` from its children, not from the segment's own layout). Fixed by moving `not-found.tsx` to the parent `projects/` segment and adding a shared `requireProject()` guard to every tab component (Next can render a layout and its page concurrently, so the layout's check alone didn't reliably stop a child from independently throwing).
+2. `npm test`'s glob (`src/**/*.test.ts`) was silently matching only 1 of 5 test files under npm's script shell (no globstar support in `sh`) — every prior phase's "N/N passing" figure since Phase 6 undercounted by 4 files' worth of tests. Fixed with `find | xargs` (shell-portable); confirmed 43/43 now actually run.
+
+**Known, documented limitation (not a content bug):** the not-found page shows the correct message but returns HTTP 200, not 404 — the `(app)/loading.tsx` Suspense boundary (an already-approved Phase 5 decision) begins streaming the 200 response before the nested `notFound()` fires. Content is correct either way; this is an HTTP-status nicety, not a user-visible defect.
+
+**Verified:** `tsc --noEmit`, `eslint`, `next build` — clean (all `/projects/*` and placeholder routes compile as expected dynamic routes). `npm test` — 43/43 (10 new Phase 8 selector tests). `npm run validate:data` — clean. Broad route smoke check across the whole app — all 200. Playwright visual verification at desktop/tablet/mobile × light/dark, plus live RTL (sidebar, grid order, tabs, breadcrumb, disclosure all mirror correctly) — zero console errors, zero horizontal overflow, filters/popover/tabs all interactively confirmed working, not just built.
+
+**No Kanban drag-and-drop, no global Tasks module, no Clients/Team/Analytics/AI features, no new dependencies.**
+
+## 23. Phase Roadmap (corrected — see DECISIONS.md D-024)
 
 - **Phase 1 — Product Definition & V1 Scope:** ✅ Approved, all open items resolved.
 - **Phase 2 — Information Architecture:** ✅ APPROVED / COMPLETE 2026-10-04.
 - **Phase 3 — Data Model:** ✅ APPROVED / COMPLETE 2026-10-04.
-- **Phase 4 — Design System:** ✅ APPROVED / COMPLETE 2026-10-04 (tokens were a starting palette pending real contrast testing — now partially verified, see §20/D-035).
+- **Phase 4 — Design System:** ✅ APPROVED / COMPLETE 2026-10-04 (tokens were a starting palette pending real contrast testing — partially verified, see §20/D-035).
 - **Phase 5 — Shared Application Shell:** ✅ IMPLEMENTED 2026-10-04 (see §16). No business features, no fixtures.
 - **Phase 6 — Mock Data Foundation:** ✅ IMPLEMENTED 2026-10-04 (see §18). No business UI.
 - **Phase 7 — Dashboard:** ✅ IMPLEMENTED 2026-10-04 (see §20).
-- **Phase 8+ — TBD**, not yet proposed.
+- **Phase 8 — Projects:** ✅ IMPLEMENTED 2026-10-04 (see §22).
+- **Phase 9+ — TBD**, not yet proposed.
