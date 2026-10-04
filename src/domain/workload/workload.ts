@@ -22,7 +22,13 @@ const FALLBACK_HOURS: Record<TaskPriority, number> = {
   high: 8,
 };
 
-function hoursForTask(task: Task): { hours: number; usedFallback: boolean } {
+/**
+ * Exported (Phase 12 §8) so a "most significant task contributors"
+ * view can show each task's own hours without a component or a
+ * second selector re-deriving the fallback rule — `sumAssignedHours`
+ * only returns a total, not a per-task breakdown.
+ */
+export function hoursForTask(task: Task): { hours: number; usedFallback: boolean } {
   if (task.estimatedHours !== undefined) {
     return { hours: task.estimatedHours, usedFallback: false };
   }

@@ -16,7 +16,9 @@ import { computeProjectRisk, type ProjectRiskResult } from "@/domain/risk/risk";
 import {
   computeTeamMemberWorkload,
   sumAssignedHours,
+  hoursForTask,
   type TeamMemberWorkloadResult,
+  type WorkloadBand,
 } from "@/domain/workload/workload";
 import {
   getClientFollowUpStatus,
@@ -622,4 +624,170 @@ export function getClientInteractionHistory(clientId: ID): ClientInteraction[] {
   return [...getClientInteractions(clientId)].sort((a, b) =>
     a.occurredAt < b.occurredAt ? 1 : -1,
   );
+}
+
+// ---------------------------------------------------------------------
+// Phase 12 — Team module
+// ---------------------------------------------------------------------
+
+export interface TeamMemberWithWorkloadEntry {
+  member: TeamMember;
+  workload: TeamMemberWorkloadResult;
+  /** Open (non-done) tasks currently assigned — what's actually driving `workload`. */
+  activeTaskCount: number;
+  /** Distinct projects with at least one open task assigned to this member. */
+  activeProjectCount: number;
+}
+
+/** Every team member with their workload (reuses getTeamMemberWorkload — no recomputation) plus light counts for the list view. */
+export function getTeamMembersWithWorkload(): TeamMemberWithWorkloadEntry[] {
+  const { teamMembers } = getDemoDataset();
+  return teamMembers.map((member) => {
+    const openTasks = getTasksForMember(member.id).filter((t) => t.status !== "done");
+    return {
+      member,
+      workload: getTeamMemberWorkload(member.id),
+      activeTaskCount: openTasks.length,
+      activeProjectCount: new Set(openTasks.map((t) => t.projectId)).size,
+    };
+  });
+}
+
+export type TeamSortKey = "workload" | "name";
+
+export interface TeamListFilters {
+  query?: string;
+  band?: WorkloadBand;
+}
+
+/**
+ * Filtered/sorted team list (Phase 12 §1-§2). Default sort
+ * ("workload") is action-oriented — Overloaded first, then High,
+ * Healthy, Available (same `WORKLOAD_BAND_RANK` the Dashboard's
+ * `getTeamWorkloadSnapshot` already uses), ties broken by workload %
+ * descending. Never alphabetical by default, since that would hide
+ * who needs attention.
+ */
+export function getTeamMembersFiltered(
+  filters: TeamListFilters = {},
+  sort: TeamSortKey = "workload",
+): TeamMemberWithWorkloadEntry[] {
+  let entries = getTeamMembersWithWorkload();
+
+  if (filters.query && filters.query.trim()) {
+    const q = filters.query.trim().toLowerCase();
+    entries = entries.filter(
+      (e) => e.member.name.toLowerCase().includes(q) || e.member.jobTitle.toLowerCase().includes(q),
+    );
+  }
+  if (filters.band) entries = entries.filter((e) => e.workload.band === filters.band);
+
+  switch (sort) {
+    case "name":
+      entries = [...entries].sort((a, b) => a.member.name.localeCompare(b.member.name));
+      break;
+    case "workload":
+    default:
+      entries = [...entries].sort((a, b) => {
+        const bandDiff = WORKLOAD_BAND_RANK[a.workload.band] - WORKLOAD_BAND_RANK[b.workload.band];
+        return bandDiff !== 0 ? bandDiff : b.workload.workloadPct - a.workload.workloadPct;
+      });
+  }
+
+  return entries;
+}
+
+export interface TeamMemberDetailEntry {
+  member: TeamMember;
+  workload: TeamMemberWorkloadResult;
+}
+
+export function getTeamMemberDetail(memberId: ID): TeamMemberDetailEntry | undefined {
+  const member = getTeamMemberById(memberId);
+  if (!member) return undefined;
+  return { member, workload: getTeamMemberWorkload(memberId) };
+}
+
+export interface MemberTaskEntry {
+  task: Task;
+  isOverdue: boolean;
+}
+
+export interface MemberProjectGroup {
+  project: Project;
+  risk: ProjectRiskResult;
+  tasks: MemberTaskEntry[];
+  /** PROJECT-SCOPED open-task hours this member contributes here — never the member's global workload (Phase 12 §7, same distinction D-established in Phase 8 §8). */
+  assignedHours: number;
+  fallbackTaskIds: ID[];
+}
+
+/**
+ * This member's assignments (any status — "current assignments"
+ * means currently theirs, not only open ones), grouped by project,
+ * most-contributing project first. Each group's `assignedHours` is
+ * this member's open-task hours on THAT project only; pair with
+ * `getTeamMemberWorkload`'s global percentage and always label the
+ * global one explicitly wherever both appear.
+ */
+export function getMemberAssignmentsGroupedByProject(memberId: ID): MemberProjectGroup[] {
+  const tasks = getTasksForMember(memberId);
+  const overdueIds = new Set(getOverdueTasks().map((t) => t.id));
+
+  const byProject = new Map<ID, Task[]>();
+  for (const task of tasks) {
+    const list = byProject.get(task.projectId) ?? [];
+    list.push(task);
+    byProject.set(task.projectId, list);
+  }
+
+  const groups: MemberProjectGroup[] = [];
+  for (const [projectId, projectTasks] of byProject) {
+    const project = getProjectById(projectId);
+    if (!project) continue;
+    const openTasks = projectTasks.filter((t) => t.status !== "done");
+    const { hours, fallbackTaskIds } = sumAssignedHours(openTasks);
+    const sortedTasks = [...projectTasks].sort((a, b) => {
+      if (!a.dueDate) return 1;
+      if (!b.dueDate) return -1;
+      return a.dueDate < b.dueDate ? -1 : 1;
+    });
+    groups.push({
+      project,
+      risk: getProjectRisk(projectId),
+      tasks: sortedTasks.map((task) => ({ task, isOverdue: overdueIds.has(task.id) })),
+      assignedHours: hours,
+      fallbackTaskIds,
+    });
+  }
+
+  return groups.sort((a, b) => b.assignedHours - a.assignedHours);
+}
+
+export interface MemberWorkloadContributor {
+  task: Task;
+  project: Project | undefined;
+  hours: number;
+  usedFallback: boolean;
+}
+
+/**
+ * This member's open tasks ranked by their own hour contribution,
+ * highest first — the "why is this person Overloaded" breakdown
+ * (Phase 12 §8). Uses the exact same per-task fallback rule
+ * `computeTeamMemberWorkload` sums, exposed via `hoursForTask`
+ * instead of re-deriving it.
+ */
+export function getMemberWorkloadContributors(
+  memberId: ID,
+  limit = 5,
+): MemberWorkloadContributor[] {
+  const openTasks = getTasksForMember(memberId).filter((t) => t.status !== "done");
+  return openTasks
+    .map((task) => {
+      const { hours, usedFallback } = hoursForTask(task);
+      return { task, project: getProjectById(task.projectId), hours, usedFallback };
+    })
+    .sort((a, b) => b.hours - a.hours)
+    .slice(0, limit);
 }
