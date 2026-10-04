@@ -4,6 +4,7 @@ import { getDemoDataset } from "@/data/mock/index";
 import { computeProjectRisk } from "@/domain/risk/risk";
 import { computeTeamMemberWorkload } from "@/domain/workload/workload";
 import { getClientFollowUpStatus } from "@/domain/clients/followUp";
+import { getOverdueTasks } from "@/domain/selectors";
 
 test("mock dataset: loads and passes validation without throwing", () => {
   assert.doesNotThrow(() => getDemoDataset());
@@ -69,6 +70,22 @@ test("mock dataset: client follow-up coverage includes needing, not-needing, and
   assert.ok(statuses.includes(false));
   for (const client of dormant) {
     assert.equal(getClientFollowUpStatus(client, ds.clientInteractions).needsFollowUp, false);
+  }
+});
+
+test("getOverdueTasks: excludes tasks belonging to completed or on_hold projects", () => {
+  const ds = getDemoDataset();
+  const excludedProjectIds = new Set(
+    ds.projects.filter((p) => p.status === "completed" || p.status === "on_hold").map((p) => p.id),
+  );
+  const overdue = getOverdueTasks();
+  assert.ok(overdue.length > 0, "expected at least one actionable overdue task");
+  for (const task of overdue) {
+    assert.equal(
+      excludedProjectIds.has(task.projectId),
+      false,
+      `overdue task "${task.id}" belongs to an excluded (completed/on_hold) project`,
+    );
   }
 });
 
