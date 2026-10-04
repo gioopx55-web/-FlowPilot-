@@ -13,8 +13,20 @@ const TONE_BY_BAND: Record<TeamMemberWorkloadResult["band"], BadgeTone> = {
  * Renders a workload band with its contributing factors always
  * reachable (D-016): assigned hours, capacity, and how many assigned
  * tasks used the fallback-hours estimate rather than a real one.
+ *
+ * `showPercent` defaults to true (every pre-Phase-12 call site keeps
+ * its inline "Overloaded 126%" exactly as before). Team Member Detail
+ * (Phase 12 §8) passes `false` since that page already shows its own
+ * large headline percentage — rendering both would just duplicate the
+ * same number right next to itself.
  */
-export function WorkloadBadge({ workload }: { workload: TeamMemberWorkloadResult }) {
+export function WorkloadBadge({
+  workload,
+  showPercent = true,
+}: {
+  workload: TeamMemberWorkloadResult;
+  showPercent?: boolean;
+}) {
   const reasons = [
     `${workload.assignedHours}h assigned / ${workload.weeklyCapacityHours}h weekly capacity (${Math.round(workload.workloadPct)}%)`,
   ];
@@ -27,9 +39,11 @@ export function WorkloadBadge({ workload }: { workload: TeamMemberWorkloadResult
   return (
     <div className="flex items-center gap-1.5 self-start">
       <Badge tone={TONE_BY_BAND[workload.band]}>{workload.band}</Badge>
-      <span className="text-xs text-muted-foreground">
-        {Math.round(workload.workloadPct)}%
-      </span>
+      {showPercent && (
+        <span className="text-xs text-muted-foreground">
+          {Math.round(workload.workloadPct)}%
+        </span>
+      )}
       <ConditionsDisclosure
         label={`Why is this workload "${workload.band}"?`}
         reasons={reasons}
