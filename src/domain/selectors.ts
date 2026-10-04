@@ -380,3 +380,109 @@ export function getProjectActivity(projectId: ID, limit?: number): Activity[] {
     .sort((a, b) => (a.occurredAt < b.occurredAt ? 1 : -1));
   return limit !== undefined ? scoped.slice(0, limit) : scoped;
 }
+
+// ---------------------------------------------------------------------
+// Phase 9 — Tasks / Kanban module
+// ---------------------------------------------------------------------
+
+export function getTaskById(id: ID): Task | undefined {
+  return getDemoDataset().tasks.find((t) => t.id === id);
+}
+
+const PRIORITY_RANK: Record<Task["priority"], number> = { high: 0, medium: 1, low: 2 };
+
+export interface TaskListFilters {
+  query?: string;
+  projectId?: ID;
+  assigneeId?: ID;
+  status?: Task["status"];
+  priority?: Task["priority"];
+  /** Overdue per the same rule getOverdueTasks uses (open, past due, not on a completed/on_hold project). */
+  overdueOnly?: boolean;
+}
+
+export type TaskSortKey = "dueDate" | "priority" | "created" | "project" | "assignee";
+
+export interface TaskListEntry {
+  task: Task;
+  project: Project | undefined;
+  assignee: TeamMember | undefined;
+  isOverdue: boolean;
+}
+
+/**
+ * Filtered/sorted task list for /tasks and the Kanban board (Phase 9
+ * §1-§3). Reads the SAME Task records Project Tasks uses — this is
+ * the one shared query both surfaces call, parameterized by
+ * `projectId` when scoped to a single project. Filtering/sorting
+ * rules live here, never duplicated in a component.
+ */
+export function getTasksFiltered(
+  filters: TaskListFilters = {},
+  sort: TaskSortKey = "dueDate",
+): TaskListEntry[] {
+  const { tasks } = getDemoDataset();
+  const overdueIds = new Set(getOverdueTasks().map((t) => t.id));
+
+  let list = tasks;
+  if (filters.projectId) list = list.filter((t) => t.projectId === filters.projectId);
+  if (filters.assigneeId) list = list.filter((t) => t.assigneeId === filters.assigneeId);
+  if (filters.status) list = list.filter((t) => t.status === filters.status);
+  if (filters.priority) list = list.filter((t) => t.priority === filters.priority);
+  if (filters.overdueOnly) list = list.filter((t) => overdueIds.has(t.id));
+  if (filters.query && filters.query.trim()) {
+    const q = filters.query.trim().toLowerCase();
+    list = list.filter((t) => t.title.toLowerCase().includes(q));
+  }
+
+  const entries: TaskListEntry[] = list.map((task) => ({
+    task,
+    project: getProjectById(task.projectId),
+    assignee: task.assigneeId ? getTeamMemberById(task.assigneeId) : undefined,
+    isOverdue: overdueIds.has(task.id),
+  }));
+
+  switch (sort) {
+    case "priority":
+      entries.sort((a, b) => PRIORITY_RANK[a.task.priority] - PRIORITY_RANK[b.task.priority]);
+      break;
+    case "created":
+      entries.sort((a, b) => (a.task.createdAt < b.task.createdAt ? 1 : -1));
+      break;
+    case "project":
+      entries.sort((a, b) => (a.project?.name ?? "").localeCompare(b.project?.name ?? ""));
+      break;
+    case "assignee":
+      entries.sort((a, b) => (a.assignee?.name ?? "￿").localeCompare(b.assignee?.name ?? "￿"));
+      break;
+    case "dueDate":
+    default:
+      entries.sort((a, b) => {
+        if (!a.task.dueDate) return 1;
+        if (!b.task.dueDate) return -1;
+        return a.task.dueDate < b.task.dueDate ? -1 : 1;
+      });
+  }
+
+  return entries;
+}
+
+export interface TaskDetailEntry {
+  task: Task;
+  project: Project | undefined;
+  client: Client | undefined;
+  assignee: TeamMember | undefined;
+}
+
+/** Everything Task Detail needs, resolved once (Phase 9 §8). */
+export function getTaskDetail(taskId: ID): TaskDetailEntry | undefined {
+  const task = getTaskById(taskId);
+  if (!task) return undefined;
+  const project = getProjectById(task.projectId);
+  return {
+    task,
+    project,
+    client: project ? getClientById(project.clientId) : undefined,
+    assignee: task.assigneeId ? getTeamMemberById(task.assigneeId) : undefined,
+  };
+}

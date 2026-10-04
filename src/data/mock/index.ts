@@ -9,26 +9,27 @@ import { activities } from "@/data/mock/activities";
 import { notifications } from "@/data/mock/notifications";
 import { withDerivedClientFields } from "@/domain/clients/deriveClientFields";
 import { validateDemoDataset, type DemoDataset } from "@/domain/validation";
+import { applyTaskOverride } from "@/domain/taskMutations";
 
 export type { DemoDataset };
 export { WORKSPACE_ID };
 
-let cached: DemoDataset | undefined;
+let cachedBase: DemoDataset | undefined;
 
 /**
- * Builds (once) and returns the full composed demo dataset. This is
- * the single place `Client.lastInteractionAt` gets attached (via
- * `withDerivedClientFields`) and the single place the dataset is
- * validated. Every domain selector reads through this function —
- * never the raw per-entity fixture modules directly — so there is
- * exactly one assembled, validated dataset in memory.
+ * Builds (once) and validates the BASE demo dataset — the Phase 6
+ * fixtures exactly as authored, before any Phase 9 task edits are
+ * applied. This is the single place `Client.lastInteractionAt` gets
+ * attached and the single place full dataset validation runs (task
+ * overrides are per-field edits, validated individually at the
+ * mutation boundary in domain/taskMutations.ts, not re-run through
+ * the full fixture-coverage validator on every edit).
  *
- * Throws on invalid data: an invalid mock dataset is a build-time bug,
- * not a recoverable runtime condition, so this fails loudly rather
- * than letting bad data silently reach a future feature.
+ * Throws on invalid BASE data: an invalid mock dataset is a
+ * build-time bug, not a recoverable runtime condition.
  */
-export function getDemoDataset(): DemoDataset {
-  if (cached) return cached;
+function getBaseDataset(): DemoDataset {
+  if (cachedBase) return cachedBase;
 
   const clients = rawClients.map((client) =>
     withDerivedClientFields(client, clientInteractions),
@@ -53,6 +54,18 @@ export function getDemoDataset(): DemoDataset {
     );
   }
 
-  cached = dataset;
+  cachedBase = dataset;
   return dataset;
+}
+
+/**
+ * Returns the demo dataset with any Phase 9 task overrides applied —
+ * the ONE function every selector/page reads through. Never returns a
+ * stale snapshot: overrides are layered on fresh on every call (cheap
+ * at this dataset size), so a mutation is visible to the very next
+ * read, from any page, with no cache invalidation to manage.
+ */
+export function getDemoDataset(): DemoDataset {
+  const base = getBaseDataset();
+  return { ...base, tasks: base.tasks.map(applyTaskOverride) };
 }

@@ -5,6 +5,8 @@ import {
   getProjectTaskSummary,
   getProjectAssignedMembers,
   getProjectActivity,
+  getTasksFiltered,
+  getTaskDetail,
 } from "@/domain/selectors";
 
 test("getFilteredProjects: status filter returns only matching projects", () => {
@@ -77,4 +79,49 @@ test("getProjectActivity: scoped to the requested project only, newest first", (
 test("getProjectActivity: respects the limit parameter", () => {
   const activity = getProjectActivity("proj_lumen_deck", 1);
   assert.equal(activity.length, 1);
+});
+
+test("getTasksFiltered: projectId scopes to that project's tasks only", () => {
+  const entries = getTasksFiltered({ projectId: "proj_fernwood_donor" });
+  assert.ok(entries.length > 0);
+  assert.ok(entries.every((e) => e.task.projectId === "proj_fernwood_donor"));
+});
+
+test("getTasksFiltered: status filter matches TaskStatus exactly", () => {
+  const entries = getTasksFiltered({ status: "blocked" });
+  assert.ok(entries.length > 0);
+  assert.ok(entries.every((e) => e.task.status === "blocked"));
+});
+
+test("getTasksFiltered: overdueOnly matches the same rule getOverdueTasks uses", () => {
+  const entries = getTasksFiltered({ overdueOnly: true });
+  assert.ok(entries.length > 0);
+  assert.ok(entries.every((e) => e.isOverdue));
+});
+
+test("getTasksFiltered: query is a case-insensitive title substring match", () => {
+  const entries = getTasksFiltered({ query: "donor records" });
+  assert.ok(entries.length > 0);
+  assert.ok(entries.every((e) => e.task.title.toLowerCase().includes("donor records")));
+});
+
+test("getTasksFiltered: sort=priority orders high before medium before low", () => {
+  const entries = getTasksFiltered({}, "priority");
+  const ranks = entries.map((e) =>
+    e.task.priority === "high" ? 0 : e.task.priority === "medium" ? 1 : 2,
+  );
+  assert.deepEqual(ranks, [...ranks].sort((a, b) => a - b));
+});
+
+test("getTaskDetail: resolves project, client, and assignee together", () => {
+  const detail = getTaskDetail("task_harbor_refresh_03");
+  assert.ok(detail);
+  assert.equal(detail!.task.id, "task_harbor_refresh_03");
+  assert.equal(detail!.project?.id, "proj_harbor_refresh");
+  assert.ok(detail!.client);
+  assert.equal(detail!.assignee?.id, "tm_omar");
+});
+
+test("getTaskDetail: returns undefined for an unknown task ID", () => {
+  assert.equal(getTaskDetail("does-not-exist"), undefined);
 });
