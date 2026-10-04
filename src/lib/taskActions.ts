@@ -11,6 +11,7 @@ import {
   type TaskEditableFields,
   type TaskMutationResult,
 } from "@/domain/taskMutations";
+import { resetClientOverrides } from "@/domain/clientMutations";
 
 /**
  * Next.js Server Action glue (thin — all real logic lives in
@@ -59,7 +60,9 @@ export async function updateTaskFieldsAction(
   return result;
 }
 
+/** Resets ALL demo-state overrides (tasks + Phase 10 client edits/added interactions). */
 export async function resetDemoDataAction(): Promise<void> {
   resetTaskOverrides();
+  resetClientOverrides();
   revalidateEverything();
 }

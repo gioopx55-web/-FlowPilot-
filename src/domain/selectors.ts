@@ -2,6 +2,8 @@ import type {
   Activity,
   ID,
   Client,
+  ClientInteraction,
+  ClientStatus,
   Project,
   ProjectStatus,
   RiskLevel,
@@ -485,4 +487,139 @@ export function getTaskDetail(taskId: ID): TaskDetailEntry | undefined {
     client: project ? getClientById(project.clientId) : undefined,
     assignee: task.assigneeId ? getTeamMemberById(task.assigneeId) : undefined,
   };
+}
+
+// ---------------------------------------------------------------------
+// Phase 10 — Clients / CRM module
+// ---------------------------------------------------------------------
+
+export interface ClientListEntry {
+  client: Client;
+  followUp: ClientFollowUpStatus;
+  activeProjectCount: number;
+  atRiskProjectCount: number;
+}
+
+export type ClientSortKey = "attention" | "name" | "lastInteraction" | "activeProjects";
+
+export interface ClientListFilters {
+  query?: string;
+  status?: ClientStatus;
+  followUpOnly?: boolean;
+}
+
+function toClientListEntry(client: Client, clientInteractions: ClientInteraction[]): ClientListEntry {
+  const followUp = getClientFollowUpStatus(client, clientInteractions);
+  const projects = getProjectsForClient(client.id);
+  const activeProjectCount = projects.filter(
+    (p) => p.status !== "completed" && p.status !== "on_hold",
+  ).length;
+  const atRiskProjectCount = projects.filter(
+    (p) => getProjectRisk(p.id).level !== "none",
+  ).length;
+  return { client, followUp, activeProjectCount, atRiskProjectCount };
+}
+
+/**
+ * Filtered/sorted client list for /clients (Phase 10 §1-§2). Default
+ * sort ("attention"): clients needing follow-up first (most overdue
+ * first), then active/retainer clients not needing follow-up (most
+ * recently contacted first), then dormant clients last (by name) —
+ * never plain alphabetical by default. Reuses the one shared
+ * getClientFollowUpStatus computation; no date comparison happens
+ * here or in any component.
+ */
+export function getClientsFiltered(
+  filters: ClientListFilters = {},
+  sort: ClientSortKey = "attention",
+): ClientListEntry[] {
+  const { clients, clientInteractions } = getDemoDataset();
+  let list = clients;
+
+  if (filters.status) list = list.filter((c) => c.status === filters.status);
+  if (filters.query && filters.query.trim()) {
+    const q = filters.query.trim().toLowerCase();
+    list = list.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) || c.primaryContactName.toLowerCase().includes(q),
+    );
+  }
+
+  let entries = list.map((c) => toClientListEntry(c, clientInteractions));
+
+  if (filters.followUpOnly) {
+    entries = entries.filter((e) => e.followUp.needsFollowUp);
+  }
+
+  switch (sort) {
+    case "name":
+      entries.sort((a, b) => a.client.name.localeCompare(b.client.name));
+      break;
+    case "lastInteraction":
+      entries.sort(
+        (a, b) =>
+          (b.followUp.daysSinceLastInteraction ?? -1) -
+          (a.followUp.daysSinceLastInteraction ?? -1),
+      );
+      break;
+    case "activeProjects":
+      entries.sort((a, b) => b.activeProjectCount - a.activeProjectCount);
+      break;
+    case "attention":
+    default:
+      entries.sort((a, b) => {
+        const rank = (e: ClientListEntry) =>
+          e.followUp.needsFollowUp ? 0 : e.client.status === "dormant" ? 2 : 1;
+        const rankDiff = rank(a) - rank(b);
+        if (rankDiff !== 0) return rankDiff;
+        if (a.followUp.needsFollowUp) {
+          return (
+            (b.followUp.daysSinceLastInteraction ?? 0) -
+            (a.followUp.daysSinceLastInteraction ?? 0)
+          );
+        }
+        if (a.client.status !== "dormant") {
+          return (
+            (a.followUp.daysSinceLastInteraction ?? 0) -
+            (b.followUp.daysSinceLastInteraction ?? 0)
+          );
+        }
+        return a.client.name.localeCompare(b.client.name);
+      });
+  }
+
+  return entries;
+}
+
+export interface ClientDetailEntry {
+  client: Client;
+  followUp: ClientFollowUpStatus;
+}
+
+/** Everything the Client Detail header needs, resolved once (Phase 10 §4). */
+export function getClientDetail(clientId: ID): ClientDetailEntry | undefined {
+  const client = getClientById(clientId);
+  if (!client) return undefined;
+  const { clientInteractions } = getDemoDataset();
+  return { client, followUp: getClientFollowUpStatus(client, clientInteractions) };
+}
+
+export interface ClientProjectEntry {
+  project: Project;
+  risk: ProjectRiskResult;
+}
+
+/** Projects linked to a client, with risk resolved via the one shared computation (Phase 10 §6). */
+export function getClientProjectsWithRisk(clientId: ID): ClientProjectEntry[] {
+  return getProjectsForClient(clientId).map((project) => ({
+    project,
+    risk: getProjectRisk(project.id),
+  }));
+}
+
+/** Chronological interaction history for a client, newest first (Phase 10 §7). */
+export function getClientInteractionHistory(clientId: ID): ClientInteraction[] {
+  return [...getClientInteractions(clientId)].sort((a, b) =>
+    a.occurredAt < b.occurredAt ? 1 : -1,
+  );
 }

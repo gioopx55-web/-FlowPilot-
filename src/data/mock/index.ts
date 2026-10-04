@@ -10,6 +10,7 @@ import { notifications } from "@/data/mock/notifications";
 import { withDerivedClientFields } from "@/domain/clients/deriveClientFields";
 import { validateDemoDataset, type DemoDataset } from "@/domain/validation";
 import { applyTaskOverride } from "@/domain/taskMutations";
+import { applyClientOverride, getAddedInteractions } from "@/domain/clientMutations";
 
 export type { DemoDataset };
 export { WORKSPACE_ID };
@@ -59,13 +60,28 @@ function getBaseDataset(): DemoDataset {
 }
 
 /**
- * Returns the demo dataset with any Phase 9 task overrides applied —
- * the ONE function every selector/page reads through. Never returns a
- * stale snapshot: overrides are layered on fresh on every call (cheap
- * at this dataset size), so a mutation is visible to the very next
- * read, from any page, with no cache invalidation to manage.
+ * Returns the demo dataset with any Phase 9 task overrides and Phase
+ * 10 client overrides/added interactions applied — the ONE function
+ * every selector/page reads through. Never returns a stale snapshot:
+ * everything is layered on fresh on every call (cheap at this
+ * dataset size), so a mutation is visible to the very next read, from
+ * any page, with no cache invalidation to manage.
+ *
+ * `lastInteractionAt` is re-derived here (not just at base-build
+ * time) using the FULL interaction list — base fixtures plus any
+ * added via "Add interaction" — so it stays correct after a mutation
+ * without a second derivation path (Phase 10 §3/§8).
  */
 export function getDemoDataset(): DemoDataset {
   const base = getBaseDataset();
-  return { ...base, tasks: base.tasks.map(applyTaskOverride) };
+  const clientInteractions = [...base.clientInteractions, ...getAddedInteractions()];
+  const clients = base.clients.map((client) =>
+    withDerivedClientFields(applyClientOverride(client), clientInteractions),
+  );
+  return {
+    ...base,
+    tasks: base.tasks.map(applyTaskOverride),
+    clients,
+    clientInteractions,
+  };
 }
