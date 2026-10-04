@@ -2,12 +2,13 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 
 /**
- * Shared section wrapper for the Dashboard's six approved sections
- * (Phase 7 "Approved Information Hierarchy"). Deliberately plain —
- * a heading row plus content, no card chrome/shadow, consistent with
- * "no giant KPI cards" and the information-dense Phase 4 direction.
+ * Shared section wrapper — a heading row plus content, no card
+ * chrome/shadow. Originally built for the Phase 7 Dashboard's six
+ * sections; reused as-is for Phase 8's Project Overview tab rather
+ * than duplicated, since both need the identical title+action+content
+ * pattern.
  */
-export function DashboardSection({
+export function Section({
   title,
   action,
   children,

@@ -1,4 +1,4 @@
-import { DashboardSection } from "@/components/dashboard/DashboardSection";
+import { Section } from "@/components/primitives/Section";
 import { DailyBrief } from "@/components/dashboard/DailyBrief";
 import { AtRiskProjects } from "@/components/dashboard/AtRiskProjects";
 import { OverdueTasks } from "@/components/dashboard/OverdueTasks";
@@ -20,43 +20,43 @@ export default function DashboardPage() {
     <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8">
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         <div className="md:col-span-2">
-          <DashboardSection title="Daily Brief">
+          <Section title="Daily Brief">
             <DailyBrief />
-          </DashboardSection>
+          </Section>
         </div>
 
-        <DashboardSection
+        <Section
           title="At-Risk Projects"
           action={{ label: "View all projects", href: "/projects" }}
         >
           <AtRiskProjects />
-        </DashboardSection>
+        </Section>
 
-        <DashboardSection
+        <Section
           title="Overdue Tasks"
           action={{ label: "View all overdue", href: "/tasks?status=overdue" }}
         >
           <OverdueTasks />
-        </DashboardSection>
+        </Section>
 
-        <DashboardSection
+        <Section
           title="Clients Needing Follow-Up"
           action={{ label: "View all clients", href: "/clients" }}
         >
           <ClientsFollowUp />
-        </DashboardSection>
+        </Section>
 
-        <DashboardSection
+        <Section
           title="Team Workload Snapshot"
           action={{ label: "View team", href: "/team" }}
         >
           <TeamWorkloadSnapshot />
-        </DashboardSection>
+        </Section>
 
         <div className="md:col-span-2">
-          <DashboardSection title="Recent Activity">
+          <Section title="Recent Activity">
             <RecentActivity />
-          </DashboardSection>
+          </Section>
         </div>
       </div>
     </div>
