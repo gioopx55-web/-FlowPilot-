@@ -2,7 +2,7 @@
 
 > Read `PROJECT_CONSTITUTION.md` first. This file tracks personas, workflows, V1 scope, exclusions, AI scope, demo content, and success criteria as approved in Phase 1. Treat this as the working spec future sessions build against.
 
-**Status:** Phase 1 (Product Definition & V1 Scope) approved, final decisions locked. Phase 2 (Information Architecture) approved, final decisions locked. Phase 3 (Data Model) approved, final decisions locked. Phase 4 (Design System) approved, final decisions locked. Phase 5 (Shared Application Shell) implemented. Phase 6 (Mock Data Foundation) implemented. Phase 7 (Dashboard) implemented. Phase 8 (Projects) implemented.
+**Status:** Phase 1 (Product Definition & V1 Scope) approved, final decisions locked. Phase 2 (Information Architecture) approved, final decisions locked. Phase 3 (Data Model) approved, final decisions locked. Phase 4 (Design System) approved, final decisions locked. Phase 5 (Shared Application Shell) implemented. Phase 6 (Mock Data Foundation) implemented. Phase 7 (Dashboard) implemented. Phase 8 (Projects) implemented. Phase 9 (Tasks / Kanban) implemented.
 **Last updated:** 2026-10-04
 
 ---
@@ -1074,7 +1074,33 @@ The complete Projects module: `/projects` (list), `/projects/:projectId` with a 
 
 **No Kanban drag-and-drop, no global Tasks module, no Clients/Team/Analytics/AI features, no new dependencies.**
 
-## 23. Phase Roadmap (corrected — see DECISIONS.md D-024)
+## 24. Phase 9 — Tasks / Kanban (IMPLEMENTED)
+
+The complete global Tasks module and the real Kanban experience: `/tasks` (list + Kanban), `/tasks/:taskId` (direct deep link), and Project Tasks (Phase 8) now reusing the exact same components.
+
+**Kanban/TaskStatus reconciliation (D-038):** the approved `TaskStatus` enum (`todo | in_progress | blocked | review | done`, Phase 3, locked) has no "backlog" value. Rather than add one, Kanban's 5 columns map 1:1 onto the 5 existing values — "To Do" stands in for the old IA sketch's "Backlog," and "Blocked" is promoted to a real, visible column. Zero duplicate `kanbanStatus` concept; `TASK_STATUS_LABEL` in `StatusBadge.tsx` is the one canonical column-label source. The active-blocker flag (`hasActiveBlocker`) remains fully decoupled from workflow status (D-023) — a card's blocker indicator shows regardless of which column it sits in, and moving a card between columns never touches `hasActiveBlocker`.
+
+**Demo-state architecture (D-039):** there is no backend. Edits (Kanban drag, StatusSelect, Task Detail form) are applied to a **server-side, in-memory overrides map** (`domain/taskMutations.ts`), layered onto the Phase 6 base fixtures at read time by `data/mock/index.ts`. This is process-lifetime state in the Node process running `next dev`/`next start` — not localStorage, not a per-browser store, shared across every tab hitting the server (acceptable and documented given no real auth/tenancy exists). Every Server Component re-reads `getDemoDataset()` on each render, so Dashboard/Projects/Tasks/Kanban/Project Detail all stay consistent automatically with zero client-side merging logic. Next.js Server Actions (`lib/taskActions.ts`) call `revalidatePath("/", "layout")` after every mutation. Base fixture arrays are never mutated. A reset-to-demo-data capability (`resetTaskOverrides`) exists at the domain layer.
+
+**List + Kanban:** `TasksTable` (dense table/stacked-list dual rendering, built responsive from the start this time, applying Phase 7's hard-won lesson preemptively) and `KanbanBoard` (`@dnd-kit/core` — pointer/touch drag, React 19 `useOptimistic` for instant feedback). Filters (search, project, assignee, status, priority) and sort live in the URL via `TasksFilters`/`parseTaskSearchParams.ts`, shared identically by `/tasks` and Project Tasks.
+
+**Accessible alternative to drag (Phase 9 §17):** every card (and Task Detail) carries a `StatusSelect` — a plain native `<select>` calling the exact same `changeTaskStatusAction` drag uses. dnd-kit's core `KeyboardSensor` needs a custom coordinate-getter to work across a multi-column board (the built-in one assumes a single sortable list) — rather than ship a fragile approximation, full keyboard/screen-reader accessibility is guaranteed by `StatusSelect` instead; drag is an accelerator on top of it, never the only path.
+
+**Task Detail — one shared implementation (Phase 2 §11.10, Phase 9 §8-§10):** `TaskDetailContent` is rendered identically by the panel (opened via a `?task=` query param on the *current* list/Kanban/Project-Tasks URL — no navigation occurs, so filters/scroll/project context are preserved) and the direct `/tasks/:taskId` page. Editable: status, priority, assignee, due date, estimated hours, active-blocker flag, description. `completedAt` is derived automatically from status transitions, never a raw editable field — the impossible-state rules from `domain/validation.ts` are enforced at the mutation boundary, not trusted to UI input.
+
+**Domain recalculation (Phase 9 §13):** proven with 5 integration tests (`taskMutations.integration.test.ts`) that a task edit changes `computeProjectRisk`/`computeTeamMemberWorkload` output end to end, through the real demo dataset — no UI code manually patches a derived value.
+
+**Mobile/tablet Kanban:** horizontal scroll-snap rather than squeezing 5 columns into a narrow viewport; desktop also scrolls once all 5 columns' card content is legibly sized (consistent with common real-world Kanban UX at this column count, e.g. Linear/Trello).
+
+**Real bugs found and fixed via interactive/visual verification** (not just build passing):
+1. Forgot to actually thread URL filter params into `ProjectTasksTab` on first pass — caught before shipping by re-reading my own code, not by a test failure.
+2. Two apparent RTL/drag "failures" during automated verification turned out to be test-script artifacts (stale DOM references, `getLocale()` being static like Phase 5/7's SidePanel, insufficient drag-distance coordinates) — each was deliberately re-verified via direct DOM inspection and the real `getLocale()` code path before being ruled out, rather than assumed away.
+
+**Verified:** `tsc --noEmit`, `eslint`, `next build` — clean. `npm test` — 67/67 (24 new Phase 9 tests). `npm run validate:data` — clean. Whole-app route smoke check — all 200. Real mouse-drag-and-drop tested end-to-end via Playwright (not just the accessible fallback) and confirmed to persist across navigation and reflect consistently in both Kanban and List views. RTL verified via the real `getLocale()` path (panel docks to the correct logical-end side). Project Tasks Kanban confirmed genuinely project-scoped (no project-filter clutter, no cross-project leakage) and visually polished in both themes.
+
+**No comments, subtasks, recurring tasks, time tracking, saved views, custom columns, WIP limits, real backend, collaboration, or AI task generation.**
+
+## 25. Phase Roadmap (corrected — see DECISIONS.md D-024)
 
 - **Phase 1 — Product Definition & V1 Scope:** ✅ Approved, all open items resolved.
 - **Phase 2 — Information Architecture:** ✅ APPROVED / COMPLETE 2026-10-04.
@@ -1084,4 +1110,5 @@ The complete Projects module: `/projects` (list), `/projects/:projectId` with a 
 - **Phase 6 — Mock Data Foundation:** ✅ IMPLEMENTED 2026-10-04 (see §18). No business UI.
 - **Phase 7 — Dashboard:** ✅ IMPLEMENTED 2026-10-04 (see §20).
 - **Phase 8 — Projects:** ✅ IMPLEMENTED 2026-10-04 (see §22).
-- **Phase 9+ — TBD**, not yet proposed.
+- **Phase 9 — Tasks / Kanban:** ✅ IMPLEMENTED 2026-10-04 (see §24).
+- **Phase 10+ — TBD**, not yet proposed.

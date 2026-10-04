@@ -16,11 +16,12 @@
 **Phase 6 — Mock Data Foundation: IMPLEMENTED 2026-10-04.**
 **Phase 7 — Dashboard: IMPLEMENTED 2026-10-04.**
 **Phase 8 — Projects: IMPLEMENTED 2026-10-04.**
-**Phase 9 — NOT STARTED, not yet proposed.**
+**Phase 9 — Tasks / Kanban: IMPLEMENTED 2026-10-04.**
+**Phase 10 — NOT STARTED, not yet proposed.**
 
-A real Next.js application exists with a working shared shell, a complete typed/validated mock-data foundation, a domain layer (risk, workload, client follow-up, project queries, selectors, Daily Brief), `/dashboard`, and now the complete Projects module (`/projects` list + `/projects/:projectId` detail with Overview/Tasks/Team/Activity tabs). Tasks/Clients/Team/Analytics/AI business UI (beyond the Projects module and thin link-target placeholders), real auth/backend/billing do not exist yet — those are later phases. `tsc --noEmit`, `eslint`, `next build`, `npm run validate:data`, and `npm test` (43/43, now correctly discovering all 5 test files — see D-037) all pass cleanly. See `PROJECT_PLAN.md` §22 for the full Phase 8 summary and `DECISIONS.md` D-036/D-037 for two real build-time findings (a Next.js not-found routing gotcha, and the test-runner glob bug).
+A real Next.js application exists with a working shared shell, a complete typed/validated mock-data foundation, a domain layer (risk, workload, client follow-up, project/task queries, selectors, Daily Brief, task mutations), `/dashboard`, the complete Projects module, and now the complete global Tasks module (`/tasks` list + Kanban, `/tasks/:taskId` direct link) with real drag-and-drop and editable Task Detail — all backed by a server-side in-memory demo-state layer (D-039) so edits are consistent everywhere without a real backend. Clients/Team/Analytics/AI business UI (beyond thin link-target placeholders), real auth/backend/billing do not exist yet — those are later phases. `tsc --noEmit`, `eslint`, `next build`, `npm run validate:data`, and `npm test` (67/67) all pass cleanly. See `PROJECT_PLAN.md` §24 for the full Phase 9 summary and `DECISIONS.md` D-038 (Kanban/TaskStatus reconciliation) / D-039 (demo-state architecture) for this phase's key decisions.
 
-**Approved roadmap (binding, D-024):** Phase 3 — Data Model → Phase 4 — Design System → Phase 5 — Shared Application Shell → Phase 6 — Mock Data Foundation → Phase 7 — Dashboard → Phase 8+ TBD.
+**Approved roadmap (binding, D-024):** Phase 3 — Data Model → Phase 4 — Design System → Phase 5 — Shared Application Shell → Phase 6 — Mock Data Foundation → Phase 7 — Dashboard → Phase 8 — Projects → Phase 9 — Tasks/Kanban → Phase 10+ TBD.
 
 ## What is approved and locked (Phase 1)
 
@@ -142,9 +143,24 @@ None outstanding.
 
 None outstanding. D-036's HTTP-200-on-not-found is a documented limitation, not an open item requiring action.
 
-## Current phase scope (Phase 9 — not yet proposed)
+## What is approved and locked (Phase 9)
 
-Not started. Natural next candidates per the approved roadmap are the remaining V1 P0 modules (Tasks, Kanban, Clients, Team, etc.), each of which should consume `domain/selectors.ts` the same way Phases 7-8 did, and any new nested dynamic route should follow the D-036 not-found guard pattern — but Phase 9 itself has not been scoped, planned, or approved yet.
+- Complete global Tasks module: `/tasks` (list + Kanban, URL-driven filters/sort/view) and `/tasks/:taskId` (direct deep link) (`PROJECT_PLAN.md` §24).
+- D-038: Kanban's 5 columns map 1:1 onto the locked `TaskStatus` enum (no "Backlog" status added, "Blocked" is a real column) — `TASK_STATUS_LABEL` in `StatusBadge.tsx` is the one canonical source. **Binding** on any future Kanban-adjacent UI.
+- D-039: V1 demo-state/persistence is a server-side, in-memory overrides map (`domain/taskMutations.ts`), process-lifetime, applied at `getDemoDataset()` read time — not localStorage, not a client store. Next.js Server Actions (`lib/taskActions.ts`) + `revalidatePath` keep every page consistent. **Binding** on any future task/project/client mutation feature — reuse this pattern, don't introduce a second state store.
+- `TaskDetailContent`: the one shared Task Detail implementation, rendered identically by the `?task=`-query-param panel (preserves list/Kanban/Project-Tasks context, no navigation) and the direct page.
+- `StatusSelect`: the guaranteed-accessible alternate to Kanban drag, present on every card and in Task Detail — real mouse/touch drag (`@dnd-kit/core`) is an accelerator on top of it, never the only path.
+- Project Tasks tab now reuses the exact same `TasksView`/`TasksTable`/`KanbanBoard` components, project-scoped — no separate Project Kanban implementation.
+- Domain recalculation proven end-to-end: 5 integration tests confirm a task edit changes `computeProjectRisk`/`computeTeamMemberWorkload` output through the real demo dataset.
+- Validation: `tsc --noEmit`, `eslint`, `next build` clean; `npm test` 67/67; `npm run validate:data` clean; whole-app route smoke check all 200; real mouse drag-and-drop verified end-to-end via Playwright (not just the accessible fallback); RTL verified via the real `getLocale()` path.
+
+## Phase 9 open items
+
+None outstanding.
+
+## Current phase scope (Phase 10 — not yet proposed)
+
+Not started. Natural next candidates per the approved roadmap are the remaining V1 P0 modules (Clients/CRM, Team, Analytics, AI Assistant, etc.), each of which should consume `domain/selectors.ts` the same way Phases 7-9 did, reuse the D-039 server-side-overrides pattern for any new mutable state, and follow the D-036 not-found guard pattern for any new nested dynamic route — but Phase 10 itself has not been scoped, planned, or approved yet.
 
 ## Session checklist (do this before any new work)
 
