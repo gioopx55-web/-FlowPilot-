@@ -1,12 +1,89 @@
-import { BarChart3 } from "lucide-react";
-import { ComingSoon } from "@/components/primitives/ComingSoon";
+import {
+  getOnTimeDeliveryRate,
+  getWorkloadDistribution,
+  getOverdueTaskTrend,
+  getProjectStatusDistribution,
+  getProjectRiskDistribution,
+  getActiveProjectAverageProgress,
+} from "@/domain/analytics";
+import { getOverdueTasks, getAtRiskProjectsSorted } from "@/domain/selectors";
+import { Section } from "@/components/primitives/Section";
+import { OperationalSummary } from "@/components/analytics/OperationalSummary";
+import { OnTimeDeliveryCard } from "@/components/analytics/OnTimeDeliveryCard";
+import { OverdueTrendChart } from "@/components/analytics/OverdueTrendChart";
+import { WorkloadDistributionChart } from "@/components/analytics/WorkloadDistributionChart";
+import { ProjectStatusChart } from "@/components/analytics/ProjectStatusChart";
+import { ProjectRiskChart } from "@/components/analytics/ProjectRiskChart";
+import { AnalyticsInsights } from "@/components/analytics/AnalyticsInsights";
+import { formatShortDate } from "@/lib/format";
+import { DEMO_TODAY_ISO } from "@/lib/demo-clock";
+
+const OVERDUE_TREND_WEEKS = 8;
 
 export default function AnalyticsPage() {
+  const onTimeDelivery = getOnTimeDeliveryRate();
+  const workloadDistribution = getWorkloadDistribution();
+  const overdueTrend = getOverdueTaskTrend(OVERDUE_TREND_WEEKS);
+  const projectStatusDistribution = getProjectStatusDistribution();
+  const projectRiskDistribution = getProjectRiskDistribution();
+  const activeAverageProgress = getActiveProjectAverageProgress();
+  const overdueCount = getOverdueTasks().length;
+  const atRiskCount = getAtRiskProjectsSorted().length;
+
   return (
-    <ComingSoon
-      icon={BarChart3}
-      title="Analytics"
-      description="On-time delivery rate, workload distribution, and overdue trend ship in a later phase."
-    />
+    <div className="mx-auto max-w-[1440px] space-y-8 px-4 py-6 sm:px-6 lg:px-8">
+      <div>
+        <h1 className="text-lg font-semibold text-foreground">Analytics</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Current workspace state as of {formatShortDate(DEMO_TODAY_ISO)}. Overdue trend covers
+          the last {OVERDUE_TREND_WEEKS} weeks.
+        </p>
+      </div>
+
+      <OperationalSummary
+        stats={[
+          {
+            label: "On-time delivery",
+            value: onTimeDelivery ? `${onTimeDelivery.onTimePct}%` : "No data",
+          },
+          { label: "Overdue tasks", value: String(overdueCount) },
+          { label: "At-risk projects", value: String(atRiskCount) },
+          {
+            label: "Avg. active progress",
+            value: activeAverageProgress !== undefined ? `${activeAverageProgress}%` : "No data",
+          },
+        ]}
+      />
+
+      <Section title="On-Time Delivery">
+        <OnTimeDeliveryCard result={onTimeDelivery} />
+      </Section>
+
+      <Section title="Overdue Task Trend">
+        <OverdueTrendChart points={overdueTrend} />
+      </Section>
+
+      <Section title="Workload Distribution" action={{ label: "View team", href: "/team" }}>
+        <WorkloadDistributionChart distribution={workloadDistribution} />
+      </Section>
+
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+        <Section title="Project Status" action={{ label: "View projects", href: "/projects" }}>
+          <ProjectStatusChart distribution={projectStatusDistribution} />
+        </Section>
+        <Section title="Project Risk">
+          <ProjectRiskChart distribution={projectRiskDistribution} />
+        </Section>
+      </div>
+
+      <Section title="Insights">
+        <AnalyticsInsights
+          onTimeDelivery={onTimeDelivery}
+          workload={workloadDistribution}
+          risk={projectRiskDistribution}
+          overdueTrend={overdueTrend}
+        />
+      </Section>
+    </div>
   );
 }
