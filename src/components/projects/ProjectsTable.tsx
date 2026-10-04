@@ -1,9 +1,19 @@
 import Link from "next/link";
-import type { ProjectListEntry } from "@/domain/selectors";
+import type { Client, Project } from "@/types/entities";
+import type { ProjectRiskResult } from "@/domain/risk/risk";
 import { RiskBadge } from "@/components/primitives/RiskBadge";
 import { Badge } from "@/components/primitives/Badge";
 import { formatShortDate } from "@/lib/format";
 import { PROJECT_STATUS_LABEL } from "@/components/projects/projectLabels";
+
+/** Accepts both ProjectListEntry (global list, `client` resolved) and
+ *  ClientProjectEntry (Client Projects tab, no `client` field needed
+ *  since it's already the scoping context). */
+interface ProjectsTableEntry {
+  project: Project;
+  risk: ProjectRiskResult;
+  client?: Client | undefined;
+}
 
 /**
  * Dense project list (Phase 8 §1). Two renderings of the same data,
@@ -11,8 +21,18 @@ import { PROJECT_STATUS_LABEL } from "@/components/projects/projectLabels";
  * mismatch risk): a real <table> at md+ and a stacked list below it —
  * same lesson as Phase 7's AtRiskProjects row-squeeze bug, avoided
  * here from the start rather than fixed after the fact.
+ *
+ * `showClient` defaults to true for the global /projects list; the
+ * Phase 10 Client Projects tab passes false since the client column
+ * would be redundant there (reuse, not a duplicate project table).
  */
-export function ProjectsTable({ entries }: { entries: ProjectListEntry[] }) {
+export function ProjectsTable({
+  entries,
+  showClient = true,
+}: {
+  entries: ProjectsTableEntry[];
+  showClient?: boolean;
+}) {
   return (
     <>
       {/* Desktop/tablet: dense table (Phase 4 §15.21) */}
@@ -20,7 +40,7 @@ export function ProjectsTable({ entries }: { entries: ProjectListEntry[] }) {
         <thead>
           <tr className="border-b border-border text-start text-xs text-muted-foreground">
             <th className="px-3 py-2 text-start font-medium">Project</th>
-            <th className="px-3 py-2 text-start font-medium">Client</th>
+            {showClient && <th className="px-3 py-2 text-start font-medium">Client</th>}
             <th className="px-3 py-2 text-start font-medium">Status</th>
             <th className="px-3 py-2 text-start font-medium">Progress</th>
             <th className="px-3 py-2 text-start font-medium">Due</th>
@@ -38,9 +58,11 @@ export function ProjectsTable({ entries }: { entries: ProjectListEntry[] }) {
                   {project.name}
                 </Link>
               </td>
-              <td className="px-3 py-2.5 text-muted-foreground">
-                {client?.name ?? "Unknown client"}
-              </td>
+              {showClient && (
+                <td className="px-3 py-2.5 text-muted-foreground">
+                  {client?.name ?? "Unknown client"}
+                </td>
+              )}
               <td className="px-3 py-2.5">
                 <Badge tone="neutral">{PROJECT_STATUS_LABEL[project.status]}</Badge>
               </td>
@@ -68,7 +90,8 @@ export function ProjectsTable({ entries }: { entries: ProjectListEntry[] }) {
                 {project.name}
               </span>
               <span className="block text-xs text-muted-foreground">
-                {client?.name ?? "Unknown client"} · {project.progressPct}% complete
+                {showClient && `${client?.name ?? "Unknown client"} · `}
+                {project.progressPct}% complete
                 {project.dueDate && ` · due ${formatShortDate(project.dueDate)}`}
               </span>
             </Link>
