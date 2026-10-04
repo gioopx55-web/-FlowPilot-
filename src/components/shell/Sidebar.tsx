@@ -67,7 +67,7 @@ export function Sidebar() {
                 "group relative flex h-11 items-center gap-3 rounded-sm px-3 text-sm font-medium text-muted-foreground outline-none",
                 "transition-colors duration-150 ease-out",
                 "hover:bg-accent hover:text-accent-foreground",
-                "focus-visible:ring-2 focus-visible:ring-ring/50",
+                "focus-visible:ring-2 focus-visible:ring-ring/70",
                 active && "bg-[var(--fp-accent-subtle-bg)] text-[var(--fp-accent)]",
               )}
             >
@@ -95,7 +95,7 @@ export function Sidebar() {
           className={cn(
             "flex h-11 w-full items-center gap-3 rounded-sm px-3 text-sm font-medium text-muted-foreground outline-none",
             "transition-colors duration-150 ease-out hover:bg-accent hover:text-accent-foreground",
-            "focus-visible:ring-2 focus-visible:ring-ring/50",
+            "focus-visible:ring-2 focus-visible:ring-ring/70",
           )}
         >
           {collapsed ? (

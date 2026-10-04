@@ -40,6 +40,8 @@ export function Badge({
 }: BadgeProps) {
   return (
     <span
+      data-slot="badge"
+      data-tone={tone}
       className={cn(
         "inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-xs font-medium",
         toneClassName[tone],
