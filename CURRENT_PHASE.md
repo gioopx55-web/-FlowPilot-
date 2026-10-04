@@ -14,11 +14,12 @@
 **Phase 4 — Design System: APPROVED / COMPLETE 2026-10-04.**
 **Phase 5 — Shared Application Shell: IMPLEMENTED 2026-10-04.**
 **Phase 6 — Mock Data Foundation: IMPLEMENTED 2026-10-04.**
-**Phase 7 — NOT STARTED, not yet proposed.**
+**Phase 7 — Dashboard: IMPLEMENTED 2026-10-04.**
+**Phase 8 — NOT STARTED, not yet proposed.**
 
-A real Next.js application exists with a working shared shell (Sidebar/Topbar/MobileNav/SidePanel/theme/RTL architecture), placeholder pages for every module route, and now a complete typed/validated mock-data foundation (`src/data/mock/`) plus a domain layer (`src/domain/`: risk, workload, client follow-up, selectors, validation) for the fictional "Northbound Studio" workspace. No Dashboard/Projects/Tasks/Clients/Team/Analytics/AI business UI, no real auth/backend/billing exist yet — those are later phases. `tsc --noEmit`, `eslint`, `next build`, `npm run validate:data`, and `npm test` (32/32) all pass cleanly. See `PROJECT_PLAN.md` §18 for the full Phase 6 summary, `DECISIONS.md` D-032 for a Phase 5 build-time finding, and D-033/D-034 for two items that need owner attention (follow-up threshold, contrast audit timing).
+A real Next.js application exists with a working shared shell, a complete typed/validated mock-data foundation, a domain layer (risk, workload, client follow-up, selectors, Daily Brief), and now the first real business screen: `/dashboard`, consuming only `src/domain` selectors. Projects/Tasks/Clients/Team/Analytics/AI business UI, real auth/backend/billing do not exist yet — those are later phases. `tsc --noEmit`, `eslint`, `next build`, `npm run validate:data`, and `npm test` (33/33) all pass cleanly. A real WCAG AA contrast audit against rendered Dashboard content found and fixed 4 token issues (D-035). See `PROJECT_PLAN.md` §20 for the full Phase 7 summary and `DECISIONS.md` D-032/D-035 for build-time findings.
 
-**Approved roadmap (binding, D-024):** Phase 3 — Data Model → Phase 4 — Design System → Phase 5 — Shared Application Shell → Phase 6 — Mock Data Foundation → Phase 7+ TBD.
+**Approved roadmap (binding, D-024):** Phase 3 — Data Model → Phase 4 — Design System → Phase 5 — Shared Application Shell → Phase 6 — Mock Data Foundation → Phase 7 — Dashboard → Phase 8+ TBD.
 
 ## What is approved and locked (Phase 1)
 
@@ -104,18 +105,30 @@ None outstanding. All resolved 2026-10-04 (see `DECISIONS.md` D-025–D-031). No
 - Single shared domain functions: `computeProjectRisk`, `computeTeamMemberWorkload`, `getClientFollowUpStatus`/`getLatestClientInteraction`, plus `domain/selectors.ts` as the only intended read path for future feature UI. No business logic belongs in React components (binding on Phase 7+).
 - `domain/validation.ts` + `data/mock/index.ts`: the dataset is validated (referential integrity, unique IDs, workspace ownership, required state coverage, impossible field combinations) every time it's loaded, and throws loudly if invalid.
 - Required state coverage confirmed by both the validator and `npm test` (32/32 passing): all 3 risk levels, all 4 workload bands, follow-up needed/not-needed/dormant, completed/on_hold risk exclusion, all 3 fallback-hours tiers.
-- `FOLLOW_UP_STALE_DAYS = 7` is a Phase 6 proposal, **not yet owner-approved** (`DECISIONS.md` D-033/O-006).
-- Contrast audit explicitly deferred to Phase 7 — no qualifying rendered UI exists yet to test against (`DECISIONS.md` D-034/O-007).
+- `FOLLOW_UP_STALE_DAYS = 7` — **approved** as the authoritative V1 threshold (`DECISIONS.md` D-033).
 - Zero new dependencies: Node 24's native `node --test` plus a small custom ESM loader hook (`scripts/alias-loader.mjs`) resolve the existing `@/*` alias for scripts/tests.
 
 ## Phase 6 open items
 
-- **O-006:** confirm or replace `FOLLOW_UP_STALE_DAYS = 7`.
-- **O-007:** perform the WCAG AA contrast audit once Phase 7 (or later) renders real content using these tokens.
+None. Both resolved in Phase 7 (D-033 approved, D-034 performed as D-035).
 
-## Current phase scope (Phase 7 — not yet proposed)
+## What is approved and locked (Phase 7)
 
-Not started. The natural next step per `PROJECT_PLAN.md`'s approved roadmap is the first real business-feature phase (e.g., Dashboard), which should consume `domain/selectors.ts` rather than recompute risk/workload/follow-up logic in components — but Phase 7 itself has not been scoped, planned, or approved yet.
+- `/dashboard` — the first real business screen, six sections in the approved order (Daily Brief / At-Risk Projects / Overdue Tasks / Clients Needing Follow-Up / Team Workload Snapshot / Recent Activity), consuming only `src/domain` selectors (`PROJECT_PLAN.md` §20).
+- `domain/dailyBrief.ts`: deterministic rule-based Daily Brief — explicitly not an AI call.
+- New sorted selectors (`getAtRiskProjectsSorted`, `getOverdueTasksSorted`, `getClientsNeedingFollowUpSorted`, `getTeamWorkloadSnapshot`, `getRecentActivities`); `getOverdueTasks` now excludes completed/on_hold projects' tasks (a real bug found via visual verification, with a regression test).
+- `RiskBadge`/`WorkloadBadge`/`ConditionsDisclosure`: risk/workload reasons always reachable (D-016), one disclosure implementation satisfying both desktop keyboard-accessibility and mobile tap-to-expand (D-027).
+- Dashboard list rows use an always-stacked layout, not a viewport-breakpoint row/column switch — found to be the only robust fix once the page's own 2-column section grid made column width unpredictable from viewport width alone.
+- D-035: WCAG AA contrast audit performed against real rendered content; 4 tokens adjusted (light success/warning/danger darkened, dark accent lightened, focus-ring opacity /50→/70 sitewide), each documented with before/after ratios in `tokens.css`.
+- Validation: `tsc --noEmit`, `eslint`, `next build` clean; `npm test` 33/33; `npm run validate:data` clean; Playwright visual verification at desktop/tablet/mobile × light/dark + RTL, zero console errors, zero horizontal overflow.
+
+## Phase 7 open items
+
+None outstanding.
+
+## Current phase scope (Phase 8 — not yet proposed)
+
+Not started. Natural next candidates per the approved roadmap are the remaining V1 P0 modules (Projects, Tasks, Clients, Team, etc.), each of which should consume `domain/selectors.ts` the same way Phase 7 did — but Phase 8 itself has not been scoped, planned, or approved yet.
 
 ## Session checklist (do this before any new work)
 

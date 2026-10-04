@@ -2,7 +2,7 @@
 
 > Read `PROJECT_CONSTITUTION.md` first. This file tracks personas, workflows, V1 scope, exclusions, AI scope, demo content, and success criteria as approved in Phase 1. Treat this as the working spec future sessions build against.
 
-**Status:** Phase 1 (Product Definition & V1 Scope) approved, final decisions locked. Phase 2 (Information Architecture) approved, final decisions locked. Phase 3 (Data Model) approved, final decisions locked. Phase 4 (Design System) approved, final decisions locked. Phase 5 (Shared Application Shell) implemented. Phase 6 (Mock Data Foundation) implemented.
+**Status:** Phase 1 (Product Definition & V1 Scope) approved, final decisions locked. Phase 2 (Information Architecture) approved, final decisions locked. Phase 3 (Data Model) approved, final decisions locked. Phase 4 (Design System) approved, final decisions locked. Phase 5 (Shared Application Shell) implemented. Phase 6 (Mock Data Foundation) implemented. Phase 7 (Dashboard) implemented.
 **Last updated:** 2026-10-04
 
 ---
@@ -1024,12 +1024,33 @@ Data/domain foundation only — no Dashboard/Projects/Tasks/Kanban/Clients/Team/
 
 **Verified:** `tsc --noEmit`, `eslint`, `next build` all pass with zero errors. `npm run validate:data` passes. `npm test` — 32/32 tests pass (project risk: 11, workload: 8, client follow-up: 5, mock dataset: 7, plus a demo-clock sanity check — see test files for the exact list). Phase 5 shell re-verified non-regressed: all 10 routes still 200, AI/Notifications mutual exclusivity still holds, dark theme still applies.
 
-## 19. Phase Roadmap (corrected — see DECISIONS.md D-024)
+## 20. Phase 7 — Dashboard (IMPLEMENTED)
+
+The first real FlowPilot AI business screen, at `/dashboard`, replacing its Phase 5 placeholder.
+
+**Sections, in the approved order:** Daily Brief, At-Risk Projects, Overdue Tasks, Clients Needing Follow-Up, Team Workload Snapshot, Recent Activity. Section order in the page source is priority order, so mobile's single-column stack needs no extra logic to put the most urgent information first.
+
+**Domain layer, not components, computes everything:** `domain/dailyBrief.ts` (new — deterministic rule-based ranking: Critical Risk > At Risk > most-overdue task > most-stale follow-up > most-overloaded member > latest activity, capped at 5 items, explicitly not an AI call) plus new sorted selectors in `domain/selectors.ts` (`getAtRiskProjectsSorted`, `getOverdueTasksSorted`, `getClientsNeedingFollowUpSorted`, `getTeamWorkloadSnapshot`, `getRecentActivities`). No component recomputes risk, workload, overdue, or follow-up logic.
+
+**Bug found via visual verification, fixed at the domain layer:** `getOverdueTasks` now excludes tasks belonging to `completed`/`on_hold` projects — without this, the Dashboard surfaced two Phase 6 fixtures deliberately authored to prove *risk* exclusion as if they were actionable "overdue" work. New regression test locks this in.
+
+**New shared components:** `RiskBadge`, `WorkloadBadge`, `StatusBadge` (`TaskStatusBadge`/`TaskPriorityBadge`), `ConditionsDisclosure` (one click/keyboard-triggered Popover satisfying D-027's "not hover-only" desktop requirement and mobile tap-to-expand with a single implementation), `riskConditionLabels.ts` (the one presentation-layer RiskCondition→sentence lookup, per §13.17), and the six Dashboard section components plus `DashboardSection`.
+
+**Layout finding:** list rows use an always-stacked layout (name/meta on one line, badge below) rather than a viewport-breakpoint row/column switch — a single breakpoint can't predict actual column width once the page's own responsive 2-column section grid is also active (confirmed broken at tablet width specifically), so the robust fix doesn't depend on viewport width at all. A related flex-column stretch bug (badges stretching to full row width) was also found and fixed with `self-start`.
+
+**Contrast audit (D-034/D-035):** performed against real rendered Dashboard elements via browser-native canvas color resolution (not regex-parsed computed styles, which initially mis-parsed Tailwind v4's `oklab()`/`color-mix()` output). Four tokens adjusted — light `--fp-success`/`--fp-warning`/`--fp-danger` darkened, dark `--fp-accent` lightened, focus-ring opacity raised `/50`→`/70` sitewide — each the smallest change clearing the relevant WCAG AA threshold, documented with before/after ratios in `tokens.css` and `DECISIONS.md` D-035.
+
+**Verified:** `tsc --noEmit`, `eslint`, `next build` — clean. `npm test` — 33/33 (added 1 regression test for the overdue-exclusion fix). `npm run validate:data` — clean. Visual verification via Playwright at desktop/tablet/mobile × light/dark, plus a live RTL check (sidebar and grid order both mirror correctly, conditions popover stays on-screen) — all pass, zero console errors, zero horizontal overflow at any combination tested.
+
+**No Recharts, no new dependencies.** No Projects/Tasks/Clients/Team/Analytics/AI business UI built — placeholders remain for those routes.
+
+## 21. Phase Roadmap (corrected — see DECISIONS.md D-024)
 
 - **Phase 1 — Product Definition & V1 Scope:** ✅ Approved, all open items resolved.
 - **Phase 2 — Information Architecture:** ✅ APPROVED / COMPLETE 2026-10-04.
 - **Phase 3 — Data Model:** ✅ APPROVED / COMPLETE 2026-10-04.
-- **Phase 4 — Design System:** ✅ APPROVED / COMPLETE 2026-10-04 (tokens are a starting palette pending real contrast testing; no fixtures authored).
+- **Phase 4 — Design System:** ✅ APPROVED / COMPLETE 2026-10-04 (tokens were a starting palette pending real contrast testing — now partially verified, see §20/D-035).
 - **Phase 5 — Shared Application Shell:** ✅ IMPLEMENTED 2026-10-04 (see §16). No business features, no fixtures.
-- **Phase 6 — Mock Data Foundation:** ✅ IMPLEMENTED 2026-10-04 (see §18). No business UI; contrast audit deferred to Phase 7.
-- **Phase 7+ — TBD**, not yet proposed.
+- **Phase 6 — Mock Data Foundation:** ✅ IMPLEMENTED 2026-10-04 (see §18). No business UI.
+- **Phase 7 — Dashboard:** ✅ IMPLEMENTED 2026-10-04 (see §20).
+- **Phase 8+ — TBD**, not yet proposed.

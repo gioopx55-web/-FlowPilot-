@@ -178,11 +178,22 @@
 **Decision:** The WCAG AA contrast audit is confirmed deferred to Phase 7, which is the first phase with representative rendered business content (the Dashboard). During Phase 7, perform real contrast verification using actual Dashboard component pairings (not tokens in isolation) for: primary text, secondary text, accent, warning, danger, success, risk badges, workload badges, and focus rings — in both light and dark themes. Any failing token gets the smallest necessary adjustment, verified in both themes and documented with before/after values and a reason; this is not license to redesign the palette.
 **Why:** Resolves O-007 with a concrete checklist so the audit has a defined scope once Phase 7 actually renders something to test.
 
+### D-035 — Phase 7 contrast audit results: 4 token adjustments made
+**Date:** 2026-10-04
+**Decision:** Performed the D-034 audit against real rendered Dashboard elements (badges, text, links, focus rings), using the browser's own canvas color compositing rather than regex-parsing computed-style strings (an earlier version of the audit script silently mis-parsed Tailwind v4's `oklab()`/`color-mix()` output and produced false readings — the final method renders each color via `<canvas>` and reads back resolved pixels, which cannot misparse). Four tokens adjusted, smallest-change-that-clears-AA in each case:
+- `--fp-success` (light): #0f9d58 → #0a6b3c (badge text was 3.13:1 against its own tint bg, now 5.68:1)
+- `--fp-warning` (light): #b54708 → #a84007 (was 4.38:1, now 4.99:1)
+- `--fp-danger` (light): #d92d20 → #b3251a (was 3.89:1, now 5.29:1)
+- `--fp-accent` (dark): #6e7cf2 → #8591f5, with `--fp-accent-hover` nudged to #9da7f7 to stay a visible step lighter (badge text was 4.35:1, now 5.49:1; this also strengthened the already-passing dark-mode link contrast from 5.39:1 to 6.82:1)
+- Focus ring opacity: `ring-ring/50` → `ring-ring/70` across all 9 usages (was 2.2-2.3:1 in both themes against canvas, now 3.27:1 light / 3.84:1 dark) — the 50% opacity itself was mathematically the limiting factor regardless of hue, so the fix is the opacity multiplier, not a token hex value
+All changes verified in both light and dark themes after the fix. Primary text, secondary text, light-mode accent/info, and dark-mode warning/danger/success/info were already compliant and left unchanged. Full before/after values and reasoning are recorded as comments directly in `src/styles/tokens.css`.
+**Why:** Resolves the D-034 checklist. This is not a palette redesign — every adjustment is a minimal shift of one existing token's lightness, chosen by computing the smallest change that clears the relevant WCAG threshold.
+
 ---
 
 ## Open
 
-As of 2026-10-04: none outstanding from Phase 6. D-033 and D-034 are both resolved/scoped above. Phase 7 (Dashboard) decisions, if any, will be logged as they arise during that phase's build.
+As of 2026-10-04: none outstanding. D-033 through D-035 are all resolved above. Phase 8 decisions, if any, will be logged as they arise during that phase's build.
 
 ---
 
