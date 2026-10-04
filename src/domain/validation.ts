@@ -227,6 +227,14 @@ export function validateDemoDataset(dataset: DemoDataset): ValidationResult {
         `Project "${project.id}" has progressPct ${project.progressPct} outside 0-100`,
       );
     }
+    if (project.completedAt !== undefined && project.status !== "completed") {
+      errors.push(
+        `Project "${project.id}" has completedAt set but status is "${project.status}" (expected "completed")`,
+      );
+    }
+    if (project.status === "completed" && project.completedAt === undefined) {
+      errors.push(`Project "${project.id}" has status "completed" but no completedAt`);
+    }
   }
 
   for (const member of teamMembers) {

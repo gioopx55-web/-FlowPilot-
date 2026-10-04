@@ -79,6 +79,14 @@ export interface Project {
   dueDate?: string;
   startDate: string;
   createdAt: string;
+  /**
+   * When this project was actually delivered. Set only when `status`
+   * is `completed` (same invariant Task.completedAt already enforces,
+   * see domain/validation.ts). Added in Phase 11 specifically so
+   * On-Time Delivery Rate can compare a real delivery date against
+   * `dueDate` instead of guessing — see DECISIONS.md D-042.
+   */
+  completedAt?: string;
 }
 
 export type RiskCondition =
