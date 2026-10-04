@@ -1,8 +1,19 @@
-import type { Activity, ID, Client, Project, Task, TeamMember } from "@/types/entities";
+import type {
+  Activity,
+  ID,
+  Client,
+  Project,
+  ProjectStatus,
+  RiskLevel,
+  Task,
+  TeamMember,
+  User,
+} from "@/types/entities";
 import { getDemoDataset } from "@/data/mock";
 import { computeProjectRisk, type ProjectRiskResult } from "@/domain/risk/risk";
 import {
   computeTeamMemberWorkload,
+  sumAssignedHours,
   type TeamMemberWorkloadResult,
 } from "@/domain/workload/workload";
 import {
@@ -42,6 +53,10 @@ export function getClientById(id: ID): Client | undefined {
 
 export function getTeamMemberById(id: ID): TeamMember | undefined {
   return getDemoDataset().teamMembers.find((m) => m.id === id);
+}
+
+export function getUserById(id: ID): User | undefined {
+  return getDemoDataset().users.find((u) => u.id === id);
 }
 
 export function getTasksForProject(projectId: ID): Task[] {
@@ -198,4 +213,170 @@ export function getRecentActivities(limit: number): Activity[] {
   return [...activities]
     .sort((a, b) => (a.occurredAt < b.occurredAt ? 1 : -1))
     .slice(0, limit);
+}
+
+// ---------------------------------------------------------------------
+// Phase 8 — Projects module
+// ---------------------------------------------------------------------
+
+export interface ProjectListEntry {
+  project: Project;
+  risk: ProjectRiskResult;
+  client: Client | undefined;
+}
+
+/** Every project with its risk and client resolved (Phase 8 §1). */
+export function getProjectsWithRisk(): ProjectListEntry[] {
+  const { projects } = getDemoDataset();
+  return projects.map((project) => ({
+    project,
+    risk: getProjectRisk(project.id),
+    client: getClientById(project.clientId),
+  }));
+}
+
+export type ProjectSortKey = "risk" | "dueDate" | "name" | "progress";
+
+export interface ProjectListFilters {
+  status?: ProjectStatus;
+  clientId?: ID;
+  risk?: RiskLevel;
+  query?: string;
+  sort?: ProjectSortKey;
+}
+
+/**
+ * Filtered/sorted project list for /projects (Phase 8 §1-§2). URL
+ * query-param parsing happens in the page component; the filtering
+ * and sorting RULES live here, so they're never duplicated if a
+ * second surface (e.g. a client's own project list) needs the same
+ * filters later.
+ */
+export function getFilteredProjects(filters: ProjectListFilters = {}): ProjectListEntry[] {
+  let entries = getProjectsWithRisk();
+
+  if (filters.status) {
+    entries = entries.filter((e) => e.project.status === filters.status);
+  }
+  if (filters.clientId) {
+    entries = entries.filter((e) => e.project.clientId === filters.clientId);
+  }
+  if (filters.risk) {
+    entries = entries.filter((e) => e.risk.level === filters.risk);
+  }
+  if (filters.query && filters.query.trim()) {
+    const q = filters.query.trim().toLowerCase();
+    entries = entries.filter((e) => e.project.name.toLowerCase().includes(q));
+  }
+
+  const sorted = [...entries];
+  switch (filters.sort) {
+    case "dueDate":
+      sorted.sort((a, b) => {
+        if (!a.project.dueDate) return 1;
+        if (!b.project.dueDate) return -1;
+        return a.project.dueDate < b.project.dueDate ? -1 : 1;
+      });
+      break;
+    case "name":
+      sorted.sort((a, b) => a.project.name.localeCompare(b.project.name));
+      break;
+    case "progress":
+      sorted.sort((a, b) => b.project.progressPct - a.project.progressPct);
+      break;
+    case "risk":
+    default:
+      sorted.sort(
+        (a, b) => RISK_LEVEL_RANK[a.risk.level] - RISK_LEVEL_RANK[b.risk.level],
+      );
+  }
+  return sorted;
+}
+
+export interface ProjectTaskSummary {
+  total: number;
+  openCount: number;
+  doneCount: number;
+  overdueCount: number;
+  byStatus: Record<Task["status"], number>;
+}
+
+/** Task counts for a project's Overview/Tasks tabs (Phase 8 §5/§7). */
+export function getProjectTaskSummary(projectId: ID): ProjectTaskSummary {
+  const tasks = getTasksForProject(projectId);
+  const byStatus: Record<Task["status"], number> = {
+    todo: 0,
+    in_progress: 0,
+    blocked: 0,
+    review: 0,
+    done: 0,
+  };
+  let overdueCount = 0;
+  for (const task of tasks) {
+    byStatus[task.status] += 1;
+    if (
+      task.status !== "done" &&
+      task.dueDate !== undefined &&
+      daysFromToday(task.dueDate) < 0
+    ) {
+      overdueCount += 1;
+    }
+  }
+  return {
+    total: tasks.length,
+    openCount: tasks.length - byStatus.done,
+    doneCount: byStatus.done,
+    overdueCount,
+    byStatus,
+  };
+}
+
+export interface ProjectAssignedMemberEntry {
+  member: TeamMember;
+  /** Total tasks on this project assigned to the member (any status). */
+  taskCount: number;
+  /** PROJECT-SCOPED hours — open tasks on this project only. Never the
+   *  member's global workload; pair with getTeamMemberWorkload and
+   *  label that value "global" wherever both appear (Phase 8 §8). */
+  assignedHours: number;
+  fallbackTaskIds: ID[];
+}
+
+/**
+ * Members with at least one task on this project, derived from task
+ * assignments — not a separately authored project-team list (Phase 8
+ * §8). Sorted by project-scoped assigned hours, most first.
+ */
+export function getProjectAssignedMembers(projectId: ID): ProjectAssignedMemberEntry[] {
+  const tasks = getTasksForProject(projectId);
+  const memberIds = new Set(
+    tasks
+      .map((t) => t.assigneeId)
+      .filter((id): id is ID => id !== undefined),
+  );
+
+  const entries: ProjectAssignedMemberEntry[] = [];
+  for (const memberId of memberIds) {
+    const member = getTeamMemberById(memberId);
+    if (!member) continue;
+    const memberTasks = tasks.filter((t) => t.assigneeId === memberId);
+    const openMemberTasks = memberTasks.filter((t) => t.status !== "done");
+    const { hours, fallbackTaskIds } = sumAssignedHours(openMemberTasks);
+    entries.push({
+      member,
+      taskCount: memberTasks.length,
+      assignedHours: hours,
+      fallbackTaskIds,
+    });
+  }
+  return entries.sort((a, b) => b.assignedHours - a.assignedHours);
+}
+
+/** Chronological activity feed scoped to one project (Phase 8 §9), newest first. */
+export function getProjectActivity(projectId: ID, limit?: number): Activity[] {
+  const { activities } = getDemoDataset();
+  const scoped = [...activities]
+    .filter((a) => a.projectId === projectId)
+    .sort((a, b) => (a.occurredAt < b.occurredAt ? 1 : -1));
+  return limit !== undefined ? scoped.slice(0, limit) : scoped;
 }

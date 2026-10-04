@@ -36,6 +36,30 @@ function bandForPct(pct: number): WorkloadBand {
   return "Overloaded";
 }
 
+export interface AssignedHoursResult {
+  hours: number;
+  fallbackTaskIds: ID[];
+}
+
+/**
+ * Sums estimated/fallback hours across a task set — the same
+ * fallback-hours rule computeTeamMemberWorkload uses, exposed so
+ * other domain functions (e.g. a project-scoped hours summary) never
+ * need to reimplement it. Callers decide what "open" or "assigned to
+ * this member" means before passing tasks in; this function only
+ * sums hours.
+ */
+export function sumAssignedHours(tasks: Task[]): AssignedHoursResult {
+  let hours = 0;
+  const fallbackTaskIds: ID[] = [];
+  for (const task of tasks) {
+    const result = hoursForTask(task);
+    hours += result.hours;
+    if (result.usedFallback) fallbackTaskIds.push(task.id);
+  }
+  return { hours, fallbackTaskIds };
+}
+
 /**
  * The single, shared Team Workload computation (PROJECT_PLAN.md
  * §13.18, DECISIONS.md D-011/D-019). Only open (not `done`) tasks
@@ -52,14 +76,7 @@ export function computeTeamMemberWorkload(
     (task) => task.assigneeId === member.id && task.status !== "done",
   );
 
-  let assignedHours = 0;
-  const fallbackTaskIds: ID[] = [];
-
-  for (const task of openAssignedTasks) {
-    const { hours, usedFallback } = hoursForTask(task);
-    assignedHours += hours;
-    if (usedFallback) fallbackTaskIds.push(task.id);
-  }
+  const { hours: assignedHours, fallbackTaskIds } = sumAssignedHours(openAssignedTasks);
 
   const workloadPct =
     member.weeklyCapacityHours > 0

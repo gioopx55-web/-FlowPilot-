@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "validate:data": "node --import ./scripts/alias-loader.mjs scripts/validate-demo-data.ts",
-    "test": "node --import ./scripts/alias-loader.mjs --test src/**/*.test.ts"
+    "test": "find src -name '*.test.ts' | xargs node --import ./scripts/alias-loader.mjs --test"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
