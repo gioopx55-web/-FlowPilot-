@@ -17,9 +17,13 @@
 **Phase 7 — Dashboard: IMPLEMENTED 2026-10-04.**
 **Phase 8 — Projects: IMPLEMENTED 2026-10-04.**
 **Phase 9 — Tasks / Kanban: IMPLEMENTED 2026-10-04.**
-**Phase 10 — NOT STARTED, not yet proposed.**
+**Phase 10 — Clients / CRM: IMPLEMENTED 2026-10-04.**
 
-A real Next.js application exists with a working shared shell, a complete typed/validated mock-data foundation, a domain layer (risk, workload, client follow-up, project/task queries, selectors, Daily Brief, task mutations), `/dashboard`, the complete Projects module, and now the complete global Tasks module (`/tasks` list + Kanban, `/tasks/:taskId` direct link) with real drag-and-drop and editable Task Detail — all backed by a server-side in-memory demo-state layer (D-039) so edits are consistent everywhere without a real backend. Clients/Team/Analytics/AI business UI (beyond thin link-target placeholders), real auth/backend/billing do not exist yet — those are later phases. `tsc --noEmit`, `eslint`, `next build`, `npm run validate:data`, and `npm test` (67/67) all pass cleanly. See `PROJECT_PLAN.md` §24 for the full Phase 9 summary and `DECISIONS.md` D-038 (Kanban/TaskStatus reconciliation) / D-039 (demo-state architecture) for this phase's key decisions.
+A real Next.js application exists with a working shared shell, a complete typed/validated mock-data foundation, a domain layer (risk, workload, client follow-up, project/task queries, selectors, Daily Brief, task/client mutations), `/dashboard`, the complete Projects module, the complete global Tasks module (`/tasks` list + Kanban, `/tasks/:taskId` direct link), and the complete Clients module (`/clients` list, `/clients/:clientId` detail with Overview/Projects/Interactions tabs) — all backed by a server-side in-memory demo-state layer (D-039, extended for clients) so edits are consistent everywhere without a real backend. Team/Analytics/AI business UI (beyond thin link-target placeholders), real auth/backend/billing do not exist yet. `tsc --noEmit`, `eslint`, `next build`, `npm run validate:data`, and `npm test` (84/84) all pass cleanly, and Phase 10 has been through full interactive/visual Playwright verification (list/detail/tabs/add-interaction/not-found/dashboard, dark mode, RTL, mobile). See `PROJECT_PLAN.md` §26 for the full Phase 10 summary and `DECISIONS.md` D-036/D-039/D-040/D-041 for this phase's key decisions (D-040: Overview tab beyond the original IA; D-041: native form over React Hook Form + Zod for Add Interaction).
+
+Committed in 5 logical checkpoints (demo-state layer, UI components, routes, tests, docs) — see `git log`.
+
+---
 
 **Approved roadmap (binding, D-024):** Phase 3 — Data Model → Phase 4 — Design System → Phase 5 — Shared Application Shell → Phase 6 — Mock Data Foundation → Phase 7 — Dashboard → Phase 8 — Projects → Phase 9 — Tasks/Kanban → Phase 10+ TBD.
 
@@ -158,9 +162,26 @@ None outstanding. D-036's HTTP-200-on-not-found is a documented limitation, not 
 
 None outstanding.
 
-## Current phase scope (Phase 10 — not yet proposed)
+## What is approved and locked (Phase 10)
 
-Not started. Natural next candidates per the approved roadmap are the remaining V1 P0 modules (Clients/CRM, Team, Analytics, AI Assistant, etc.), each of which should consume `domain/selectors.ts` the same way Phases 7-9 did, reuse the D-039 server-side-overrides pattern for any new mutable state, and follow the D-036 not-found guard pattern for any new nested dynamic route — but Phase 10 itself has not been scoped, planned, or approved yet.
+- Complete Clients module: `/clients` (filterable/sortable dense list, default sort needs-follow-up-first) and `/clients/:clientId` with a shared header + route-backed tabs (Overview/Projects/Interactions) (`PROJECT_PLAN.md` §26).
+- Follow-up computation is read-only consumed, never re-implemented: all client-list/detail follow-up state goes through `getClientFollowUpStatus`/`getLatestClientInteraction` (`domain/clients/followUp.ts`, D-033).
+- D-039 (demo-state architecture) extended, not duplicated: `domain/clientMutations.ts` adds client field overrides + an appended-interactions list, both server-side/in-memory; `getDemoDataset()` re-derives `lastInteractionAt` fresh from base+added interactions on every call, so an added interaction flows through the one real follow-up computation automatically (interaction list, follow-up badge, and Dashboard's Clients Needing Follow-Up all update together via `revalidatePath`, no manual per-view patching). **Binding** on any future client-mutation feature — reuse this pattern.
+- D-040: Client Detail has a lightweight Overview tab beyond the original Phase 2 §11.7 IA (Projects/Interactions only) — justified as matching Project Detail's existing Overview-as-landing pattern, no new data/selectors introduced.
+- D-041: Add Interaction uses a plain native controlled form, not React Hook Form + Zod — judged unjustified for 2 fields/1 validation rule; same native-input pattern as `TaskDetailContent.tsx`.
+- Projects tab reuses the global `ProjectsTable` (new `showClient` prop, default `true`) with `getClientProjectsWithRisk` — zero duplicated project/risk data. Interactions tab is backed entirely by `ClientInteraction`, no new interaction types.
+- D-036 guard pattern reused without modification: `requireClient()` called from `[clientId]/layout.tsx` and every tab; `clients/not-found.tsx` lives in the parent segment.
+- Client `status` (active/retainer/dormant) and computed follow-up state remain structurally separate — editing one never touches the other's storage.
+- The Phase 2 "Draft update for this client" AI entry point is intentionally absent from this phase's UI (not even a disabled stub — the real tabs already fill the header/action space).
+- Validation: `tsc --noEmit`, `eslint`, `next build` clean; `npm test` 84/84 (17 new); `npm run validate:data` clean; whole-app route smoke check all 200 (no regressions); Playwright interactive verification of list/detail/tabs/add-interaction/not-found/dashboard with zero console errors; dark mode, real-`getLocale()` RTL, and mobile (390×844) all verified on Client Detail; bidirectional Project↔Client navigation confirmed.
+
+## Phase 10 open items
+
+None outstanding.
+
+## Current phase scope (Phase 11 — not yet proposed)
+
+Not started. Natural next candidates per the approved roadmap are the remaining V1 P0 modules (Team, Analytics, AI Assistant, etc.), each of which should consume `domain/selectors.ts` the same way Phases 7-10 did, reuse the D-039 server-side-overrides pattern for any new mutable state, and follow the D-036 not-found guard pattern for any new nested dynamic route — but Phase 11 itself has not been scoped, planned, or approved yet.
 
 ## Session checklist (do this before any new work)
 

@@ -1100,6 +1100,30 @@ The complete global Tasks module and the real Kanban experience: `/tasks` (list 
 
 **No comments, subtasks, recurring tasks, time tracking, saved views, custom columns, WIP limits, real backend, collaboration, or AI task generation.**
 
+## 26. Phase 10 — Clients / CRM (IMPLEMENTED)
+
+The complete Clients module: `/clients` (list), `/clients/:clientId` (Overview), `/clients/:clientId/projects`, `/clients/:clientId/interactions` — replacing the Phase 8 `ComingSoon` placeholder.
+
+**List (`ClientsTable`/`ClientsFilters`):** sorted needs-follow-up-first by default (`attention` sort — needs-follow-up clients first, then active/retainer by recency, dormant clients last, each tier alphabetical), not alphabetical. Search, status filter, and a "Needs follow-up only" checkbox all live in the URL, same `router.replace` pattern as Projects/Tasks. Dense table at `md+`, an always-stacked list below it from the start (Phase 7's lesson applied preemptively, as Phase 9 also did).
+
+**Follow-up computation reused, not re-implemented:** every follow-up read goes through the one shared `getClientFollowUpStatus`/`getLatestClientInteraction` (`domain/clients/followUp.ts`, `FOLLOW_UP_STALE_DAYS = 7`, D-033) via new selectors (`getClientsFiltered`, `getClientDetail`, `getClientsNeedingFollowUpSorted` — the last already existed from Phase 7's Dashboard). `FollowUpBadge` is the one D-016-compliant presentation of that status (reuses `ConditionsDisclosure`, same pattern as `RiskBadge`/`WorkloadBadge`).
+
+**Client Detail:** a persistent header (`ClientDetailHeader` — name, contact with bidi-protected email, status badge, follow-up badge, "Add interaction" button) and three route-backed tabs (`ClientTabs`): Overview, Projects, Interactions. Overview is a lightweight addition beyond the original Phase 2 §11.7 IA, justified and documented as D-040. Projects tab reuses the global `ProjectsTable` (new `showClient` toggle, default `true`) with `getClientProjectsWithRisk` — zero duplicated project data or risk computation. Interactions tab is backed entirely by `ClientInteraction` (`getClientInteractionHistory`, newest-first) with no new interaction types.
+
+**Add Interaction (D-041):** a plain native controlled form (`AddInteractionForm.tsx`), not React Hook Form + Zod — judged unjustified for two fields and one validation rule, and consistent with `TaskDetailContent.tsx`'s existing native-input pattern.
+
+**Demo-state architecture extended, not duplicated (builds on D-039):** `domain/clientMutations.ts` adds client field overrides (`primaryContactName`/`primaryContactEmail`/`status` only — no multi-contact, no pipeline/sales fields) and an appended-interactions list, both server-side and in-memory. `data/mock/index.ts`'s `getDemoDataset()` merges both and **re-derives `lastInteractionAt` fresh from the full base+added interaction list on every call** — so an added interaction flows through the exact same `getClientFollowUpStatus` computation everything else uses, with no second derivation path. `lib/clientActions.ts` Server Actions call `revalidatePath("/", "layout")`, so the interaction list, the client's follow-up badge, and the Dashboard's Clients Needing Follow-Up all update together automatically. `resetDemoDataAction` now resets both tasks and clients. Client `status` (active/retainer/dormant) stays structurally separate from computed follow-up state — editing one never touches the other's storage.
+
+**Guard pattern reused (D-036):** `requireClient(clientId)` is called from the `[clientId]/layout.tsx` and from every tab component; `src/app/(app)/clients/not-found.tsx` lives in the parent segment, exactly matching the Phase 8 `requireProject`/`projects/not-found.tsx` structure (no re-introduction of the bug D-036 already found and fixed once).
+
+**AI entry point explicitly not implemented:** the Phase 2-approved "Draft update for this client" affordance is not present anywhere in this phase's UI — no disabled stub was added either, since the real tabs already fill the available header/action space without needing a placeholder to preserve the IA.
+
+**No feature creep:** no multi-contact support, no sales pipeline/stages, no CRM-style deal tracking, no new `InteractionType` values, no client-level custom fields, no bulk actions, no CSV import/export.
+
+**Tests:** `clientMutations.test.ts` (10 unit tests — interaction validation/trimming/id-uniqueness, field-edit validation/merging/null-clearing, override reset) and `clientMutations.integration.test.ts` (8 tests against the real demo dataset — follow-up status flips after an added interaction, the Dashboard's Clients Needing Follow-Up list drops a client immediately after its interaction is added, dormant-status exclusion via a live status edit, `followUpOnly`/`attention`-sort filtering, client-scoped project relationships, newest-first interaction ordering including a newly added one, the `getClientDetail` not-found-guard input case).
+
+**Verified:** `tsc --noEmit`, `eslint`, `next build` — clean (new routes `/clients`, `/clients/[clientId]`, `/clients/[clientId]/interactions`, `/clients/[clientId]/projects` all build as dynamic routes). `npm test` — 84/84 (17 new Phase 10 tests, zero regressions in the prior 67). `npm run validate:data` — clean. Whole-app route smoke check — all 200, no regressions on Dashboard/Projects/Tasks/Clients/Team/Analytics/Settings. Interactive Playwright verification: list → detail → Projects tab → Interactions tab → Add Interaction (new entry appears newest-first, follow-up badge flips from "Needs Follow-Up" to "Up to date" immediately, no page reload) → invalid-client `not-found` route → Dashboard — zero console/page errors throughout. Dark mode and RTL (via the real `getLocale()`-driven `dir` flip) both verified on Client Detail — RTL mirrors the whole layout correctly and the contact email stays in natural left-to-right order via its existing `dir="ltr"` + `unicode-bidi: isolate` span. Mobile (390×844) verified on the list and the Interactions tab — always-stacked rows, full-width form, bottom tab bar intact. Bidirectional Project↔Client navigation confirmed working both directions.
+
 ## 25. Phase Roadmap (corrected — see DECISIONS.md D-024)
 
 - **Phase 1 — Product Definition & V1 Scope:** ✅ Approved, all open items resolved.
@@ -1111,4 +1135,5 @@ The complete global Tasks module and the real Kanban experience: `/tasks` (list 
 - **Phase 7 — Dashboard:** ✅ IMPLEMENTED 2026-10-04 (see §20).
 - **Phase 8 — Projects:** ✅ IMPLEMENTED 2026-10-04 (see §22).
 - **Phase 9 — Tasks / Kanban:** ✅ IMPLEMENTED 2026-10-04 (see §24).
-- **Phase 10+ — TBD**, not yet proposed.
+- **Phase 10 — Clients / CRM:** ✅ IMPLEMENTED 2026-10-04 (see §26).
+- **Phase 11+ — TBD**, not yet proposed.

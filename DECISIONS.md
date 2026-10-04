@@ -211,11 +211,21 @@ All changes verified in both light and dark themes after the fix. Primary text, 
 **Why:** The Phase 9 brief required "one source of truth," consistency across every page without manual syncing, and explicitly allowed (but did not mandate) localStorage — framed as "if local client state/localStorage... document that clearly." Given the codebase's existing heavy use of Server Components (every page since Phase 7 reads `getDemoDataset()` directly, synchronously, server-side), a localStorage-based design would have required converting Dashboard/Projects/Tasks into client-fetching components (since Server Components cannot read browser localStorage), which is a far larger and riskier architectural change than this phase's actual goal. The chosen design reuses the exact singleton-module pattern `data/mock/index.ts` already established in Phase 6, needs no new state-management dependency (no Zustand/Redux), and is honestly documented as process-lifetime, server-shared state — not a real backend, not real per-user persistence, exactly as the brief required ("do not pretend a backend persistence layer exists").
 **Known tradeoff (accepted, not a defect):** restarting the dev/prod server process discards all edits (by design — this is a demo, not a database) and all edits are visible to every browser tab hitting the same server (acceptable given no real auth/tenancy exists in V1). If a future phase adds real multi-user auth, this architecture must be revisited — flagged here so it isn't forgotten.
 
+### D-040 — Client Detail gets a lightweight Overview tab beyond the original Phase 2 IA
+**Date:** 2026-10-04
+**Decision:** Client Detail has three route-backed tabs — Overview, Projects, Interactions — not the two (Projects, Interactions) the Phase 2 §11.7 IA originally specified. Overview is a short landing summary (project count/at-risk count + a 5-item project list; a 5-item recent-interaction list), each half linking to its own full tab, structured identically to Project Detail's own Overview tab (`ProjectOverview.tsx`). It introduces no new data, selector, or business rule — `getClientProjectsWithRisk`/`getClientInteractionHistory` are the same selectors the Projects/Interactions tabs use.
+**Why:** The Phase 10 brief explicitly allowed this ("a lightweight Overview, if it fits the approved IA and stays simple"), and Client Detail without a landing tab would default to `/clients/:id` 404ing or redirecting, whereas Project Detail already established the "detail root = Overview" pattern — adding it keeps the two detail sections consistent rather than introducing an inconsistent special case for clients only.
+
+### D-041 — Add Interaction form: plain native controls, not React Hook Form + Zod
+**Date:** 2026-10-04
+**Decision:** `AddInteractionForm.tsx` is a plain React-state controlled form (a native `<select>` for type, a native `<textarea>` for summary, `useState` + `useTransition`), submitting via the `addClientInteractionAction` Server Action — the same native-input pattern already established in `TaskDetailContent.tsx`. React Hook Form and Zod were not added as dependencies.
+**Why:** The Phase 10 brief required RHF+Zod "only if genuinely justified." The form has two fields and exactly one validation rule (summary required, already enforced server-side in `domain/clientMutations.ts`); a form library's value (schema-driven validation, field-array handling, uncontrolled-input performance) has no leverage at this scale, and the codebase already has a working native pattern for exactly this shape of form. Revisit only if a future phase adds materially more fields/validation to this form.
+
 ---
 
 ## Open
 
-As of 2026-10-04: none outstanding. D-033 through D-039 are all resolved above. Phase 10 decisions, if any, will be logged as they arise during that phase's build.
+As of 2026-10-04: none outstanding. D-033 through D-041 are all resolved above.
 
 ---
 
