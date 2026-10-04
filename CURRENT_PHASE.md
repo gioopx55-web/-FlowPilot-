@@ -12,9 +12,10 @@
 **Phase 2 — Information Architecture: APPROVED / COMPLETE 2026-10-04.**
 **Phase 3 — Data Model: APPROVED / COMPLETE 2026-10-04.**
 **Phase 4 — Design System: APPROVED / COMPLETE 2026-10-04.**
-**Phase 5 — Shared Application Shell: IMPLEMENTATION-PLAN PROPOSAL STAGE (not yet approved; no application code written).**
+**Phase 5 — Shared Application Shell: IMPLEMENTED 2026-10-04.**
+**Phase 6 — Mock Data Foundation: NOT STARTED, not yet proposed.**
 
-No implementation has started. No files beyond this documentation set exist in the repository. No Next.js project, no dependencies, no code, no pages, no components, no mock data, no fixtures. Phase 5's implementation plan is proposal-only until approved; even once approved, Phase 5 must NOT build Dashboard/Projects/Tasks/Clients/Team/Analytics/AI business features and must NOT author mock fixtures (deferred to Phase 6 — see `DECISIONS.md` D-024).
+A real Next.js application now exists in the repository (TypeScript, Tailwind, shadcn/ui, App Router), with a working shared shell (Sidebar/Topbar/MobileNav/SidePanel/theme/RTL architecture) and placeholder pages for every module route. No Dashboard/Projects/Tasks/Clients/Team/Analytics/AI business logic, no mock fixtures, no real auth/backend/billing exist yet — those are later phases. `tsc --noEmit`, `eslint`, and `next build` all pass cleanly; see `PROJECT_PLAN.md` §16 for the full implementation summary and `DECISIONS.md` D-032 for one real build-time architecture finding (SidePanel modality/stacking).
 
 **Approved roadmap (binding, D-024):** Phase 3 — Data Model → Phase 4 — Design System → Phase 5 — Shared Application Shell → Phase 6 — Mock Data Foundation → Phase 7+ TBD.
 
@@ -78,9 +79,27 @@ None outstanding. All resolved 2026-10-04 (see `DECISIONS.md` D-019–D-024).
 
 None outstanding. All resolved 2026-10-04 (see `DECISIONS.md` D-025–D-031). Note: Arabic typeface choice remains open for the future Arabic/RTL implementation phase (not a Phase 5 blocker).
 
-## Current phase scope (Phase 5 — implementation-plan proposal stage)
+## What is approved and locked (Phase 5)
 
-Shared application shell only, plan form first (no code yet): Next.js/TypeScript/Tailwind/shadcn setup approach, minimal initial dependency list, folder structure, App Router structure, root layout, shell architecture (sidebar/topbar/mobile nav/drawers), theme/dark-mode/RTL architecture, logical-CSS strategy, typography and design-token implementation strategy, global styles, reusable primitive boundaries, responsive shell behavior, accessibility requirements, motion foundation + reduced-motion implementation, error/loading boundaries, lint/type-check/build validation, Git checkpoint strategy, expected files/folders, acceptance criteria. Explicitly excludes: Dashboard/Projects/Tasks/Clients/Team/Analytics/AI business features, and mock fixtures (deferred to Phase 6, per D-024). Awaits explicit user approval of the plan before any Next.js init, dependency install, or application code is written — this file must be updated again once that approval happens, with a new "What is approved and locked (Phase 5)" section.
+- Next.js 16 App Router + TypeScript (strict, `noUncheckedIndexedAccess`) + Tailwind v4 + shadcn/ui (Radix base, RTL-enabled) scaffolded at the repo root (`PROJECT_PLAN.md` §16).
+- Phase 4 design tokens wired into the Tailwind/shadcn theme contract; light/dark theme and `getLocale()`-driven lang/dir architecture implemented via `useSyncExternalStore` (no setState-in-effect).
+- Full shell: Sidebar (collapsible, persisted), Topbar (title + AI/Notifications triggers), MobileNav (5-tab bar + More sheet per D-013), SidePanel (one shared AI/Notifications implementation, mutually exclusive per D-014, logical-end docking per D-017).
+- Placeholder pages for every Phase 2 top-level route; shell-level and root-level error/loading/not-found boundaries.
+- `src/types/entities.ts`: Phase 3 entity model as the single TypeScript source for later phases.
+- D-032: SidePanel is non-modal on desktop/tablet and modal on mobile, with the topbar given a higher stacking position — a real architecture finding from Playwright smoke-testing, not a stylistic choice. Binding on any future panel-like component.
+- Validation: `tsc --noEmit`, `eslint`, `next build` all pass with zero errors. Interactive checks (mutual exclusivity, mobile nav, dark mode repaint, real RTL path, reduced motion) all confirmed via Playwright.
+- Git: repository initialized, 6 incremental commits (docs baseline → scaffold → tokens/theme → layout/primitives/entities → shell → placeholder routes).
+
+## Phase 5 open items / known limitations
+
+- Color tokens remain a starting palette (D-025) — not yet contrast-audited against final real content.
+- Touch-target sizing (D-031, ~44×44px) was applied explicitly to Topbar/MobileNav/Sidebar controls but has not been exhaustively audited across every interactive element.
+- No visible theme-toggle UI exists yet (architecture is wired; a Settings control is a later phase).
+- Arabic typeface and full Arabic content remain an open, not-yet-made decision (D-026) — RTL architecture is verified working, translation is not in scope.
+
+## Current phase scope (Phase 6 — not yet proposed)
+
+Mock Data Foundation: actual Northbound Studio fixture data (per `PROJECT_PLAN.md` §13.26/§13.31's rules), built as typed fixture modules against `src/types/entities.ts`, with risk/workload computed by real rule-engine functions rather than hand-faked. Not started — awaiting a Phase 6 proposal and approval, per the standing workflow (plan before implementation).
 
 ## Session checklist (do this before any new work)
 

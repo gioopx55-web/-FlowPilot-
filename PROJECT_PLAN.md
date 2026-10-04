@@ -2,7 +2,7 @@
 
 > Read `PROJECT_CONSTITUTION.md` first. This file tracks personas, workflows, V1 scope, exclusions, AI scope, demo content, and success criteria as approved in Phase 1. Treat this as the working spec future sessions build against.
 
-**Status:** Phase 1 (Product Definition & V1 Scope) approved, final decisions locked. Phase 2 (Information Architecture) approved, final decisions locked. Phase 3 (Data Model) approved, final decisions locked. Phase 4 (Design System) approved, final decisions locked.
+**Status:** Phase 1 (Product Definition & V1 Scope) approved, final decisions locked. Phase 2 (Information Architecture) approved, final decisions locked. Phase 3 (Data Model) approved, final decisions locked. Phase 4 (Design System) approved, final decisions locked. Phase 5 (Shared Application Shell) implemented.
 **Last updated:** 2026-10-04
 
 ---
@@ -985,12 +985,22 @@ Form errors are programmatically associated with their field for screen-reader c
 4. Chart color-by-series mapping remains deferred until Analytics is actually built — risk of drift from the neutral+accent+status system if not reconciled carefully with the `dataviz` skill at that time.
 5. Breakpoint-addition discipline (§15.12) depends on future sessions actually documenting the reason before adding a new breakpoint — a soft process risk, not a technical one.
 
-## 16. Phase Roadmap (corrected — see DECISIONS.md D-024)
+## 16. Phase 5 — Shared Application Shell (IMPLEMENTED)
+
+Implemented per the approved Phase 5 plan. No Dashboard/Projects/Tasks/Clients/Team/Analytics/AI business logic, no mock fixtures, no real auth/backend/billing — shell only, exactly as scoped.
+
+**What exists:** Next.js 16 (App Router, Turbopack) + TypeScript (strict, `noUncheckedIndexedAccess`) + Tailwind v4 + shadcn/ui (Radix base, RTL-enabled) at the repo root. Design tokens from Phase 4 wired into the Tailwind/shadcn theme contract (`src/styles/tokens.css` → `src/app/globals.css`). Theme architecture (system-preference default + persisted override, no-flash script) and locale architecture (single `getLocale()` seam, D-017) both implemented via `useSyncExternalStore` rather than a setState-in-effect pattern. Full shell: `Sidebar` (desktop/tablet, collapsible, persisted), `Topbar` (title + AI/Notifications triggers), `MobileNav` (5-tab bar + "More" sheet, D-013), `SidePanel` (one shared implementation for AI Assistant and Notifications, mutually exclusive per D-014, logical-end docking per D-017). Placeholder pages exist for every Phase 2 top-level route. Error/loading/not-found boundaries exist at both the shell and root level. Phase 3's entity types live in `src/types/entities.ts` as the single TypeScript source for later phases.
+
+**Build-time finding (D-032):** the shared `SidePanel` needed to be non-modal (no overlay/focus-trap) on desktop/tablet and modal on mobile — a shadcn default that, left unchanged, would have silently broken D-014's "click one trigger to swap panels" requirement. Caught via Playwright smoke-testing, not manual review; fixed via `modal`/`showOverlay` props and a topbar stacking-context adjustment. See `DECISIONS.md` D-032 for the full rationale — this is a real architectural clarification, not a cosmetic tweak, and binds how any future panel-like component in this codebase should be built.
+
+**Verified:** `tsc --noEmit`, `eslint`, and `next build` all pass with zero errors; all 10 routes render; AI/Notifications mutual exclusivity confirmed interactively; mobile 5-tab bar + More sheet confirmed; dark mode confirmed to actually repaint (not just toggle a class); the real `getLocale()`-driven RTL path confirmed end-to-end (sidebar and panel both correctly mirror to the opposite physical edge); reduced-motion emulation confirmed non-breaking.
+
+## 17. Phase Roadmap (corrected — see DECISIONS.md D-024)
 
 - **Phase 1 — Product Definition & V1 Scope:** ✅ Approved, all open items resolved.
 - **Phase 2 — Information Architecture:** ✅ APPROVED / COMPLETE 2026-10-04.
 - **Phase 3 — Data Model:** ✅ APPROVED / COMPLETE 2026-10-04.
 - **Phase 4 — Design System:** ✅ APPROVED / COMPLETE 2026-10-04 (tokens are a starting palette pending real contrast testing; no fixtures authored).
-- **Phase 5 — Shared Application Shell:** proposal stage — see separate Phase 5 implementation plan delivered to the user; not yet approved. Does not author mock fixtures or build Dashboard/Projects/Tasks/Clients/Team/Analytics/AI business features.
+- **Phase 5 — Shared Application Shell:** ✅ IMPLEMENTED 2026-10-04 (see §16). No business features, no fixtures.
 - **Phase 6 — Mock Data Foundation:** not started. Actual Northbound Studio fixture data is built here.
 - **Phase 7+ — TBD**, defined only once Phase 6 is approved.

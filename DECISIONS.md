@@ -161,9 +161,16 @@
 
 ---
 
+### D-032 — SidePanel is non-modal on desktop/tablet, modal on mobile (implementation clarification found during Phase 5 build)
+**Date:** 2026-10-04
+**Decision:** The shared `SidePanel` (AI Assistant / Notifications) renders without a backdrop overlay and without a focus trap on desktop/tablet (`modal={false}`, no `SheetOverlay`), and with both on mobile (`modal={true}`, overlay shown), switching on the Phase 4 §15.12 mobile breakpoint (<640px). The Topbar is given a higher stacking position (`z-40`) than the docked panel (`z-30` on desktop/tablet only) so its own AI/Notifications trigger buttons remain clickable even though the panel visually docks at the same screen edge.
+**Why:** Phase 4 §15.8 explicitly specifies desktop/tablet drawers have "no backdrop scrim... content stays interactive-adjacent," and D-014 requires that clicking one trigger closes the other and opens it — which is impossible if the first panel's modal overlay/focus-trap blocks clicks on the second trigger. This was caught by Playwright smoke-testing during Phase 5 (the panel's own content div, not just the overlay, physically covered the topbar's top-right corner at the same screen position) and fixed by giving the topbar a higher stacking context rather than resizing/repositioning the panel. Mobile keeps the modal+overlay behavior since a full-screen sheet is the only thing on screen there. Implementation in `sheet.tsx` (`showOverlay` prop), `SidePanel.tsx`, and `Topbar.tsx`.
+
+---
+
 ## Open
 
-None outstanding as of 2026-10-04. All Phase 1 open items (O-001–O-005) resolved via D-008–D-012. All Phase 2 corrections resolved via D-013–D-018. All Phase 3 corrections resolved via D-019–D-024. All Phase 4 corrections resolved via D-025–D-031. Phase 5 (Shared Application Shell) is at implementation-plan proposal stage — see `PROJECT_PLAN.md` and `CURRENT_PHASE.md`; nothing in the Phase 5 plan is binding and no application code exists until approved.
+None outstanding as of 2026-10-04. All Phase 1 open items (O-001–O-005) resolved via D-008–D-012. All Phase 2 corrections resolved via D-013–D-018. All Phase 3 corrections resolved via D-019–D-024. All Phase 4 corrections resolved via D-025–D-031. All Phase 5 build findings resolved via D-032. Phase 6 (Mock Data Foundation) has not been proposed yet — see `PROJECT_PLAN.md` and `CURRENT_PHASE.md`.
 
 ---
 
