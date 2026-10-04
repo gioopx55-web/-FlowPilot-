@@ -1,0 +1,92 @@
+/*
+  FlowPilot AI design tokens — Phase 4 (PROJECT_PLAN.md §15, DECISIONS.md D-025/D-028/D-030).
+
+  These are the starting palette approved in Phase 4. Per D-025, WCAG AA
+  validation has authority over any value here once real component
+  pairings are tested — adjust the value, not this file's structure.
+
+  This is the single place color/radius/motion token *values* live.
+  globals.css only wires these onto the shadcn/Tailwind theme contract —
+  it never redeclares a hex/pixel value itself.
+*/
+
+:root {
+  /* Neutral + surface (light) */
+  --fp-bg-canvas: #f7f8fa;
+  --fp-bg-surface: #ffffff;
+  --fp-bg-surface-raised: #ffffff;
+  --fp-border-subtle: #e4e7ec;
+  --fp-border-default: #d0d5dd;
+  --fp-text-primary: #101828;
+  --fp-text-secondary: #475467;
+  --fp-text-tertiary: #667085;
+
+  /* Brand accent (light) */
+  --fp-accent: #3a4fe0;
+  --fp-accent-hover: #2f3fc0;
+  --fp-accent-subtle-bg: #eef0fd;
+  --fp-accent-foreground: #ffffff;
+
+  /* Semantic base hues (light) */
+  --fp-success: #0f9d58;
+  --fp-warning: #b54708;
+  --fp-danger: #d92d20;
+  --fp-info: #6938c4;
+
+  /* Task status (light) */
+  --fp-status-todo: var(--fp-text-tertiary);
+  --fp-status-in-progress: var(--fp-accent);
+  --fp-status-blocked: var(--fp-warning);
+  --fp-status-review: var(--fp-info);
+  --fp-status-done: var(--fp-success);
+
+  /* Project risk (light) */
+  --fp-risk-at-risk: var(--fp-warning);
+  --fp-risk-critical: var(--fp-danger);
+
+  /* Team workload (light) */
+  --fp-workload-available: var(--fp-text-tertiary);
+  --fp-workload-healthy: var(--fp-success);
+  --fp-workload-high: var(--fp-warning);
+  --fp-workload-overloaded: var(--fp-danger);
+
+  /* Radius scale (D-028: ceiling is --fp-radius-lg, 12px) */
+  --fp-radius-sm: 0.375rem; /* 6px */
+  --fp-radius-md: 0.5rem; /* 8px */
+  --fp-radius-lg: 0.75rem; /* 12px */
+
+  /* Elevation (light) */
+  --fp-shadow-level-1: 0 1px 2px 0 rgb(16 24 40 / 0.06), 0 1px 3px 0 rgb(16 24 40 / 0.1);
+  --fp-shadow-level-2: 0 4px 6px -2px rgb(16 24 40 / 0.05), 0 12px 16px -4px rgb(16 24 40 / 0.1);
+
+  /* Motion (Phase 4 §15.13) */
+  --fp-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --fp-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --fp-duration-micro: 120ms;
+  --fp-duration-standard: 200ms;
+  --fp-duration-panel: 250ms;
+}
+
+:root[data-theme="dark"] {
+  --fp-bg-canvas: #0b0d12;
+  --fp-bg-surface: #13161d;
+  --fp-bg-surface-raised: #1a1e27;
+  --fp-border-subtle: #242933;
+  --fp-border-default: #30363f;
+  --fp-text-primary: #f2f4f7;
+  --fp-text-secondary: #94a0b2;
+  --fp-text-tertiary: #677082;
+
+  --fp-accent: #6e7cf2;
+  --fp-accent-hover: #828ff5;
+  --fp-accent-subtle-bg: #1c2140;
+  --fp-accent-foreground: #ffffff;
+
+  --fp-success: #3ec97e;
+  --fp-warning: #f0883e;
+  --fp-danger: #f97066;
+  --fp-info: #9b8afb;
+
+  --fp-shadow-level-1: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --fp-shadow-level-2: 0 8px 16px -4px rgb(0 0 0 / 0.5);
+}

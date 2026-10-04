@@ -1,0 +1,145 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "../styles/tokens.css";
+
+@custom-variant dark (&:is([data-theme="dark"] *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-heading: var(--font-sans);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  /* FlowPilot semantic status/risk/workload colors, exposed as Tailwind utilities
+     (bg-fp-risk-critical, text-fp-workload-overloaded, etc.) — Phase 4 §15.4. */
+  --color-fp-status-todo: var(--fp-status-todo);
+  --color-fp-status-in-progress: var(--fp-status-in-progress);
+  --color-fp-status-blocked: var(--fp-status-blocked);
+  --color-fp-status-review: var(--fp-status-review);
+  --color-fp-status-done: var(--fp-status-done);
+  --color-fp-risk-at-risk: var(--fp-risk-at-risk);
+  --color-fp-risk-critical: var(--fp-risk-critical);
+  --color-fp-workload-available: var(--fp-workload-available);
+  --color-fp-workload-healthy: var(--fp-workload-healthy);
+  --color-fp-workload-high: var(--fp-workload-high);
+  --color-fp-workload-overloaded: var(--fp-workload-overloaded);
+
+  /* Radius scale — D-028, ceiling is --radius-lg (12px). xl+ are capped to the
+     same ceiling as a guardrail so a stray rounded-2xl/3xl/4xl utility can
+     never exceed the approved maximum. */
+  --radius-sm: var(--fp-radius-sm);
+  --radius-md: var(--fp-radius-md);
+  --radius-lg: var(--fp-radius-lg);
+  --radius-xl: var(--fp-radius-lg);
+  --radius-2xl: var(--fp-radius-lg);
+  --radius-3xl: var(--fp-radius-lg);
+  --radius-4xl: var(--fp-radius-lg);
+}
+
+:root {
+  /* Wiring only — no raw color values below. Every value traces back to
+     src/styles/tokens.css, the single source of truth for token values. */
+  --background: var(--fp-bg-canvas);
+  --foreground: var(--fp-text-primary);
+  --card: var(--fp-bg-surface);
+  --card-foreground: var(--fp-text-primary);
+  --popover: var(--fp-bg-surface-raised);
+  --popover-foreground: var(--fp-text-primary);
+  --primary: var(--fp-accent);
+  --primary-foreground: var(--fp-accent-foreground);
+  --secondary: var(--fp-bg-surface);
+  --secondary-foreground: var(--fp-text-primary);
+  --muted: var(--fp-bg-canvas);
+  --muted-foreground: var(--fp-text-secondary);
+  /* shadcn's --accent is a neutral hover/active surface tint (ghost/outline
+     hover state) — NOT the FlowPilot brand accent. The brand accent is
+     --primary above. Do not conflate the two. */
+  --accent: var(--fp-bg-canvas);
+  --accent-foreground: var(--fp-text-primary);
+  --destructive: var(--fp-danger);
+  --border: var(--fp-border-default);
+  --input: var(--fp-border-default);
+  --ring: var(--fp-accent);
+}
+
+[data-theme="dark"] {
+  --background: var(--fp-bg-canvas);
+  --foreground: var(--fp-text-primary);
+  --card: var(--fp-bg-surface);
+  --card-foreground: var(--fp-text-primary);
+  --popover: var(--fp-bg-surface-raised);
+  --popover-foreground: var(--fp-text-primary);
+  --primary: var(--fp-accent);
+  --primary-foreground: var(--fp-accent-foreground);
+  --secondary: var(--fp-bg-surface);
+  --secondary-foreground: var(--fp-text-primary);
+  --muted: var(--fp-bg-surface-raised);
+  --muted-foreground: var(--fp-text-secondary);
+  --accent: var(--fp-bg-surface-raised);
+  --accent-foreground: var(--fp-text-primary);
+  --destructive: var(--fp-danger);
+  --border: var(--fp-border-default);
+  --input: var(--fp-border-default);
+  --ring: var(--fp-accent);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+/* Reduced motion — Phase 4 §15.13/§15.18, Constitution §5. Global so every
+   shell transition complies automatically; no component re-implements this
+   check individually. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Skip-to-content link — visible only on keyboard focus (Phase 5 §23). */
+.skip-link {
+  position: absolute;
+  inset-inline-start: -9999px;
+  top: 1rem;
+  z-index: 100;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  background: var(--fp-bg-surface-raised);
+  color: var(--fp-text-primary);
+  box-shadow: var(--fp-shadow-level-2);
+}
+
+.skip-link:focus-visible {
+  inset-inline-start: 1rem;
+}
