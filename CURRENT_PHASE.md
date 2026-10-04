@@ -13,9 +13,10 @@
 **Phase 3 — Data Model: APPROVED / COMPLETE 2026-10-04.**
 **Phase 4 — Design System: APPROVED / COMPLETE 2026-10-04.**
 **Phase 5 — Shared Application Shell: IMPLEMENTED 2026-10-04.**
-**Phase 6 — Mock Data Foundation: NOT STARTED, not yet proposed.**
+**Phase 6 — Mock Data Foundation: IMPLEMENTED 2026-10-04.**
+**Phase 7 — NOT STARTED, not yet proposed.**
 
-A real Next.js application now exists in the repository (TypeScript, Tailwind, shadcn/ui, App Router), with a working shared shell (Sidebar/Topbar/MobileNav/SidePanel/theme/RTL architecture) and placeholder pages for every module route. No Dashboard/Projects/Tasks/Clients/Team/Analytics/AI business logic, no mock fixtures, no real auth/backend/billing exist yet — those are later phases. `tsc --noEmit`, `eslint`, and `next build` all pass cleanly; see `PROJECT_PLAN.md` §16 for the full implementation summary and `DECISIONS.md` D-032 for one real build-time architecture finding (SidePanel modality/stacking).
+A real Next.js application exists with a working shared shell (Sidebar/Topbar/MobileNav/SidePanel/theme/RTL architecture), placeholder pages for every module route, and now a complete typed/validated mock-data foundation (`src/data/mock/`) plus a domain layer (`src/domain/`: risk, workload, client follow-up, selectors, validation) for the fictional "Northbound Studio" workspace. No Dashboard/Projects/Tasks/Clients/Team/Analytics/AI business UI, no real auth/backend/billing exist yet — those are later phases. `tsc --noEmit`, `eslint`, `next build`, `npm run validate:data`, and `npm test` (32/32) all pass cleanly. See `PROJECT_PLAN.md` §18 for the full Phase 6 summary, `DECISIONS.md` D-032 for a Phase 5 build-time finding, and D-033/D-034 for two items that need owner attention (follow-up threshold, contrast audit timing).
 
 **Approved roadmap (binding, D-024):** Phase 3 — Data Model → Phase 4 — Design System → Phase 5 — Shared Application Shell → Phase 6 — Mock Data Foundation → Phase 7+ TBD.
 
@@ -97,9 +98,24 @@ None outstanding. All resolved 2026-10-04 (see `DECISIONS.md` D-025–D-031). No
 - No visible theme-toggle UI exists yet (architecture is wired; a Settings control is a later phase).
 - Arabic typeface and full Arabic content remain an open, not-yet-made decision (D-026) — RTL architecture is verified working, translation is not in scope.
 
-## Current phase scope (Phase 6 — not yet proposed)
+## What is approved and locked (Phase 6)
 
-Mock Data Foundation: actual Northbound Studio fixture data (per `PROJECT_PLAN.md` §13.26/§13.31's rules), built as typed fixture modules against `src/types/entities.ts`, with risk/workload computed by real rule-engine functions rather than hand-faked. Not started — awaiting a Phase 6 proposal and approval, per the standing workflow (plan before implementation).
+- Full typed Northbound Studio dataset in `src/data/mock/` (1 Workspace, 2 Users, 8 TeamMembers, 15 Clients, 18 ClientInteractions, 14 Projects, 55 Tasks, 16 Activities, 8 Notifications) — deliberately authored, not randomized, against the fixed `DEMO_TODAY_ISO` clock in `lib/demo-clock.ts` (`PROJECT_PLAN.md` §18).
+- Single shared domain functions: `computeProjectRisk`, `computeTeamMemberWorkload`, `getClientFollowUpStatus`/`getLatestClientInteraction`, plus `domain/selectors.ts` as the only intended read path for future feature UI. No business logic belongs in React components (binding on Phase 7+).
+- `domain/validation.ts` + `data/mock/index.ts`: the dataset is validated (referential integrity, unique IDs, workspace ownership, required state coverage, impossible field combinations) every time it's loaded, and throws loudly if invalid.
+- Required state coverage confirmed by both the validator and `npm test` (32/32 passing): all 3 risk levels, all 4 workload bands, follow-up needed/not-needed/dormant, completed/on_hold risk exclusion, all 3 fallback-hours tiers.
+- `FOLLOW_UP_STALE_DAYS = 7` is a Phase 6 proposal, **not yet owner-approved** (`DECISIONS.md` D-033/O-006).
+- Contrast audit explicitly deferred to Phase 7 — no qualifying rendered UI exists yet to test against (`DECISIONS.md` D-034/O-007).
+- Zero new dependencies: Node 24's native `node --test` plus a small custom ESM loader hook (`scripts/alias-loader.mjs`) resolve the existing `@/*` alias for scripts/tests.
+
+## Phase 6 open items
+
+- **O-006:** confirm or replace `FOLLOW_UP_STALE_DAYS = 7`.
+- **O-007:** perform the WCAG AA contrast audit once Phase 7 (or later) renders real content using these tokens.
+
+## Current phase scope (Phase 7 — not yet proposed)
+
+Not started. The natural next step per `PROJECT_PLAN.md`'s approved roadmap is the first real business-feature phase (e.g., Dashboard), which should consume `domain/selectors.ts` rather than recompute risk/workload/follow-up logic in components — but Phase 7 itself has not been scoped, planned, or approved yet.
 
 ## Session checklist (do this before any new work)
 

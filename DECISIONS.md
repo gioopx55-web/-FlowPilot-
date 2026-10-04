@@ -168,9 +168,26 @@
 
 ---
 
+### D-033 — Client follow-up stale threshold: PROPOSED default, not yet approved
+**Date:** 2026-10-04
+**Decision:** `FOLLOW_UP_STALE_DAYS = 7` is implemented in `domain/clients/followUp.ts` as the dividing line between "needs follow-up" and "does not," for non-dormant clients. Unlike D-010/D-011/D-019 (which were explicit owner-approved formulas from earlier phases), **no prior phase ever defined this threshold** — it did not exist as an approved decision before Phase 6. This is a Phase 6 proposal, analogous to how fallback-hours started as a Phase 3 proposal (then approved as D-019).
+**Why:** The required dataset coverage (clients needing vs. not needing follow-up) cannot be authored at all without picking some threshold. 7 days was chosen as a reasonable small-agency cadence. The fixture dates were deliberately given a wide safety margin (recent interactions ≤6 days ago, stale ones ≥19 days ago) specifically so this constant can be changed later without needing to reshuffle any fixture dates.
+**Status:** OPEN — needs explicit owner confirmation or a replacement value before being treated as locked the way D-010/D-011 are.
+
+### D-034 — Contrast audit deferred to Phase 7 (not performed in Phase 6)
+**Date:** 2026-10-04
+**Decision:** The WCAG AA token contrast verification flagged as a Phase 6 conditional task is explicitly deferred to Phase 7, not performed now.
+**Why:** Phase 6's own scope (per this task's instructions and the standing phase boundaries) excludes building any Dashboard/Projects/Tasks/etc. UI — there is no rendered "representative content in a debug view" for the tokens to be tested against yet. Claiming a contrast pass without a qualifying render would not be honest reporting. D-025's rule stands: the light/dark tokens in `PROJECT_PLAN.md` §15.2 remain a starting palette, and WCAG AA validation retains authority over them whenever that first real render happens.
+
+---
+
 ## Open
 
-None outstanding as of 2026-10-04. All Phase 1 open items (O-001–O-005) resolved via D-008–D-012. All Phase 2 corrections resolved via D-013–D-018. All Phase 3 corrections resolved via D-019–D-024. All Phase 4 corrections resolved via D-025–D-031. All Phase 5 build findings resolved via D-032. Phase 6 (Mock Data Foundation) has not been proposed yet — see `PROJECT_PLAN.md` and `CURRENT_PHASE.md`.
+As of 2026-10-04:
+- **O-006 (D-033):** Client follow-up stale-days threshold (`FOLLOW_UP_STALE_DAYS = 7`) is a Phase 6 proposal, not yet owner-approved. Confirm or replace before treating it as locked.
+- **O-007 (D-034):** WCAG AA contrast audit of Phase 4 tokens — deferred to Phase 7, where real UI will first exist to test against.
+
+All earlier items resolved: Phase 1 (O-001–O-005) via D-008–D-012; Phase 2 corrections via D-013–D-018; Phase 3 corrections via D-019–D-024; Phase 4 corrections via D-025–D-031; Phase 5 build findings via D-032. Phase 7 has not been proposed yet — see `PROJECT_PLAN.md` and `CURRENT_PHASE.md`.
 
 ---
 

@@ -2,7 +2,7 @@
 
 > Read `PROJECT_CONSTITUTION.md` first. This file tracks personas, workflows, V1 scope, exclusions, AI scope, demo content, and success criteria as approved in Phase 1. Treat this as the working spec future sessions build against.
 
-**Status:** Phase 1 (Product Definition & V1 Scope) approved, final decisions locked. Phase 2 (Information Architecture) approved, final decisions locked. Phase 3 (Data Model) approved, final decisions locked. Phase 4 (Design System) approved, final decisions locked. Phase 5 (Shared Application Shell) implemented.
+**Status:** Phase 1 (Product Definition & V1 Scope) approved, final decisions locked. Phase 2 (Information Architecture) approved, final decisions locked. Phase 3 (Data Model) approved, final decisions locked. Phase 4 (Design System) approved, final decisions locked. Phase 5 (Shared Application Shell) implemented. Phase 6 (Mock Data Foundation) implemented.
 **Last updated:** 2026-10-04
 
 ---
@@ -995,12 +995,41 @@ Implemented per the approved Phase 5 plan. No Dashboard/Projects/Tasks/Clients/T
 
 **Verified:** `tsc --noEmit`, `eslint`, and `next build` all pass with zero errors; all 10 routes render; AI/Notifications mutual exclusivity confirmed interactively; mobile 5-tab bar + More sheet confirmed; dark mode confirmed to actually repaint (not just toggle a class); the real `getLocale()`-driven RTL path confirmed end-to-end (sidebar and panel both correctly mirror to the opposite physical edge); reduced-motion emulation confirmed non-breaking.
 
-## 17. Phase Roadmap (corrected — see DECISIONS.md D-024)
+## 18. Phase 6 — Mock Data Foundation (IMPLEMENTED)
+
+Data/domain foundation only — no Dashboard/Projects/Tasks/Kanban/Clients/Team/Analytics/AI UI, no real auth/backend/billing, no API routes. Everything below lives in `src/data/mock/`, `src/domain/`, and `src/lib/demo-clock.ts`.
+
+**Deterministic clock:** `lib/demo-clock.ts` fixes `DEMO_TODAY_ISO = "2026-10-04T09:00:00.000Z"`. Every risk/workload/overdue/follow-up calculation reads "today" from this one constant — never `new Date()` — so the demo produces the same states regardless of when it's opened or built.
+
+**Dataset (Northbound Studio, all fictional):** 1 Workspace, 2 demo Users, 8 TeamMembers, 15 Clients (3 dormant), 18 ClientInteractions, 14 Projects (12 active-stage + 1 completed + 1 on_hold), 55 Tasks, 16 Activities, 8 Notifications. All names/companies/emails are clearly invented; no fake awards/press/certifications/logos.
+
+**State coverage (deliberately authored, not randomized) — see `src/data/mock/index.test.ts` for the automated proof:**
+- Project risk: `none` (7 projects), `at_risk` (4 projects, one per individual condition), `critical_risk` (1 project, conditions 1+2 together). The completed and on_hold projects each carry a task that would trigger `critical_risk` if not excluded — proving the exclusion rule in `domain/risk/risk.ts` actually excludes something.
+- Team workload: all four bands produced (Sana Iyer → Overloaded ~126%, Priya Nair → High 100%, Jordan Lee → Healthy ~74%, Omar Haddad → Available 50%), using a mix of real `estimatedHours` and all three fallback tiers (low/medium/high).
+- Client follow-up: 6 non-dormant clients within the proposed 7-day threshold (no follow-up needed), 6 non-dormant clients well past it (follow-up needed), 3 dormant clients excluded regardless of interaction age.
+- Task-level: overdue, due-soon, completed, high-priority, `status: "blocked"` (workflow state) deliberately demonstrated separately from `hasActiveBlocker: true` (risk-relevant blocker) per D-023's decoupling rule, tasks with and without `estimatedHours`.
+
+**Domain layer (single shared implementations, per Constitution §7 One Source of Truth):**
+- `domain/risk/risk.ts` — `computeProjectRisk(project, tasks)`. The only place the §4a formula is implemented.
+- `domain/workload/workload.ts` — `computeTeamMemberWorkload(member, tasks)`. Approved fallback hours (D-019) applied only at computation time; never written to `Task.estimatedHours`. Workload is never stored (Constitution §7).
+- `domain/clients/followUp.ts` + `deriveClientFields.ts` — `getClientFollowUpStatus`, `getLatestClientInteraction`, and the one controlled place `Client.lastInteractionAt` is derived from `max(ClientInteraction.occurredAt)`.
+- `domain/selectors.ts` — `getProjectById`, `getClientById`, `getTeamMemberById`, `getTasksForProject`, `getProjectsForClient`, `getTasksForMember`, `getClientInteractions`, `getLatestClientInteraction`, `getProjectRisk`, `getTeamMemberWorkload`, `getOverdueTasks`, `getClientsNeedingFollowUp`, `getAtRiskProjects`. Phase 7+ feature UI must consume these, not recompute business rules in components.
+- `domain/validation.ts` + `data/mock/index.ts` — composes the dataset (deriving `lastInteractionAt` exactly once), validates referential integrity/unique IDs/workspace ownership/required state coverage/impossible field combinations, and throws with every problem listed if invalid.
+
+**New proposed default needing confirmation (see DECISIONS.md D-033):** `FOLLOW_UP_STALE_DAYS = 7` — no prior phase defined a numeric client follow-up threshold. The dataset was authored with a wide margin (recent ≤6 days, stale ≥19 days) specifically so this value can be adjusted later without reshuffling fixture dates.
+
+**Tooling (dependency-on-demand):** no test framework or path-alias package was installed. Node 24 runs `.ts` test files natively via `node --test`; `scripts/alias-loader.mjs` is a ~20-line Node ESM loader hook resolving the existing `@/*` tsconfig alias under plain `node`, so scripts/tests import exactly the way the Next.js build does. New npm scripts: `validate:data`, `test`.
+
+**Contrast audit: explicitly deferred to Phase 7.** Phase 6 built no rendered UI consuming this data (per its own scope) — there is no "representative content in a debug view" to test against yet, so claiming a contrast pass now would not be honest. See DECISIONS.md D-034.
+
+**Verified:** `tsc --noEmit`, `eslint`, `next build` all pass with zero errors. `npm run validate:data` passes. `npm test` — 32/32 tests pass (project risk: 11, workload: 8, client follow-up: 5, mock dataset: 7, plus a demo-clock sanity check — see test files for the exact list). Phase 5 shell re-verified non-regressed: all 10 routes still 200, AI/Notifications mutual exclusivity still holds, dark theme still applies.
+
+## 19. Phase Roadmap (corrected — see DECISIONS.md D-024)
 
 - **Phase 1 — Product Definition & V1 Scope:** ✅ Approved, all open items resolved.
 - **Phase 2 — Information Architecture:** ✅ APPROVED / COMPLETE 2026-10-04.
 - **Phase 3 — Data Model:** ✅ APPROVED / COMPLETE 2026-10-04.
 - **Phase 4 — Design System:** ✅ APPROVED / COMPLETE 2026-10-04 (tokens are a starting palette pending real contrast testing; no fixtures authored).
 - **Phase 5 — Shared Application Shell:** ✅ IMPLEMENTED 2026-10-04 (see §16). No business features, no fixtures.
-- **Phase 6 — Mock Data Foundation:** not started. Actual Northbound Studio fixture data is built here.
-- **Phase 7+ — TBD**, defined only once Phase 6 is approved.
+- **Phase 6 — Mock Data Foundation:** ✅ IMPLEMENTED 2026-10-04 (see §18). No business UI; contrast audit deferred to Phase 7.
+- **Phase 7+ — TBD**, not yet proposed.
