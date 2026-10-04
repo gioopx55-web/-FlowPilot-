@@ -11,6 +11,7 @@
     "test": "find src -name '*.test.ts' | xargs node --import ./scripts/alias-loader.mjs --test"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cn": "^0.4.0",
