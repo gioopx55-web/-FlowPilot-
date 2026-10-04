@@ -236,11 +236,26 @@ All changes verified in both light and dark themes after the fix. Primary text, 
 **Decision:** Every Recharts chart container in `components/analytics/` (`WorkloadDistributionChart`, `ProjectStatusChart`, `ProjectRiskChart`, `OverdueTrendChart`) wraps its `ResponsiveContainer` in a `dir="ltr"` div, independent of the page's own direction. The surrounding page chrome (Section headers, the two-column grid, legends, the `sr-only` text summaries, Insights) still follows the page's real direction normally — only the SVG chart canvas itself is pinned.
 **Why:** Found via Phase 11 RTL visual verification: Recharts' SVG text-anchor/positioning math is not RTL-aware, and without this fix the Workload Distribution chart's Y-axis category labels rendered overlapping the bars when the page was RTL — unreadable, not just visually off. Pinning the SVG to `ltr` avoids that breakage; the chart's meaning is preserved for RTL users via the always-present text equivalents (Phase 11 §7), which already follow the page's real direction. **Binding** on any future Recharts (or other SVG-chart-library) component — wrap it the same way rather than rediscovering this per chart.
 
+### D-045 — `hoursForTask` exported from `domain/workload/workload.ts`
+**Date:** 2026-10-04
+**Decision:** `hoursForTask` (the per-task estimated/fallback-hours function `sumAssignedHours` already called internally) is now exported, not private. `domain/selectors.ts`'s new `getMemberWorkloadContributors` (Phase 12 §8, "biggest contributors to this workload") calls it directly to get each open task's own hour figure — `sumAssignedHours` only returns a total, not a per-task breakdown.
+**Why:** The alternative was re-deriving the fallback-hours rule (low→2h/medium→4h/high→8h) a second time in `selectors.ts` or a component, which is exactly the duplicated-business-logic the Constitution's One Source of Truth principle forbids. Exporting the existing pure function has zero behavior change for any current caller.
+
+### D-046 — `WorkloadBadge` gains an optional `showPercent` prop
+**Date:** 2026-10-04
+**Decision:** `WorkloadBadge` now accepts `showPercent?: boolean` (default `true` — every existing call site is unchanged). Team Member Detail (Phase 12 §8) passes `showPercent={false}` since that page already shows its own large headline workload percentage directly above the badge; without this, the same number appeared twice right next to itself.
+**Why:** Found via Phase 12 visual verification. The alternative — duplicating `WorkloadBadge`'s tone-mapping and reason-building logic into a second component just to omit one `<span>` — would have split one piece of presentation logic into two, risking future drift (e.g. a tone color changing in one copy but not the other). A boolean prop keeps it a single component with one behavior change, backward-compatible by default.
+
+### D-047 — Team: no active/inactive filter, no capacity editing in V1
+**Date:** 2026-10-04
+**Decision:** The Team list has no active/inactive filter control, and weekly capacity is read-only everywhere in Phase 12.
+**Why:** Every Phase 6 fixture team member has `active: true` — an active/inactive filter would never actually filter anything, which the brief explicitly calls out as adding a control "solely for visual completeness" (Phase 12 §11). Capacity editing was explicitly gated behind "don't add it automatically... if it would create scope creep, keep it read-only" (Phase 12 §12); nothing in this phase's actual requirements needed it, so it was left out rather than spent on a feature no requirement asked for.
+
 ---
 
 ## Open
 
-As of 2026-10-04: none outstanding. D-033 through D-044 are all resolved above.
+As of 2026-10-04: none outstanding. D-033 through D-047 are all resolved above.
 
 ---
 

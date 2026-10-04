@@ -19,14 +19,15 @@
 **Phase 9 — Tasks / Kanban: IMPLEMENTED 2026-10-04.**
 **Phase 10 — Clients / CRM: IMPLEMENTED 2026-10-04.**
 **Phase 11 — Analytics: IMPLEMENTED 2026-10-04.**
+**Phase 12 — Team: IMPLEMENTED 2026-10-04.**
 
-A real Next.js application exists with a working shared shell, a complete typed/validated mock-data foundation, a domain layer (risk, workload, client follow-up, project/task queries, selectors, Daily Brief, task/client mutations, analytics), `/dashboard`, the complete Projects module, the complete global Tasks module (`/tasks` list + Kanban, `/tasks/:taskId` direct link), the complete Clients module (`/clients` list, `/clients/:clientId` detail with Overview/Projects/Interactions tabs), and the complete Analytics module (`/analytics` — On-Time Delivery, Overdue Task Trend, Workload/Project-Status/Project-Risk distributions, Insights) — all backed by a server-side in-memory demo-state layer (D-039, extended for clients) so edits are consistent everywhere without a real backend. Team/AI business UI (beyond thin link-target placeholders), real auth/backend/billing do not exist yet. `tsc --noEmit`, `eslint`, `npm run validate:data`, and `npm test` (97/97) all pass cleanly; `next build` passed earlier this session but could not be re-verified after Phase 11's fixture/dependency changes because this environment currently has no network route to `fonts.googleapis.com` (an existing Phase 5/D-026 dependency, unrelated to Phase 11's code) — see `PROJECT_PLAN.md` §27's "Known limitation" for the full explanation and what to re-run once network access returns. Phase 11 has been through full interactive/visual Playwright verification (desktop light/dark/RTL, tablet, mobile, reduced-motion) against a live Turbopack dev server, with zero console errors and one real RTL bug found and fixed before completion (D-044). See `PROJECT_PLAN.md` §26/§27 and `DECISIONS.md` D-036/D-039/D-040/D-041 (Phase 10) and D-042/D-043/D-044 (Phase 11) for this pair of phases' key decisions.
+A real Next.js application exists with a working shared shell, a complete typed/validated mock-data foundation, a domain layer (risk, workload, client follow-up, project/task queries, selectors, Daily Brief, task/client mutations, analytics, team), `/dashboard`, the complete Projects module, the complete global Tasks module (`/tasks` list + Kanban, `/tasks/:taskId` direct link), the complete Clients module (`/clients` list, `/clients/:clientId` detail with Overview/Projects/Interactions tabs), the complete Analytics module (`/analytics` — On-Time Delivery, Overdue Task Trend, Workload/Project-Status/Project-Risk distributions, Insights), and the complete Team module (`/team` list, `/team/:memberId` detail with a workload explanation and assignments grouped by project) — all backed by a server-side in-memory demo-state layer (D-039, extended for clients) so edits are consistent everywhere without a real backend. AI business UI (beyond a thin link-target placeholder), real auth/backend/billing do not exist yet. `tsc --noEmit`, `eslint`, `npm run validate:data`, and `npm test` (111/111) all pass cleanly. `next build` still fails with the identical `fonts.googleapis.com` connection-timeout error documented at the end of Phase 11 — re-confirmed during Phase 12 (same root cause, `api.github.com`/`registry.npmjs.org` still reachable, that one host still times out), not resolved, and not a Team code issue; see `PROJECT_PLAN.md` §28's "Known limitation." Phase 12 has been through full interactive/visual Playwright verification (desktop light/dark/RTL, tablet, mobile, reduced-motion) against a live Turbopack dev server, zero console errors, one visual issue (a duplicated workload percentage) found and fixed before completion (D-046). See `PROJECT_PLAN.md` §26/§27/§28 and `DECISIONS.md` D-036/D-039/D-040/D-041 (Phase 10), D-042/D-043/D-044 (Phase 11), D-045/D-046/D-047 (Phase 12) for these phases' key decisions.
 
-Committed in logical checkpoints (Phase 10: demo-state layer, UI components, routes, tests, docs; Phase 11: data-model extension, domain layer, UI components, tests, docs) — see `git log`.
+Committed in logical checkpoints per phase (Phase 10: demo-state layer, UI components, routes, tests, docs; Phase 11: data-model extension, domain layer, UI components, tests, docs; Phase 12: domain layer, UI components, tests, docs) — see `git log`.
 
 ---
 
-**Approved roadmap (binding, D-024):** Phase 3 — Data Model → Phase 4 — Design System → Phase 5 — Shared Application Shell → Phase 6 — Mock Data Foundation → Phase 7 — Dashboard → Phase 8 — Projects → Phase 9 — Tasks/Kanban → Phase 10 — Clients/CRM → Phase 11 — Analytics → Phase 12+ TBD.
+**Approved roadmap (binding, D-024):** Phase 3 — Data Model → Phase 4 — Design System → Phase 5 — Shared Application Shell → Phase 6 — Mock Data Foundation → Phase 7 — Dashboard → Phase 8 — Projects → Phase 9 — Tasks/Kanban → Phase 10 — Clients/CRM → Phase 11 — Analytics → Phase 12 — Team → Phase 13+ TBD.
 
 ## What is approved and locked (Phase 1)
 
@@ -193,11 +194,28 @@ None outstanding.
 
 ## Phase 11 open items
 
-`next build` needs one more clean run once this environment has network access to `fonts.googleapis.com` again — not expected to fail (nothing in Phase 11 touches font loading), but not yet directly re-confirmed after this phase's fixture/dependency changes.
+Superseded by the Phase 12 open item below — the `next build` gap was re-checked during Phase 12, not resolved.
 
-## Current phase scope (Phase 12 — not yet proposed)
+## What is approved and locked (Phase 12)
 
-Not started. Natural next candidates per the approved roadmap are the remaining V1 P0 modules (Team, AI Assistant, etc.), each of which should consume `domain/selectors.ts`/`domain/analytics.ts` the same way Phases 7-11 did, reuse the D-039 server-side-overrides pattern for any new mutable state, and follow the D-036 not-found guard pattern for any new nested dynamic route — but Phase 12 itself has not been scoped, planned, or approved yet.
+- Complete Team module: `/team` (filterable/sortable dense list, default sort action-oriented) and `/team/:memberId` (one scrollable detail page — no tabs) (`PROJECT_PLAN.md` §28).
+- Workload logic is read-only consumed everywhere, never recomputed: `getTeamMembersWithWorkload`/`getTeamMembersFiltered`/`getTeamMemberDetail` all call the existing `computeTeamMemberWorkload`/`getTeamMemberWorkload`. **Binding**: no Team component may compute a workload percentage or band itself.
+- Default team sort is `workload` (Overloaded → High → Healthy → Available, ties by % desc), reusing the exact `WORKLOAD_BAND_RANK` constant Dashboard's `getTeamWorkloadSnapshot` already defined — never alphabetical by default.
+- D-045: `hoursForTask` exported from `domain/workload/workload.ts` so `getMemberWorkloadContributors` can show each task's own hour contribution without a second fallback-hours implementation.
+- D-046: `WorkloadBadge` gained an optional `showPercent` prop (default `true`, every pre-Phase-12 call site unchanged) — Team Member Detail passes `false` to avoid showing its own headline percentage twice. **Binding**: any future page that shows its own large workload number should do the same rather than duplicating WorkloadBadge's logic.
+- D-047: no active/inactive filter (every fixture member is active — it would filter nothing) and no capacity editing (kept read-only; nothing in Phase 12's requirements needed it).
+- Assignments grouped by project (`getMemberAssignmentsGroupedByProject`) explicitly separates project-scoped contribution hours from the page's own global workload percentage — same distinction established for `ProjectTeamTab` in Phase 8 §8. Opening a task reuses the exact `TaskDetailPanel`/`TaskDetailContent` Phase 9 built, via `?task=` on the Team Member Detail URL.
+- D-036 guard pattern reused without modification: `requireTeamMember()` called from the detail page; `team/not-found.tsx` lives in the parent segment.
+- Current-state mutation integration proven: reassignment/estimate-edit/completion all update Team, and `getTeamWorkloadSnapshot` (Dashboard)/`getWorkloadDistribution` (Analytics) agree exactly with Team's own numbers (`team.integration.test.ts`).
+- Validation: `tsc --noEmit`, `eslint` clean (after removing stale `.next/types/* 2.ts` duplicate files — a macOS/iCloud Desktop-sync artifact, not a Team code issue); `npm test` 111/111 (14 new); `npm run validate:data` clean; whole-app route smoke check all 200 (no regressions); Playwright visual verification across desktop light/dark/RTL, tablet, mobile (no horizontal overflow, correct state→reason→assignments priority order), and `prefers-reduced-motion: reduce`, zero console errors.
+
+## Phase 12 open items
+
+`next build` still fails with the identical `fonts.googleapis.com` connection-timeout error first documented at the end of Phase 11 — re-verified during Phase 12 (same exact cause: that one host times out while `api.github.com`/`registry.npmjs.org` remain reachable). Not a Team or Analytics code issue; no font-architecture change was made to work around it. Re-run `next build` once this environment has real network access to `fonts.googleapis.com`, and only then update this entry and `PROJECT_PLAN.md` §27/§28 to say the build is actually confirmed.
+
+## Current phase scope (Phase 13 — not yet proposed)
+
+Not started. The remaining V1 P0 module per the original roadmap sketch is the AI Assistant — it should consume `domain/selectors.ts`/`domain/analytics.ts` the same way Phases 7-12 did, reuse the D-039 server-side-overrides pattern for any new mutable state, and follow the D-036 not-found guard pattern for any new nested dynamic route — but Phase 13 itself has not been scoped, planned, or approved yet.
 
 ## Session checklist (do this before any new work)
 

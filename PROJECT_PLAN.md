@@ -1152,6 +1152,32 @@ The complete `/analytics` module: top operational summary, On-Time Delivery, Ove
 
 **Known limitation:** `next build` could not be re-verified in this environment during this phase — the sandbox has no network route to `fonts.googleapis.com` (confirmed via direct `curl`; other hosts like api.github.com/registry.npmjs.org are reachable), which `next/font/google`'s Inter setup (Phase 5, D-026, unchanged by this phase) needs to fetch at build time. This is an environment/network constraint, not a code regression — `tsc`, `eslint`, the full test suite, and a live Turbopack dev server (same compiler, same source) serving every route with zero console errors are the evidence of correctness in its place. Re-run `next build` once network access to Google Fonts is available to get a final confirmation.
 
+## 28. Phase 12 — Team (IMPLEMENTED)
+
+The complete Team module: `/team` (filterable/sortable dense list, default sort action-oriented) and `/team/:memberId` (one scrollable detail page) — replacing the Phase 8 `ComingSoon`/thin placeholders.
+
+**Team list (`TeamTable`/`TeamFilters`):** default sort is `workload` — Overloaded first, then High, Healthy, Available (reusing the exact `WORKLOAD_BAND_RANK` constant `getTeamWorkloadSnapshot` already defined in Phase 7), ties broken by workload % descending — never alphabetical by default. Search (name/job title) and a workload-band filter live in the URL, same `router.replace` pattern as every other list. No active/inactive filter: every Phase 6 fixture member is active, so one would never filter anything (D-047).
+
+**Workload logic reused, never recomputed:** every number comes from the existing `computeTeamMemberWorkload`/`getTeamMemberWorkload`/`getTeamWorkloadSnapshot` — nothing in `components/team/` computes a percentage or band itself. New selectors (`getTeamMembersWithWorkload`, `getTeamMembersFiltered`, `getTeamMemberDetail`, `getMemberAssignmentsGroupedByProject`, `getMemberWorkloadContributors`) only shape and filter/sort that same data.
+
+**Fallback estimate disclosure:** the list shows "(est.)" next to a member's hours whenever any of their open tasks used a fallback estimate; Team Member Detail spells out the exact count ("N of M assigned tasks used an estimated (fallback) hour value") and a "Biggest contributors to this workload" list showing each task's own hours and whether it was a real estimate or fallback (`hoursForTask`, newly exported from `workload.ts` per D-045 — no second fallback-hours implementation).
+
+**Team Member Detail:** intentionally shallow — one scrollable page (header, Workload section, Assignments section), no tabs. The workload explanation is on the page at rest, not hidden behind a click (D-016/Phase 12 §8) — `WorkloadBadge`'s own disclosure is still present for the quick-scan case, with its redundant inline percentage suppressed here via a new `showPercent` prop (D-046) since the page already shows its own large headline number.
+
+**Assignments grouped by project (`getMemberAssignmentsGroupedByProject`):** most-contributing project first; each group shows project name/status/risk and this member's project-scoped open-task hours, explicitly never conflated with the page's own global workload percentage (same distinction established in Phase 8 §8 for `ProjectTeamTab`). Clicking a task opens the exact same `TaskDetailPanel`/`TaskDetailContent` Phase 9 built, via `?task=` on the Team Member Detail URL (`MemberAssignmentsView`) — no duplicated task data or a second detail implementation.
+
+**Guard pattern reused (D-036):** `requireTeamMember(memberId)` called from the detail page; `src/app/(app)/team/not-found.tsx` lives in the parent `team/` segment.
+
+**Current-state mutation integration, proven (Phase 12 §9/§13/§14):** `team.integration.test.ts` proves a task reassignment moves workload off the old member and onto the new one with `getTeamWorkloadSnapshot` (Dashboard) and `getWorkloadDistribution` (Analytics) agreeing exactly; an estimated-hours edit updates `getTeamMemberDetail` and `getMemberAssignmentsGroupedByProject` identically; completing a task reduces workload while the task still appears in Assignments (now marked Done); and `resetTaskOverrides` returns Team to fixture-derived values. No Team-specific cached workload exists anywhere.
+
+**No feature creep:** no HR profile cards, org chart, skills matrix, time off, payroll, recruiting, reviews, utilization forecasting, or capacity editing (D-047 — kept read-only, nothing in this phase's requirements needed it).
+
+**Tests:** `team.test.ts` (10 tests — all-members coverage, default sort ordering invariant across all 8 real fixture members, name sort, query/band filtering, detail resolution + unknown-id `undefined`, project-grouping totals/ordering/fallback-subset correctness, contributor ordering/limit/hours-sum-equals-total) and `team.integration.test.ts` (4 tests, described above).
+
+**Verified:** `tsc --noEmit` and `eslint` clean (after removing stale duplicate `.next/types/*  2.ts` files — a macOS/iCloud Desktop-sync artifact from two Next.js processes writing concurrently earlier in the session, not a Team code issue). Full test suite 111/111 (14 new, zero regressions). `npm run validate:data` clean. Whole-app route smoke check all 200. Playwright: list, an Overloaded member's detail, an Available member's detail, the Task Detail panel opening over Team Member Detail, the not-found route, and Dashboard→Team Member Detail navigation — all zero console/page errors. Desktop light/dark/RTL, tablet, and mobile (390px, no horizontal overflow) all verified; mobile correctly prioritizes state → reason → actionable assignments top to bottom, matching Phase 12 §18's requirement. One visual issue (D-046's duplicate workload percentage) found and fixed before completion.
+
+**Known limitation (carried over from Phase 11, re-verified, not resolved):** `next build` still fails with the identical `fonts.googleapis.com` connection-timeout error (re-confirmed via direct `curl`: that host times out while `api.github.com`/`registry.npmjs.org` return 200) — this environment still has no network route to it. Not a Team regression; `tsc`, `eslint`, the full test suite, and a live Turbopack dev server serving every route with zero console errors are the evidence of correctness in its place, exactly as documented for Phase 11. No change was made to the font architecture to work around this.
+
 ## 25. Phase Roadmap (corrected — see DECISIONS.md D-024)
 
 - **Phase 1 — Product Definition & V1 Scope:** ✅ Approved, all open items resolved.
@@ -1165,4 +1191,5 @@ The complete `/analytics` module: top operational summary, On-Time Delivery, Ove
 - **Phase 9 — Tasks / Kanban:** ✅ IMPLEMENTED 2026-10-04 (see §24).
 - **Phase 10 — Clients / CRM:** ✅ IMPLEMENTED 2026-10-04 (see §26).
 - **Phase 11 — Analytics:** ✅ IMPLEMENTED 2026-10-04 (see §27; `next build` network-limited, see §27's known limitation).
-- **Phase 12+ — TBD**, not yet proposed.
+- **Phase 12 — Team:** ✅ IMPLEMENTED 2026-10-04 (see §28; `next build` still network-limited, re-verified not resolved).
+- **Phase 13+ — TBD**, not yet proposed.
