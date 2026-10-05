@@ -343,9 +343,28 @@ All changes verified in both light and dark themes after the fix. Primary text, 
 
 ---
 
+### D-065 — Phase 15 RTL testing methodology: dir-attribute injection, not a real locale switch
+**Date:** 2026-10-05
+**Decision:** `getLocale()` (`lib/locale.ts`) remains hardcoded to `{ lang: "en", dir: "ltr" }` — Phase 15 did not add a locale switcher, a setter, or any Arabic UI copy. Every RTL screenshot/check in this phase's audit was produced by injecting `document.documentElement.setAttribute('dir', 'rtl')` via Playwright after page load (the same technique used for RTL verification in every prior phase since Phase 5), not by exercising a real runtime toggle. No such toggle exists in the product today.
+**Why:** The brief asked to audit and correct RTL *robustness*, not to build a locale-switching feature — adding one would be feature creep outside this phase's explicit scope (§26). Documenting the actual testing method matters because it clarifies that "verified in RTL" in this and all prior phases means "verified with `dir="rtl"` forced via devtools/test automation," not "verified via a real product-level language switch" — the architecture is RTL-*ready* (single `getLocale()` seam, logical CSS throughout), but V1 content is English-only, exactly as D-026 already stated. This distinction was already implicit in the architecture but had not been stated plainly as a Phase 15 finding until now.
+
+### D-066 — Two real RTL bugs found and fixed: bidi-scrambled numeric summaries, a bare bullet-marker character
+**Date:** 2026-10-05
+**Decision:** Two genuine (non-cosmetic) RTL defects were found during the Phase 15 visual audit, both confined to Phase 14's Settings additions, both fixed:
+1. `src/app/(app)/settings/workspace/page.tsx` and `src/app/(app)/settings/billing/page.tsx` each rendered a stat line of the shape `{count} label · {count} label · {count} label` (e.g. "8 team members · 15 clients · 19 projects"). Under `dir="rtl"`, the Unicode Bidi Algorithm relocated the *leading* number to the visual end of the line (rendering as "…15 clients · 19 projects 8" — i.e. actually scrambled, not merely mirrored). Fixed by wrapping each line in `dir="ltr"` + `[unicode-bidi:isolate]`, the same technical-value-isolation pattern already established for email fields (D-015-era precedent, reused verbatim — no new pattern invented).
+2. The Billing capability list used a literal `"· "` text prefix per `<li>` instead of a native list marker. A bare neutral character at the very start of a text node is exactly the case the bidi algorithm handles unpredictably; under RTL the dot visually detached to the wrong edge. Fixed by switching to `list-disc`/logical `ps-4` padding (grep-confirmed as the pattern every *other* bulleted list in the app already uses — `ConditionsDisclosure`, `ProjectOverview`, `AIProjectRiskExplanationCard`, `AIWeeklyReportCard`, `AnalyticsInsights`, `RiskShowcase` — this was the one outlier, not a new pattern).
+**Why:** Both are genuine, user-visible scrambling (not the cosmetic, linguistically-correct "trailing sentence punctuation flips to the start" behavior already accepted in D-015/Phase 14 — e.g. a period or "?" moving to the front of an English sentence under a forced RTL paragraph is expected Unicode bidi behavior for prose, not a bug; a *count* relocating past unrelated later counts, or a *list marker* detaching from its item, is not). A full codebase grep (`{[a-zA-Z0-9_.]+\} [a-zA-Z]+( ·| of | assigned| overdue| day)`) confirmed these were the only two occurrences of the leading-raw-number pattern and the only hand-rolled bullet prefix in the app — not a systemic issue requiring a broader sweep.
+
+### D-067 — No Arabic font decision made; nothing to evaluate yet
+**Date:** 2026-10-05
+**Decision:** Phase 15 did not introduce a new Arabic typeface, did not silently fall back to one, and did not change `src/app/layout.tsx`'s `Inter` font loading. This is not a decision to keep Inter for Arabic — it is a non-decision, because V1 has zero Arabic copy anywhere in the product (per D-065/D-026) to actually render and evaluate for fallback quality, density, or readability. D-026's existing open item ("Arabic typeface choice remains open for the future Arabic/RTL implementation phase") is unchanged and still open.
+**Why:** The brief's §14 explicitly forbade silently introducing a new Arabic font and asked to "document the issue" only if the current fallback is visually poor — there is no current fallback to judge, since no Arabic text renders anywhere. Documenting a verdict on font quality without real Arabic content to look at would be fabricated, not honest QA.
+
+---
+
 ## Open
 
-As of 2026-10-05: `next build` could not be re-confirmed during Phase 14 due to the intermittent `fonts.googleapis.com` gap (same gap as D-060) — re-run it on a future session/environment with network access to confirm, but do not block further work on it; every other Phase 14 validation (tsc, eslint, full test suite incl. new Phase 14 tests, data validation, route smoke tests, Playwright visual verification) passed cleanly. D-033 through D-064 are otherwise all resolved above.
+As of 2026-10-05: `next build` could not be re-confirmed during Phase 15 due to the intermittent `fonts.googleapis.com` gap (same gap as D-060) — re-run it on a future session/environment with network access to confirm, but do not block further work on it; every other Phase 15 validation (tsc, eslint, full test suite — 158/158, unchanged — data validation, route smoke tests, Playwright RTL visual verification) passed cleanly. The Arabic typeface decision (D-026) remains open, now explicitly re-affirmed as out of scope until real Arabic copy exists (D-067). D-033 through D-067 are otherwise all resolved above.
 
 ---
 

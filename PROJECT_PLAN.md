@@ -1304,6 +1304,40 @@ A V1 demo-entry experience and complete Settings/Billing area, completing the na
 
 **Known limitation:** `next build` could not be re-confirmed this phase — the same `fonts.googleapis.com` network gap documented since Phase 11 (D-060) was still failing at the end of this phase; re-confirmed via direct `curl` (connection timeout, `http_code=000`) that only this host is unreachable. Not a Phase 14 code issue — every other validation passed cleanly against a live dev server running the same code. Re-run `next build` when network access to that host is available again.
 
+## 33. Phase 15 — Arabic / RTL QA (IMPLEMENTED)
+
+A correction-only RTL/localization audit across the entire product — no new product features, per the phase's explicit "QA and correction only" scope.
+
+**Locale architecture review:** `lib/locale.ts`'s single `getLocale()` seam (unchanged since Phase 2/D-017) was reviewed and confirmed still sufficient — one function, no duplicated direction logic anywhere, `src/app/layout.tsx` is the one place `dir`/`lang` are set on `<html>`. No new i18n system was built (the brief explicitly forbade one unless the existing architecture were fundamentally insufficient — it is not). D-065 documents, for the first time explicitly, that every RTL verification in this and all prior phases (Phase 5 onward) has been performed by injecting `dir="rtl"` via devtools/Playwright after page load, since `getLocale()` has no real runtime toggle — the architecture is RTL-*ready*, V1 content is English-only (consistent with D-026).
+
+**Global directional-CSS audit (§21 of the brief):** a full-codebase grep for `ml-`/`mr-`/`pl-`/`pr-`/`left-`/`right-`/`border-l`/`border-r`/`translate-x`/`rotate`/`ChevronLeft`/`ChevronRight`/`ArrowLeft`/`ArrowRight` found every match already correctly classified: Radix Popover/Tooltip `data-[side=left/right]` attributes are the primitives' own auto-computed overflow-avoidance positioning (not direction-dependent); `sheet.tsx`'s physical `side` prop is already resolved from `dir` once, in `SidePanel.tsx` (D-017/D-032, unchanged); `dialog.tsx`'s centering transform already has an `rtl:translate-x-1/2` flip; `FlowDiagram`'s connector arrow already mirrors per D-059. Every `inset-x-0` match is symmetric (non-directional). Zero new logical-property replacements were needed anywhere outside Settings.
+
+**Per-module findings:** Landing Page, Login, App Shell (sidebar/topbar/account menu/AI panel/Notifications panel/mobile nav), Dashboard (all 6 sections), Projects (list/detail/tabs), Tasks/Kanban (list, board — 5-column order and horizontal-scroll-with-partial-clip both re-verified via DOM bounding-rect inspection, not just screenshots, and mirror correctly; D-038's column model untouched), Clients (list/detail/interactions/add-interaction form, email bidi isolation intact), Team (list/detail, including the wide `justify-between` workload-contributor rows — confirmed correctly row-paired via bounding-rect inspection after an initial screenshot misread), Analytics (D-044's forced-LTR chart-internals exception re-verified and reaffirmed, not revisited), and AI Assistant (panel direction, quick actions, input/button order) all passed with no real defects found.
+
+**D-066 — 2 real bugs found and fixed, both in Phase 14's Settings additions:**
+1. Workspace and Billing settings each had a `{count} label · {count} label · {count} label` stat line (e.g. "8 team members · 15 clients · 19 projects") whose *leading number* the Unicode Bidi Algorithm relocated to the visual end of the line under RTL — genuinely scrambled, not merely mirrored. Fixed with `dir="ltr"` + `[unicode-bidi:isolate]`, reusing the exact technical-value-isolation pattern already established for email fields (D-015-era) rather than inventing a new one.
+2. The Billing capability list used a literal `"· "` text-prefix per list item instead of a native marker — the one list in the whole app not using `list-disc` (confirmed by grep against `ConditionsDisclosure`/`ProjectOverview`/`AIProjectRiskExplanationCard`/`AIWeeklyReportCard`/`AnalyticsInsights`/`RiskShowcase`, which all already do). A bare neutral character at a text node's start is exactly the bidi edge case that breaks; fixed by switching to `list-disc`/logical `ps-4` padding to match every other list.
+
+Both are distinguished from the already-accepted, linguistically-correct "trailing sentence punctuation flips to the start under a forced-RTL English sentence" behavior (e.g. a period or "?" moving to the front — expected Unicode bidi behavior for prose, already seen and accepted in Phase 14's Login copy, not a bug) — these were different in kind: a count displacing past unrelated later counts, and a list marker detaching from its item.
+
+**Mobile RTL:** Landing, Login, Dashboard, the "More" bottom sheet (plain flex row, no hardcoded direction — reviewed at the source level, confirmed sound), Kanban (board scroll direction re-verified), Clients, Team, Settings, and the AI panel were all swept at 390×844 with no RTL-specific defects beyond the 2 already listed (which reproduced identically at both breakpoints and are fixed site-wide, not per-breakpoint).
+
+**Accessibility in RTL:** keyboard order, focus movement, and semantic DOM order were not altered by either fix (both were presentational CSS/markup changes with no DOM-order implications); no component was reordered purely for visual RTL effect anywhere in this phase.
+
+**Typography / Arabic font (D-067):** no Arabic typeface was introduced, and no silent fallback change was made to `Inter`. There is currently no Arabic copy anywhere in the product to evaluate for line-height, density, or fallback-rendering quality — D-026's open Arabic-typeface decision remains explicitly deferred to a future phase that actually scopes real Arabic content, not resolved or worked around here.
+
+**Translation quality:** not applicable — V1 has no Arabic strings implemented anywhere (confirmed via D-065); this is stated honestly rather than treated as a gap to silently fill, per the brief's explicit instruction not to invent a translation project.
+
+**A non-RTL finding, explicitly out of scope:** a `dnd-kit`/React-Strict-Mode dev-mode hydration console warning (`aria-describedby="DndDescribedBy-N"` mismatch on Kanban drag handles) was investigated and conclusively isolated as unrelated to RTL — it reproduces identically on a single fresh page load in plain English/LTR with zero `dir` manipulation (a pre-existing dnd-kit SSR/Strict-Mode interaction dating to Phase 9's original Kanban build, dev-mode-only). Documented here for completeness; not fixed, as it is outside this phase's RTL/localization scope.
+
+**No feature creep:** no translation CMS, no language backend, no locale-persistence backend, no new product features, no Arabic marketing campaign, no new design system. `getLocale()` was not modified.
+
+**Tests:** no new automated tests were added. Both fixes are bidi/CSS rendering behavior, which `node --test`'s non-rendering environment cannot meaningfully exercise (a unit test would only assert the JSX contains `dir="ltr"`/`list-disc`, which doesn't actually prove the bidi algorithm resolves correctly) — consistent with the brief's "keep tests meaningful" instruction, regression coverage here is the Playwright RTL sweep itself, not a snapshot.
+
+**Verified:** `tsc --noEmit`, `eslint` clean. Full test suite 158/158, unchanged (no business logic touched). `npm run validate:data` clean. Whole-app route smoke check unchanged (public 200, protected 307→`/login` without a session, 200 with one present). Playwright RTL visual sweep: desktop (Landing — full scroll-reveal + reduced-motion, Login, Dashboard + AI/Notifications panels + account menu, Projects list/detail/tabs, Tasks list/Kanban, Task Detail, Clients list/detail/interactions, Team list/detail, Analytics, all 5 Settings tabs, one dark-mode RTL spot-check), and mobile (Landing, Login, Dashboard, the More sheet, Kanban, Clients, Team, Settings, AI panel) — zero RTL-caused console errors.
+
+**Known limitation:** `next build` could not be re-confirmed this phase — the same `fonts.googleapis.com` network gap documented since Phase 11 (D-060) was still failing; re-confirmed via `curl` (connection timeout, `http_code=000`). Not a Phase 15 code issue.
+
 ## 25. Phase Roadmap (corrected — see DECISIONS.md D-024)
 
 - **Phase 1 — Product Definition & V1 Scope:** ✅ Approved, all open items resolved.
@@ -1322,4 +1356,5 @@ A V1 demo-entry experience and complete Settings/Billing area, completing the na
 - **Phase 13.5 — Public Landing Page:** ✅ IMPLEMENTED 2026-10-05 (see §30).
 - **Phase 13.6 — Visual Graphics & Landing Page Polish:** ✅ IMPLEMENTED 2026-10-05 (see §31; `next build` gap recurred intermittently, D-060 — not re-confirmed this phase).
 - **Phase 14 — Auth / Settings / Billing Demo:** ✅ IMPLEMENTED 2026-10-05 (see §32; `next build` gap unchanged from D-060 — not re-confirmed this phase).
-- **Phase 15+ — TBD**, not yet proposed.
+- **Phase 15 — Arabic / RTL QA:** ✅ IMPLEMENTED 2026-10-05 (see §33; `next build` gap unchanged from D-060 — not re-confirmed this phase).
+- **Phase 16+ — TBD**, not yet proposed.
