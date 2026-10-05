@@ -12,13 +12,19 @@ const TABS = [
   { key: "billing", label: "Billing", href: "/settings/billing" },
 ];
 
-/** Route-backed Settings tabs (Phase 14 §8) — same pattern as ClientTabs/ProjectTabs. */
+/**
+ * Route-backed Settings tabs (Phase 14 §8) — same pattern as ClientTabs/ProjectTabs.
+ * Plain nav links with `aria-current="page"`, not `role="tablist"`/`role="tab"`
+ * (Phase 17 fix): each item is a real, deep-linkable route — not an
+ * in-page panel switcher — so the ARIA tab pattern's expectations
+ * (arrow-key navigation between tabs, `aria-controls`/`tabpanel`) don't
+ * match the actual behavior and would mislead screen-reader users.
+ */
 export function SettingsTabs() {
   const pathname = usePathname();
 
   return (
     <nav
-      role="tablist"
       aria-label="Settings sections"
       className="flex gap-1 overflow-x-auto border-b border-border px-4 sm:px-6 lg:px-8"
     >
@@ -28,8 +34,7 @@ export function SettingsTabs() {
           <Link
             key={tab.key}
             href={tab.href}
-            role="tab"
-            aria-selected={active}
+            aria-current={active ? "page" : undefined}
             className={cn(
               "relative flex h-11 shrink-0 items-center px-3 text-sm font-medium outline-none transition-colors",
               "focus-visible:ring-2 focus-visible:ring-ring/70",

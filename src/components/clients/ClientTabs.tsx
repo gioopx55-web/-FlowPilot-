@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
  * consistency with Project Detail's own Overview-as-landing pattern,
  * per Phase 10 §5's explicit allowance ("if useful... keep it
  * lightweight and consistent with the approved IA").
+ * Plain nav links with `aria-current="page"`, not `role="tablist"`/
+ * `role="tab"` (Phase 17 fix) — see ProjectTabs.tsx for why.
  */
 export function ClientTabs({ clientId }: { clientId: string }) {
   const pathname = usePathname();
@@ -23,7 +25,6 @@ export function ClientTabs({ clientId }: { clientId: string }) {
 
   return (
     <nav
-      role="tablist"
       aria-label="Client sections"
       className="flex gap-1 border-b border-border px-4 sm:px-6 lg:px-8"
     >
@@ -33,8 +34,7 @@ export function ClientTabs({ clientId }: { clientId: string }) {
           <Link
             key={tab.key}
             href={tab.href}
-            role="tab"
-            aria-selected={active}
+            aria-current={active ? "page" : undefined}
             className={cn(
               "relative flex h-11 items-center px-3 text-sm font-medium outline-none transition-colors",
               "focus-visible:ring-2 focus-visible:ring-ring/70",

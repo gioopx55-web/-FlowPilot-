@@ -10,6 +10,12 @@ import { cn } from "@/lib/utils";
  * its own deep-linkable route. Active state via `usePathname`, same
  * pattern as Sidebar.tsx. No second sub-sidebar: this is a single
  * horizontal tab row under the shared header.
+ * Plain nav links with `aria-current="page"`, not `role="tablist"`/
+ * `role="tab"` (Phase 17 fix) — this file's own docblock already said
+ * "real navigation links, not a panel switcher," but the markup had
+ * contradicted it since Phase 8: the ARIA tab pattern's expectations
+ * (arrow-key navigation, `aria-controls`/`tabpanel`) don't match real
+ * route navigation and would mislead screen-reader users.
  */
 export function ProjectTabs({ projectId }: { projectId: string }) {
   const pathname = usePathname();
@@ -23,7 +29,6 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
 
   return (
     <nav
-      role="tablist"
       aria-label="Project sections"
       className="flex gap-1 border-b border-border px-4 sm:px-6 lg:px-8"
     >
@@ -33,8 +38,7 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
           <Link
             key={tab.key}
             href={tab.href}
-            role="tab"
-            aria-selected={active}
+            aria-current={active ? "page" : undefined}
             className={cn(
               "relative flex h-11 items-center px-3 text-sm font-medium outline-none transition-colors",
               "focus-visible:ring-2 focus-visible:ring-ring/70",
