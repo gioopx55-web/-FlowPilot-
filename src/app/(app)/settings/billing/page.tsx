@@ -32,16 +32,23 @@ export default function BillingSettingsPage() {
 
         <div>
           <span className="text-xs text-muted-foreground">Included in this preview</span>
-          <ul className="mt-2 space-y-1.5 text-sm text-foreground">
+          {/* list-disc + ps-4 (logical padding-start) instead of a literal
+              "· " text prefix — a bare marker character at the start of a
+              text node can be relocated by the bidi algorithm under RTL;
+              a native list marker positions itself from logical start and
+              mirrors correctly (Phase 15 RTL finding). */}
+          <ul className="mt-2 list-disc space-y-1.5 ps-4 text-sm text-foreground">
             {INCLUDED_CAPABILITIES.map((item) => (
-              <li key={item}>· {item}</li>
+              <li key={item}>{item}</li>
             ))}
           </ul>
         </div>
 
         <div>
           <span className="text-xs text-muted-foreground">Workspace usage</span>
-          <p className="mt-1 text-sm text-foreground">
+          {/* dir="ltr" + bidi isolation: see the identical fix/reasoning
+              on Workspace settings' size line (Phase 15 RTL finding). */}
+          <p dir="ltr" className="mt-1 text-sm text-foreground [unicode-bidi:isolate]">
             {teamMembers.length} team members · {projects.length} projects · {clients.length}{" "}
             clients
           </p>

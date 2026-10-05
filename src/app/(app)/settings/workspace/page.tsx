@@ -24,7 +24,12 @@ export default function WorkspaceSettingsPage() {
         </div>
         <div>
           <dt className="text-xs text-muted-foreground">Workspace size</dt>
-          <dd className="text-foreground">
+          {/* dir="ltr" + bidi isolation: a string opening with a raw
+              number (count · count · count) can have its leading digit
+              relocated by the Unicode bidi algorithm under RTL — found
+              during Phase 15 RTL verification. Same remedy as the email
+              fields (D-015-era technical-value isolation). */}
+          <dd dir="ltr" className="text-foreground [unicode-bidi:isolate]">
             {teamMembers.length} team members · {clients.length} clients · {projects.length}{" "}
             projects
           </dd>
