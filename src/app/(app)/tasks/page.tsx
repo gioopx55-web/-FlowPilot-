@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { getTasksFiltered, getTaskDetail } from "@/domain/selectors";
 import { getDemoDataset } from "@/data/mock";
 import { TasksView } from "@/components/tasks/TasksView";
+import { PageHeader } from "@/components/primitives/PageHeader";
 import {
   parseTaskFilters,
   parseTaskSort,
@@ -27,7 +28,10 @@ export default async function TasksPage({
 
   return (
     <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8">
-      <h1 className="mb-4 text-lg font-semibold text-foreground">Tasks</h1>
+      <PageHeader
+        title="Tasks"
+        description="The full task list, plus a drag-and-drop Kanban board scoped to real records."
+      />
       <Suspense fallback={null}>
         <TasksView
           entries={entries}

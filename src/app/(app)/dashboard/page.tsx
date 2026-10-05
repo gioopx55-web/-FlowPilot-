@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/primitives/PageHeader";
 import { Section } from "@/components/primitives/Section";
 import { DailyBrief } from "@/components/dashboard/DailyBrief";
 import { AtRiskProjects } from "@/components/dashboard/AtRiskProjects";
@@ -18,6 +19,10 @@ import { RecentActivity } from "@/components/dashboard/RecentActivity";
 export default function DashboardPage() {
   return (
     <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8">
+      <PageHeader
+        title="Dashboard"
+        description="What needs your attention today, ranked — not buried in a list."
+      />
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         <div className="md:col-span-2">
           <Section title="Daily Brief">

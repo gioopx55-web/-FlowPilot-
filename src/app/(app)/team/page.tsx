@@ -3,6 +3,7 @@ import { getTeamMembersFiltered, type TeamSortKey, type TeamListFilters } from "
 import type { WorkloadBand } from "@/domain/workload/workload";
 import { TeamFilters } from "@/components/team/TeamFilters";
 import { TeamTable } from "@/components/team/TeamTable";
+import { PageHeader } from "@/components/primitives/PageHeader";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -37,7 +38,10 @@ export default async function TeamPage({
 
   return (
     <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8">
-      <h1 className="mb-4 text-lg font-semibold text-foreground">Team</h1>
+      <PageHeader
+        title="Team"
+        description="Workload across the team, always explainable — never a bare percentage."
+      />
       <Suspense fallback={null}>
         <TeamFilters />
       </Suspense>

@@ -8,6 +8,7 @@ import {
 } from "@/domain/analytics";
 import { getOverdueTasks, getAtRiskProjectsSorted } from "@/domain/selectors";
 import { Section } from "@/components/primitives/Section";
+import { PageHeader } from "@/components/primitives/PageHeader";
 import { OperationalSummary } from "@/components/analytics/OperationalSummary";
 import { OnTimeDeliveryCard } from "@/components/analytics/OnTimeDeliveryCard";
 import { OverdueTrendChart } from "@/components/analytics/OverdueTrendChart";
@@ -32,13 +33,10 @@ export default function AnalyticsPage() {
 
   return (
     <div className="mx-auto max-w-[1440px] space-y-8 px-4 py-6 sm:px-6 lg:px-8">
-      <div>
-        <h1 className="text-lg font-semibold text-foreground">Analytics</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Current workspace state as of {formatShortDate(DEMO_TODAY_ISO)}. Overdue trend covers
-          the last {OVERDUE_TREND_WEEKS} weeks.
-        </p>
-      </div>
+      <PageHeader
+        title="Analytics"
+        description={`Current workspace state as of ${formatShortDate(DEMO_TODAY_ISO)}. Overdue trend covers the last ${OVERDUE_TREND_WEEKS} weeks.`}
+      />
 
       <OperationalSummary
         stats={[

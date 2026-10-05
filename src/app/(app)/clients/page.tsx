@@ -3,6 +3,7 @@ import { getClientsFiltered, type ClientSortKey, type ClientListFilters } from "
 import type { ClientStatus } from "@/types/entities";
 import { ClientsFilters } from "@/components/clients/ClientsFilters";
 import { ClientsTable } from "@/components/clients/ClientsTable";
+import { PageHeader } from "@/components/primitives/PageHeader";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -38,7 +39,10 @@ export default async function ClientsPage({
 
   return (
     <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8">
-      <h1 className="mb-4 text-lg font-semibold text-foreground">Clients</h1>
+      <PageHeader
+        title="Clients"
+        description="Every client relationship, with follow-up risk surfaced automatically."
+      />
       <Suspense fallback={null}>
         <ClientsFilters />
       </Suspense>

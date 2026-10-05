@@ -6,6 +6,7 @@ import type { ProjectStatus, RiskLevel } from "@/types/entities";
 import { ProjectsFilters } from "@/components/projects/ProjectsFilters";
 import { ProjectsTable } from "@/components/projects/ProjectsTable";
 import { EmptyState } from "@/components/primitives/EmptyState";
+import { PageHeader } from "@/components/primitives/PageHeader";
 
 const VALID_STATUSES: ProjectStatus[] = [
   "kickoff",
@@ -60,7 +61,10 @@ export default async function ProjectsPage({
 
   return (
     <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8">
-      <h1 className="mb-4 text-lg font-semibold text-foreground">Projects</h1>
+      <PageHeader
+        title="Projects"
+        description="Every project's risk, progress, and due date in one scannable list."
+      />
 
       <Suspense fallback={null}>
         <ProjectsFilters clientOptions={clientOptions} />
