@@ -83,6 +83,18 @@ export function KanbanBoard({
 
   return (
     <DndContext
+      // Phase 17 finding: dnd-kit's own `useUniqueId` (used internally
+      // for the board's aria-describedby live-region id) is a plain
+      // module-level counter, not React's hydration-safe `useId` — under
+      // React Strict Mode's dev-only double-invoke, the client-computed
+      // id drifts from what SSR embedded, producing a reproducible
+      // (but dev-mode-only, not a real runtime/AT-facing defect)
+      // hydration-mismatch console warning first seen in Phase 15/16.
+      // dnd-kit's own `id` prop bypasses the counter entirely when
+      // supplied, so a fixed id makes the value deterministic across
+      // server and client. One board renders per page (never two at
+      // once), so a static id is safe here.
+      id="kanban-board"
       sensors={sensors}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
