@@ -13,6 +13,15 @@ import { MoreSheet } from "@/components/shell/MoreSheet";
  * breakpoint (lg:hidden matches the Sidebar's lg:flex, Phase 4 §15.12).
  * AI Assistant/Notifications are intentionally absent here — they live
  * in the mobile topbar action cluster, not the tab bar (D-013/D-014).
+ *
+ * Phase 17.5: `bg-card` (the same raised-surface token the Sidebar
+ * uses) instead of `bg-background` — matches the desktop shell's
+ * chrome-vs-canvas separation rather than blending into the page.
+ * Kept solid (no transparency/blur): this is a persistent, dense,
+ * always-visible nav, not an overlay, and the brief explicitly keeps
+ * transparency off anything dense/overlay-adjacent on mobile. Active
+ * state now pairs color with a small icon-backing chip, not color
+ * alone.
  */
 export function MobileNav() {
   const pathname = usePathname();
@@ -21,7 +30,7 @@ export function MobileNav() {
   return (
     <>
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 flex h-16 border-t border-border bg-background lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 flex h-16 border-t border-border bg-card lg:hidden"
         aria-label="Primary navigation"
       >
         {mobileTabItems.map((item) => {
@@ -37,7 +46,14 @@ export function MobileNav() {
                 active && "text-[var(--fp-accent)]",
               )}
             >
-              <Icon className="size-[20px]" aria-hidden="true" />
+              <span
+                className={cn(
+                  "flex h-7 w-10 items-center justify-center rounded-full transition-colors duration-150 ease-out",
+                  active && "bg-[var(--fp-accent-subtle-bg)]",
+                )}
+              >
+                <Icon className="size-[20px]" aria-hidden="true" />
+              </span>
               {item.label}
             </Link>
           );
@@ -50,7 +66,9 @@ export function MobileNav() {
           aria-expanded={moreOpen}
           className="flex flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium text-muted-foreground"
         >
-          <moreTabItem.icon className="size-[20px]" aria-hidden="true" />
+          <span className="flex h-7 w-10 items-center justify-center rounded-full">
+            <moreTabItem.icon className="size-[20px]" aria-hidden="true" />
+          </span>
           {moreTabItem.label}
         </button>
       </nav>
