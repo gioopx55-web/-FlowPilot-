@@ -35,7 +35,19 @@ export function OverdueTrendChart({ points }: { points: OverdueTrendPoint[] }) {
     <div>
       <div dir="ltr" className="h-[220px] w-full" aria-hidden="true">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData} margin={{ left: 0, right: 16, top: 8 }}>
+          {/* accessibilityLayer={false}: Recharts v3 defaults this on,
+              which puts tabindex="0" role="application" on the SVG root —
+              directly conflicting with this wrapper's own aria-hidden
+              (D-044's "SVG hidden, textual equivalent instead" pattern,
+              found as a real axe violation in Phase 17). We already
+              provide the textual equivalent below; Recharts' competing
+              built-in a11y layer is redundant and must not be focusable
+              inside an aria-hidden container. */}
+          <LineChart
+            data={chartData}
+            margin={{ left: 0, right: 16, top: 8 }}
+            accessibilityLayer={false}
+          >
             <CartesianGrid vertical={false} stroke={CHART_GRID} />
             <XAxis dataKey="label" tick={axisTick} axisLine={{ stroke: CHART_GRID }} tickLine={false} />
             <YAxis allowDecimals={false} tick={axisTick} axisLine={{ stroke: CHART_GRID }} tickLine={false} width={28} />

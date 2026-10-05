@@ -34,7 +34,15 @@ export function WorkloadDistributionChart({
     <div>
       <div dir="ltr" className="h-[200px] w-full" aria-hidden="true">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={distribution} layout="vertical" margin={{ left: 8, right: 16 }}>
+          {/* accessibilityLayer={false}: see OverdueTrendChart.tsx's
+              comment — Recharts v3's own focus/role layer conflicts with
+              this wrapper's aria-hidden (Phase 17 axe finding). */}
+          <BarChart
+            data={distribution}
+            layout="vertical"
+            margin={{ left: 8, right: 16 }}
+            accessibilityLayer={false}
+          >
             <CartesianGrid horizontal={false} stroke={CHART_GRID} />
             <XAxis type="number" allowDecimals={false} tick={axisTick} axisLine={{ stroke: CHART_GRID }} tickLine={false} />
             <YAxis type="category" dataKey="band" tick={axisTick} axisLine={{ stroke: CHART_GRID }} tickLine={false} width={80} />

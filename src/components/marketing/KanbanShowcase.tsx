@@ -30,7 +30,12 @@ export function KanbanShowcase({
         { icon: Link2, text: "The same board, scoped, appears on each project's Tasks tab" },
       ]}
       visual={
-        <div className="mx-auto flex w-full max-w-lg gap-3 overflow-x-auto rounded-[var(--fp-radius-lg)] border border-border bg-[var(--fp-bg-surface-raised)] p-4 shadow-[var(--fp-shadow-level-2)]">
+        <div
+          tabIndex={0}
+          role="group"
+          aria-label="Kanban board preview, scrollable"
+          className="mx-auto flex w-full max-w-lg gap-3 overflow-x-auto rounded-[var(--fp-radius-lg)] border border-border bg-[var(--fp-bg-surface-raised)] p-4 shadow-[var(--fp-shadow-level-2)] focus-visible:ring-2 focus-visible:ring-ring/70 focus-visible:outline-none"
+        >
           {columns.map((column) => (
             <div key={column.status} className="w-40 shrink-0">
               <div className="mb-2 flex items-center justify-between px-0.5">
