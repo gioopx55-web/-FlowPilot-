@@ -1268,6 +1268,42 @@ A focused visual-polish pass on the public Landing Page only — no business log
 
 **Known limitation:** `next build` could not be re-confirmed this phase — the `fonts.googleapis.com` network gap (resolved in Phase 13, D-051) recurred intermittently and was still failing at the end of this phase (D-060). Not a Phase 13.6 code issue; `tsc`/`eslint`/tests/data-validation/route-smoke-tests/visual-verification all passed cleanly against the same code. Re-run `next build` when network access to that host is available again.
 
+## 32. Phase 14 — Auth / Settings / Billing Demo (IMPLEMENTED)
+
+A V1 demo-entry experience and complete Settings/Billing area, completing the navigable loop: Landing Page → Login / Demo Entry → App → Settings → Logout → Landing Page. No production auth, payment processing, or real backend was added — see D-061/D-062/D-063.
+
+**Login (`/login`):** a standalone page outside the `(app)` shell — no sidebar/topbar. One primary action, "Continue to Demo", honestly labeled as demo-only (no credentials collected, nothing validated against a real backend). Composition (centered minimal card, single strong CTA, concise copy, the existing `DotGrid` background motif reused from Phase 13.6) follows general SaaS sign-in principles gathered via the required external visual research — not a copy of any specific site (D-064).
+
+**Demo session (D-061):** `lib/demoSession.ts` establishes a single `httpOnly`/`sameSite=lax` presence cookie (`fp_demo_session`, 7-day maxAge) — not an encrypted/signed JWT session, since every visitor shares one demo workspace and there is no real secret behind the cookie. `src/proxy.ts` (Next.js 16's renamed middleware convention) performs the Next.js-documented "optimistic check" (cookie presence only) to protect `/dashboard`, `/projects`, `/tasks`, `/clients`, `/team`, `/analytics`, and `/settings`; `/` and `/login` stay public. `lib/protectedRoutes.ts` is the single shared source of truth for the protected-prefix list and for `sanitizeRedirectTarget()`, which allow-lists only known internal protected paths for the post-login redirect (rejecting external URLs and `//`-prefixed protocol-relative targets) — preventing open redirects.
+
+**Login/logout flow:** an unauthenticated visit to a protected route redirects to `/login?redirect=<path>`; signing in establishes the session and redirects to the sanitized target (defaulting to `/dashboard`). The account menu's "Log out" (a Server Action, `signOutOfDemoAction`) clears the cookie and returns to `/`; a subsequent visit to any protected route redirects back to `/login` again.
+
+**Landing Page CTA integration:** every "Open Demo"/"Open FlowPilot Demo" CTA (`Hero`, `FinalCTA`, `MarketingNav`, `MarketingFooter`) now routes to `/login` rather than directly to `/dashboard` — the demo entry flow can no longer be bypassed from marketing surfaces.
+
+**Settings IA:** `/settings` gained a persistent header + route-backed tabs shell (`SettingsTabs.tsx`, the same pattern as Project/Client Detail), with 5 sections: Profile, Workspace, Appearance, Notifications, Billing.
+
+**Profile settings (D-062):** `displayName`/`email` are editable via a plain native controlled form (`ProfileSettingsForm.tsx`, consistent with D-041's "no form library for 2 fields" precedent), saved through `domain/settingsMutations.ts#updateProfile`. `jobTitle` is shown read-only, sourced from the linked `TeamMember` — deliberately not editable here, to avoid reopening D-047's Team-is-read-only-in-V1 boundary through a back door.
+
+**Workspace settings:** read-only display of workspace name, creation date, and a real size summary (team/client/project counts) — nothing in the product needs a renameable workspace yet, so no mutation surface was added for it.
+
+**Appearance settings:** a direct `useTheme()` consumer (`AppearanceSettingsForm.tsx`) — Light/Dark/System, no second theme state. Locale/RTL toggle is not exposed: `getLocale()` has no setter yet (V1 is English-only), so there is no real toggle to surface.
+
+**Notification settings:** 4 demo preference toggles (overdue task alerts, project risk alerts, client follow-up reminders, workload alerts) via native checkboxes, consistent with the project's existing "plain native control over a new UI-kit primitive" precedent. Honestly labeled as preferences only — nothing in the product currently sends a real email/push/Slack notification.
+
+**Billing demo (D-063):** `/settings/billing` is presentation-only — a plan label ("Demo / Pro Preview"), a static included-capabilities list, a real workspace-usage summary pulled from `getDemoDataset()`, and a `disabled` "Manage billing" button with honest adjacent copy ("Billing is disabled in demo — no payment method or invoices exist."). No Stripe, checkout, card fields, or fake invoices anywhere.
+
+**State/persistence (D-062):** both Profile overrides and Notification preferences extend D-039's existing server-side, in-memory, process-lifetime overrides pattern (`domain/settingsMutations.ts`) — no localStorage, no second persistence architecture. `resetDemoDataAction` (`lib/taskActions.ts`) now also calls `resetSettingsOverrides()`, so the one existing "Reset demo data" action clears Profile edits and Notification preferences alongside task/client overrides.
+
+**Account menu:** a compact `Popover`-based menu (`components/shell/AccountMenu.tsx`, reusing the existing primitive rather than adding a new dropdown-menu/avatar dependency) in the Topbar — name/email, a "Profile & settings" link, and "Log out". No account-management features, no upsells.
+
+**Security honesty:** no claim of real authentication, encryption, or account isolation is made anywhere — copy consistently says "Demo workspace"/"Demo session"/"no real account, password, or data leaves this workspace."
+
+**No feature creep:** no production auth (Supabase/Auth0/Clerk/Firebase/NextAuth/OAuth), no payment processor, no real invoices, no org invites/SSO/MFA/audit logs/password reset/production RBAC. Zero new npm dependencies.
+
+**Verified:** `tsc --noEmit`, `eslint` clean. Full test suite 158/158 (16 new: `lib/protectedRoutes.test.ts` covering `isProtectedPath`/`sanitizeRedirectTarget` including the open-redirect guard; `domain/settingsMutations.test.ts` covering profile edits, validation, notification preferences, and reset). `npm run validate:data` clean. Whole-app route smoke check: public `/` and `/login` → 200; all 7 protected routes → 307 redirect to `/login?redirect=<path>` without a session cookie, and resolve normally with one present. Playwright visual verification: Login desktop/mobile, light/dark, RTL (logo/copy mirror correctly, trailing punctuation flips per bidi rules); all 5 Settings tabs; the account menu open state; the complete Landing→Login→Dashboard→Settings→Logout→Landing flow confirming the session clears and protected routes re-redirect after logout — zero console errors under correctly-sequenced (waited) navigation. A hydration-mismatch warning (`caret-color` style attribute) was observed only when a test script fired consecutive `page.goto()` calls across Settings tabs without waiting for each page to settle; isolated repro scripts with proper `waitForLoadState` calls across the identical 5-page sequence produced zero errors, confirming this was a test-navigation-speed artifact, not an application defect.
+
+**Known limitation:** `next build` could not be re-confirmed this phase — the same `fonts.googleapis.com` network gap documented since Phase 11 (D-060) was still failing at the end of this phase; re-confirmed via direct `curl` (connection timeout, `http_code=000`) that only this host is unreachable. Not a Phase 14 code issue — every other validation passed cleanly against a live dev server running the same code. Re-run `next build` when network access to that host is available again.
+
 ## 25. Phase Roadmap (corrected — see DECISIONS.md D-024)
 
 - **Phase 1 — Product Definition & V1 Scope:** ✅ Approved, all open items resolved.
@@ -1285,4 +1321,5 @@ A focused visual-polish pass on the public Landing Page only — no business log
 - **Phase 13 — AI Assistant:** ✅ IMPLEMENTED 2026-10-05 (see §29; `next build` network gap from Phases 11-12 now resolved, D-051).
 - **Phase 13.5 — Public Landing Page:** ✅ IMPLEMENTED 2026-10-05 (see §30).
 - **Phase 13.6 — Visual Graphics & Landing Page Polish:** ✅ IMPLEMENTED 2026-10-05 (see §31; `next build` gap recurred intermittently, D-060 — not re-confirmed this phase).
-- **Phase 14+ — TBD**, not yet proposed.
+- **Phase 14 — Auth / Settings / Billing Demo:** ✅ IMPLEMENTED 2026-10-05 (see §32; `next build` gap unchanged from D-060 — not re-confirmed this phase).
+- **Phase 15+ — TBD**, not yet proposed.
