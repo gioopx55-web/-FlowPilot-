@@ -9,7 +9,7 @@ export function MarketingFooter() {
           A portfolio product demo. Not a real company, service, or offering.
         </p>
         <Link
-          href="/dashboard"
+          href="/login"
           className="rounded-sm text-xs font-medium text-[var(--fp-accent)] outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/70"
         >
           Open Demo

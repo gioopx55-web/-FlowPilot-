@@ -73,7 +73,7 @@ export function MarketingNav() {
 
         <div className="hidden md:block">
           <Button asChild size="sm">
-            <Link href="/dashboard">Open Demo</Link>
+            <Link href="/login">Open Demo</Link>
           </Button>
         </div>
 
@@ -100,7 +100,7 @@ export function MarketingNav() {
               ))}
               <SheetClose asChild>
                 <Button asChild size="sm" className="mt-2">
-                  <Link href="/dashboard">Open Demo</Link>
+                  <Link href="/login">Open Demo</Link>
                 </Button>
               </SheetClose>
             </nav>

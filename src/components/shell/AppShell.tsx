@@ -16,15 +16,33 @@ import { AIPanelContent } from "@/components/ai/AIPanelContent";
  * panels around the route content. No business feature content lives
  * here (Phase 5 scope) — only shell chrome.
  */
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({
+  children,
+  displayName,
+  email,
+}: {
+  children: React.ReactNode;
+  displayName: string;
+  email: string;
+}) {
   return (
     <PanelProvider>
-      <ShellLayout>{children}</ShellLayout>
+      <ShellLayout displayName={displayName} email={email}>
+        {children}
+      </ShellLayout>
     </PanelProvider>
   );
 }
 
-function ShellLayout({ children }: { children: React.ReactNode }) {
+function ShellLayout({
+  children,
+  displayName,
+  email,
+}: {
+  children: React.ReactNode;
+  displayName: string;
+  email: string;
+}) {
   const pathname = usePathname();
   const { openPanelId, closePanel } = useShellPanels();
   const title = getPageTitle(pathname ?? "");
@@ -34,7 +52,7 @@ function ShellLayout({ children }: { children: React.ReactNode }) {
       <Sidebar />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar title={title} />
+        <Topbar title={title} displayName={displayName} email={email} />
         <main id="main-content" className="flex-1 overflow-y-auto pb-16 lg:pb-0">
           {children}
         </main>

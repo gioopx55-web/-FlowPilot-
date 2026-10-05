@@ -9,6 +9,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useShellPanels } from "@/components/shell/panel-context";
+import { AccountMenu } from "@/components/shell/AccountMenu";
 
 /**
  * Topbar — Phase 2 §11.11-11.12, Phase 4 §15.8/§15.25, Phase 5 §11.
@@ -17,7 +18,15 @@ import { useShellPanels } from "@/components/shell/panel-context";
  * writing directions). Triggers only toggle shell panel state here —
  * no AI/notification business logic exists yet (Phase 5 scope).
  */
-export function Topbar({ title }: { title: string }) {
+export function Topbar({
+  title,
+  displayName,
+  email,
+}: {
+  title: string;
+  displayName: string;
+  email: string;
+}) {
   const { openPanelId, togglePanel } = useShellPanels();
 
   return (
@@ -58,6 +67,8 @@ export function Topbar({ title }: { title: string }) {
           </TooltipTrigger>
           <TooltipContent>Notifications</TooltipContent>
         </Tooltip>
+
+        <AccountMenu displayName={displayName} email={email} />
       </div>
     </header>
   );

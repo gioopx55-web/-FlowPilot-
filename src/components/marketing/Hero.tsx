@@ -44,7 +44,7 @@ export function Hero({
           <StaggerItem>
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
               <Button asChild size="lg">
-                <Link href="/dashboard">Open FlowPilot Demo</Link>
+                <Link href="/login">Open FlowPilot Demo</Link>
               </Button>
               <Button asChild size="lg" variant="outline">
                 <a href="#product-preview">See how it works</a>

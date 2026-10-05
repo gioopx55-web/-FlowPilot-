@@ -15,7 +15,7 @@ export function FinalCTA() {
         </p>
         <div className="mt-7 flex justify-center">
           <Button asChild size="lg">
-            <Link href="/dashboard">Open FlowPilot Demo</Link>
+            <Link href="/login">Open FlowPilot Demo</Link>
           </Button>
         </div>
       </RevealOnScroll>
