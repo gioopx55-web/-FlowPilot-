@@ -12,7 +12,9 @@ import { formatShortDate } from "@/lib/format";
  * the current demo workspace's actual data. Phase 13.6 adds a
  * restrained dot-grid backdrop and icon-framed card headers so this
  * (the page's second major visual moment after the Hero) reads as
- * authored rather than a plain two-card grid.
+ * authored rather than a plain two-card grid. Phase 17.6: `isolate`
+ * added to the section — without it the DotGrid backdrop never
+ * actually painted (see Hero.tsx's note on the same stacking bug).
  */
 export function DashboardShowcase({
   atRiskEntries,
@@ -22,7 +24,7 @@ export function DashboardShowcase({
   overdueEntries: OverdueTaskEntry[];
 }) {
   return (
-    <section id="product-preview" className="relative overflow-hidden px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+    <section id="product-preview" className="relative isolate overflow-hidden px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
       <DotGrid className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-80 text-border/50" />
 
       <RevealOnScroll className="mx-auto max-w-2xl text-center">

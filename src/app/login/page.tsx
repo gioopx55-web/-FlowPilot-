@@ -48,7 +48,7 @@ export default async function LoginPage({
   };
 
   return (
-    <div className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-[var(--fp-bg-canvas)] px-4">
+    <div className="relative isolate flex min-h-dvh items-center justify-center overflow-hidden bg-[var(--fp-bg-canvas)] px-4">
       <DotGrid className="pointer-events-none absolute inset-0 -z-10 text-border/40" />
       <div
         aria-hidden="true"

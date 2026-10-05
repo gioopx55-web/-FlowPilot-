@@ -48,8 +48,23 @@ export function ShowcaseLayout({
     <section
       id={id}
       className={cn(
-        "relative overflow-hidden px-4 py-16 sm:px-6 sm:py-20 lg:px-8",
-        tone === "surface" && "bg-[var(--fp-bg-surface)]",
+        // Phase 17.6 bug fix: `isolate` is required for the DotGrid
+        // backdrop (-z-10) to actually paint — without it, `relative`
+        // alone does not establish a stacking context, so the
+        // negative-z layer escapes to the page root and renders
+        // *below* the page's own canvas background instead of above
+        // it. Every `tone="surface"` showcase's dot-grid has been
+        // invisible since Phase 13.6 because of this (see Hero.tsx's
+        // longer note on the same bug).
+        "relative isolate overflow-hidden px-4 py-16 sm:px-6 sm:py-20 lg:px-8",
+        // Phase 17.6: a top/bottom fade instead of a flat fill — the
+        // previous hard color block created a visible seam at every
+        // section boundary (§4 continuity). Fading into the canvas
+        // tone at each edge makes the surface read as a soft "island"
+        // within the page rather than a reset, while staying fully
+        // solid (readable) through the section's own content.
+        tone === "surface" &&
+          "bg-[linear-gradient(to_bottom,transparent,var(--fp-bg-surface)_14%,var(--fp-bg-surface)_86%,transparent)]",
       )}
     >
       {tone === "surface" && (
