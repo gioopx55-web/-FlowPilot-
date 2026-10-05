@@ -1238,6 +1238,36 @@ The public marketing experience — `/` is now a premium Landing Page, structura
 
 **Known limitations:** none.
 
+## 31. Phase 13.6 — Visual Graphics & Landing Page Polish (IMPLEMENTED)
+
+A focused visual-polish pass on the public Landing Page only — no business logic, data model, or application-shell change.
+
+**Visual audit findings:** before editing, the page was reviewed section by section. Weaknesses identified: the Hero's product preview was a single flat card with no layered depth; all 7 feature showcases used the identical two-column layout with plain dot bullets, reading as one component repeated rather than an authored sequence; no background rhythm distinguished one section from the next; the AI section stated "structured intelligence" only in copy, with nothing visual to back it up; icons were almost entirely absent outside the nav/AI disclosure line.
+
+**Graphic layer (D-057):** 5 small, centralized, dependency-free components — `IconFrame` (the one icon-in-frame treatment), `DotGrid` (static SVG dot-pattern background), `FlowDiagram` (the AI section's 3-node composition), plus icon props added to `ShowcaseLayout` and `PreviewCard`. No new npm package.
+
+**Iconography:** every showcase's eyebrow and bullet list now carries a semantically chosen Lucide icon in a restrained `IconFrame` (e.g. `AlertTriangle`/`Clock`/`Users`/`Gauge` for Daily Brief; `ShieldAlert`/`ListChecks` for Risk; `Ban`/`MousePointer2`/`Link2` for Kanban) — never a generic sparkle used as decoration, never a giant colorful icon.
+
+**Transparency:** restrained to two places — the Hero's backdrop fragment (a lower-opacity second card behind the main one) and the floating signal chip. Every dense product-data surface (list rows, badges, the Kanban board) stays fully solid.
+
+**Depth/3D (D-058):** the Hero preview gained a layered backdrop fragment and a floating "N need attention" chip, both rendered as siblings of the main card (a child would be clipped by the card's own `overflow-hidden`) — still CSS-perspective/transform only, no 3D library.
+
+**Section differentiation:** alternating `canvas`/`surface` background tone across the 7 showcases (with `DotGrid` only on `surface` sections, at low opacity) plus the icon treatment above gives each section a distinct rhythm without seven different layouts.
+
+**AI visual treatment:** `FlowDiagram` renders "Workspace data → FlowPilot AI → Structured action" as three icon nodes connected by arrows, directly above the existing quick-actions/result preview — making Phase 13.6 §9's suggested composition literal, with no chatbot/orb/purple-magic styling anywhere.
+
+**RTL (D-059):** `FlowDiagram` is a directional relationship, so it mirrors — node order reverses with the page direction and the connector arrow is flipped (`rtl:-scale-x-100`); found and fixed a real mismatch where the arrow kept pointing the wrong way after the node order reversed. `IconFrame`/`DotGrid` are pure decoration and intentionally do not mirror.
+
+**Reduced motion:** every new element is either genuinely static (backdrop fragment's rotation, signal chip) or respects the existing `useReducedMotion` hook; a full-page reduced-motion screenshot confirms the complete page renders correctly with no animation.
+
+**Performance:** no new dependency, no images, `DotGrid`/`FlowDiagram`/`IconFrame` are plain SVG/CSS with zero runtime cost beyond initial render.
+
+**No feature creep, no business-logic change:** confirmed — only `components/marketing/*` and 2 small `PreviewCard`/`ShowcaseLayout` prop additions touched; `domain/`, `app/(app)/`, and every authenticated route are untouched.
+
+**Verified:** `tsc --noEmit`, `eslint` clean. Full existing test suite 142/142 (no new tests — no new business logic). `npm run validate:data` clean. Whole-app route smoke check all 200 against a live dev server. Playwright visual verification: full scroll sweep desktop light/dark, RTL (hero + a surface-tone section + the AI flow diagram, confirming the arrow-mirroring fix), mobile (no horizontal overflow, flow diagram still legible at 390px), tablet, and a complete reduced-motion pass — zero console errors throughout.
+
+**Known limitation:** `next build` could not be re-confirmed this phase — the `fonts.googleapis.com` network gap (resolved in Phase 13, D-051) recurred intermittently and was still failing at the end of this phase (D-060). Not a Phase 13.6 code issue; `tsc`/`eslint`/tests/data-validation/route-smoke-tests/visual-verification all passed cleanly against the same code. Re-run `next build` when network access to that host is available again.
+
 ## 25. Phase Roadmap (corrected — see DECISIONS.md D-024)
 
 - **Phase 1 — Product Definition & V1 Scope:** ✅ Approved, all open items resolved.
@@ -1254,4 +1284,5 @@ The public marketing experience — `/` is now a premium Landing Page, structura
 - **Phase 12 — Team:** ✅ IMPLEMENTED 2026-10-04 (see §28).
 - **Phase 13 — AI Assistant:** ✅ IMPLEMENTED 2026-10-05 (see §29; `next build` network gap from Phases 11-12 now resolved, D-051).
 - **Phase 13.5 — Public Landing Page:** ✅ IMPLEMENTED 2026-10-05 (see §30).
+- **Phase 13.6 — Visual Graphics & Landing Page Polish:** ✅ IMPLEMENTED 2026-10-05 (see §31; `next build` gap recurred intermittently, D-060 — not re-confirmed this phase).
 - **Phase 14+ — TBD**, not yet proposed.

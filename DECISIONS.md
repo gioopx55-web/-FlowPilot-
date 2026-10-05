@@ -301,9 +301,31 @@ All changes verified in both light and dark themes after the fix. Primary text, 
 
 ---
 
+### D-057 — Phase 13.6 graphic layer: one shared set of primitives, no new dependency
+**Date:** 2026-10-05
+**Decision:** The entire visual-polish layer is 5 small components: `IconFrame` (the one icon-in-frame treatment, used for every bullet and section/card header), `DotGrid` (a static SVG dot-pattern background, `currentColor`-themed), `FlowDiagram` (the AI section's 3-node "data → AI → action" composition), plus `ShowcaseLayout` gaining `eyebrowIcon`/icon-bullets/`tone` props and `PreviewCard`'s header gaining an optional `icon`. No new npm package was added — everything is Tailwind + inline SVG + the existing Lucide icon set already in the project.
+**Why:** Phase 13.6 §19 required stopping to ask before adding any heavy dependency; none of the requested enhancements (icon framing, restrained transparency/depth, section differentiation, an AI flow diagram) needed one. Centralizing the icon-frame/dot-grid/flow-diagram patterns as named components (rather than repeating inline markup in all 7 showcases) is what Phase 13.6 §12 asked for ("centralize and document" any new marketing-only visual pattern) applied to graphics as well as tokens.
+
+### D-058 — Layered Hero depth: a backdrop fragment + a floating signal chip, both as siblings of the overflow-hidden card
+**Date:** 2026-10-05
+**Decision:** `HeroProductPreview` gained two purely decorative elements: a second, smaller, lower-opacity card peeking out behind the main one (rotated ±2°, mirrors with `tiltSign` in RTL), and a small floating "N need attention" chip overlapping the card's top edge (the count is just a client-side filter over the same `briefItems` prop already passed in — no new data source). Both are rendered as **siblings** of the main `overflow-hidden` card, not children of it, positioned via a `relative` wrapper — a child would be clipped by the card's own `overflow-hidden`.
+**Why:** Phase 13.6 §5/§6 asked for genuine layered/foreground-background composition in the Hero specifically, not just a single flat tilted card. Keeping both elements `aria-hidden` and deriving the chip's count from existing props (not a new selector call) keeps this strictly presentational — no new business logic, per Phase 13.6 §18's explicit constraint.
+
+### D-059 — Directional graphics mirror in RTL; pure decoration does not
+**Date:** 2026-10-05
+**Decision:** `FlowDiagram`'s connector arrow is flipped (`rtl:-scale-x-100`) and its node order auto-reverses under `dir="rtl"` via normal flex-row mirroring, since it represents a real directional relationship (workspace data flows into the AI, the AI produces the action). The `IconFrame` icons used for bullets/headers do **not** mirror — they're pure decoration with no directional meaning, so Phase 13.6 §16's "pure decorative geometry does not need mechanical mirroring" applies directly; same for `DotGrid` (a symmetric pattern with nothing to mirror).
+**Why:** Found and fixed during Phase 13.6 RTL visual verification: without the arrow flip, the flow diagram's node order reversed correctly (right-to-left reading order) but the arrow glyph kept pointing in its original direction, contradicting the new node order. This is the one Phase 13.6 §16 "document any deliberate exception" case — everything else in the new graphic layer is non-directional and intentionally left unmirrored.
+
+### D-060 — `next build`'s `fonts.googleapis.com` gap recurred intermittently; not resolved this phase
+**Date:** 2026-10-05
+**Decision:** The network gap documented in Phases 11/12 and marked resolved in Phase 13 (D-051) **recurred** during Phase 13.6 — `next build` failed again with the identical `fonts.googleapis.com` connection-timeout, re-confirmed via direct `curl` (that host times out; `api.github.com`/`registry.npmjs.org` remain reachable, ruling out a general network outage). Retried twice, several seconds apart, same result both times. No font-architecture change was made. `tsc`, `eslint`, the full test suite, `npm run validate:data`, and a whole-app route smoke check against a live dev server all passed cleanly.
+**Why:** This network path is evidently intermittent in this sandbox (confirmed reachable during Phase 13.5 by two independent clean builds, confirmed unreachable again now) rather than permanently fixed or permanently broken. Per the standing instruction across Phases 11-13.6, this is logged honestly as "not currently verifiable" rather than either claiming a pass that didn't happen or re-opening D-051 as if Phase 13's resolution were itself wrong — it was genuinely resolved *then*; the network changed again since.
+
+---
+
 ## Open
 
-As of 2026-10-05: none outstanding. D-033 through D-056 are all resolved above.
+As of 2026-10-05: `next build` could not be re-confirmed during Phase 13.6 due to the intermittent `fonts.googleapis.com` gap (D-060) — re-run it on a future session/environment with network access to confirm, but do not block further work on it; every other validation passed. D-033 through D-060 are otherwise all resolved above.
 
 ---
 
