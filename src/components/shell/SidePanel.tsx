@@ -50,7 +50,13 @@ export function SidePanel({
         side={endSide}
         showOverlay={isMobile}
         className={cn(
-          "w-full sm:max-w-sm",
+          // Phase 16 finding: a plain "w-full" here loses to the base
+          // Sheet primitive's own `data-[side=left/right]:w-3/4` (a
+          // data-attribute selector outranks a plain class of equal
+          // specificity), so on mobile the panel silently rendered at
+          // 3/4 width instead of full-screen. Matching the same
+          // data-attribute-variant syntax restores full-screen mobile.
+          "data-[side=left]:w-full data-[side=right]:w-full sm:data-[side=left]:max-w-sm sm:data-[side=right]:max-w-sm",
           // Desktop/tablet only: stay below the topbar's z-40 (Topbar.tsx)
           // so the topbar's own trigger buttons remain clickable above a
           // non-modal panel docked at the same screen edge. Mobile keeps

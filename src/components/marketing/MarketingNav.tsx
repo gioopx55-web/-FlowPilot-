@@ -83,7 +83,14 @@ export function MarketingNav() {
               <Menu className="size-5" aria-hidden="true" />
             </Button>
           </SheetTrigger>
-          <SheetContent side={endSide} className="w-full sm:max-w-xs">
+          <SheetContent
+            side={endSide}
+            // Phase 16 finding: see SidePanel.tsx's identical fix — a
+            // plain "w-full" loses to the base Sheet primitive's own
+            // `data-[side=left/right]:w-3/4` (attribute selector beats
+            // a plain class of equal specificity).
+            className="data-[side=left]:w-full data-[side=right]:w-full sm:data-[side=left]:max-w-xs sm:data-[side=right]:max-w-xs"
+          >
             <SheetHeader>
               <SheetTitle>FlowPilot AI</SheetTitle>
             </SheetHeader>

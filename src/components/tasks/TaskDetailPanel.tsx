@@ -37,7 +37,16 @@ export function TaskDetailPanel({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side={endSide} className="w-full sm:max-w-lg">
+      <SheetContent
+        side={endSide}
+        // Phase 16 finding: a plain "w-full" loses to the base Sheet
+        // primitive's own `data-[side=left/right]:w-3/4` (a
+        // data-attribute selector outranks a plain class of equal
+        // specificity) — the docblock's "full-screen on mobile" claim
+        // was not actually true until this matched the same
+        // data-attribute-variant syntax (see SidePanel.tsx's identical fix).
+        className="data-[side=left]:w-full data-[side=right]:w-full sm:data-[side=left]:max-w-lg sm:data-[side=right]:max-w-lg"
+      >
         <SheetHeader>
           <SheetTitle>Task</SheetTitle>
         </SheetHeader>
