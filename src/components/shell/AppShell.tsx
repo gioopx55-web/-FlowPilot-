@@ -8,6 +8,7 @@ import { MobileNav } from "@/components/shell/MobileNav";
 import { SidePanel } from "@/components/shell/SidePanel";
 import { PanelProvider, useShellPanels } from "@/components/shell/panel-context";
 import { getPageTitle } from "@/components/shell/nav-config";
+import { AIPanelContent } from "@/components/ai/AIPanelContent";
 
 /**
  * Shared application shell — Phase 2 §11.1-11.3/§11.11-11.13, Phase 5 §9.
@@ -45,13 +46,9 @@ function ShellLayout({ children }: { children: React.ReactNode }) {
         open={openPanelId === "ai"}
         onOpenChange={(open) => (open ? undefined : closePanel())}
         title="AI Assistant"
-        description="Daily Brief, risk, and workload insights — coming in a later phase."
+        description="Daily Brief, risk, overdue tasks, follow-ups, and workload — grounded in your current workspace data."
       >
-        <p className="text-sm text-muted-foreground">
-          The AI Assistant panel foundation is in place. Business logic
-          (Daily Brief, overdue/at-risk queries, workload analysis) ships
-          in a later phase, per the approved V1 AI scope.
-        </p>
+        <AIPanelContent />
       </SidePanel>
 
       <SidePanel

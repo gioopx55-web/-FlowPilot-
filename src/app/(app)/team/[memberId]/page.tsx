@@ -12,6 +12,7 @@ import { Section } from "@/components/primitives/Section";
 import { EmptyState } from "@/components/primitives/EmptyState";
 import { MemberWorkloadExplanation } from "@/components/team/MemberWorkloadExplanation";
 import { MemberAssignmentsView } from "@/components/team/MemberAssignmentsView";
+import { TeamMemberAIActions } from "@/components/ai/TeamMemberAIActions";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -45,9 +46,12 @@ export default async function TeamMemberDetailPage({
 
   return (
     <div className="mx-auto max-w-[1440px] space-y-8 px-4 py-6 sm:px-6 lg:px-8">
-      <div>
-        <h1 className="text-lg font-semibold text-foreground">{detail.member.name}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{detail.member.jobTitle}</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-lg font-semibold text-foreground">{detail.member.name}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{detail.member.jobTitle}</p>
+        </div>
+        <TeamMemberAIActions memberId={detail.member.id} memberName={detail.member.name} />
       </div>
 
       <Section title="Workload">

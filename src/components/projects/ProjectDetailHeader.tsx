@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Client, Project } from "@/types/entities";
 import type { ProjectRiskResult } from "@/domain/risk/risk";
 import { RiskBadge } from "@/components/primitives/RiskBadge";
+import { ProjectAIActions } from "@/components/ai/ProjectAIActions";
 import { formatShortDate } from "@/lib/format";
 import { PROJECT_STATUS_LABEL } from "@/components/projects/projectLabels";
 
@@ -57,7 +58,10 @@ export function ProjectDetailHeader({
           </p>
         </div>
 
-        <RiskBadge risk={risk} />
+        <div className="flex items-center gap-2">
+          <RiskBadge risk={risk} />
+          <ProjectAIActions projectId={project.id} />
+        </div>
       </div>
     </header>
   );

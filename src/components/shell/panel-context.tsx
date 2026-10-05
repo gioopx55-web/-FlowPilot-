@@ -1,14 +1,26 @@
 "use client";
 
 import * as React from "react";
+import type { AIIntentId, AIScope } from "@/domain/ai/intents";
 
 export type ShellPanelId = "ai" | "notifications";
+
+export interface AIPendingRequest {
+  intentId: AIIntentId;
+  scope?: AIScope;
+  /** The pseudo "user question" text shown in the conversation for this contextual request. */
+  label: string;
+}
 
 interface PanelContextValue {
   openPanelId: ShellPanelId | null;
   openPanel: (id: ShellPanelId) => void;
   closePanel: () => void;
   togglePanel: (id: ShellPanelId) => void;
+  /** Set by a contextual AI entry point (e.g. Project Detail's "Explain risk"); consumed once by the AI panel then cleared. */
+  aiPendingRequest: AIPendingRequest | null;
+  openAIWithRequest: (request: AIPendingRequest) => void;
+  clearAIPendingRequest: () => void;
 }
 
 const PanelContext = React.createContext<PanelContextValue | null>(null);
@@ -22,6 +34,7 @@ export function PanelProvider({ children }: { children: React.ReactNode }) {
   const [openPanelId, setOpenPanelId] = React.useState<ShellPanelId | null>(
     null,
   );
+  const [aiPendingRequest, setAIPendingRequest] = React.useState<AIPendingRequest | null>(null);
 
   const openPanel = React.useCallback(
     (id: ShellPanelId) => setOpenPanelId(id),
@@ -33,10 +46,23 @@ export function PanelProvider({ children }: { children: React.ReactNode }) {
       setOpenPanelId((current) => (current === id ? null : id)),
     [],
   );
+  const openAIWithRequest = React.useCallback((request: AIPendingRequest) => {
+    setAIPendingRequest(request);
+    setOpenPanelId("ai");
+  }, []);
+  const clearAIPendingRequest = React.useCallback(() => setAIPendingRequest(null), []);
 
   const value = React.useMemo(
-    () => ({ openPanelId, openPanel, closePanel, togglePanel }),
-    [openPanelId, openPanel, closePanel, togglePanel],
+    () => ({
+      openPanelId,
+      openPanel,
+      closePanel,
+      togglePanel,
+      aiPendingRequest,
+      openAIWithRequest,
+      clearAIPendingRequest,
+    }),
+    [openPanelId, openPanel, closePanel, togglePanel, aiPendingRequest, openAIWithRequest, clearAIPendingRequest],
   );
 
   return <PanelContext.Provider value={value}>{children}</PanelContext.Provider>;
