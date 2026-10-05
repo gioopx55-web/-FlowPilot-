@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import {
   Sheet,
   SheetContent,
@@ -34,6 +35,20 @@ export function TaskDetailPanel({
 }) {
   const { dir } = getLocale();
   const endSide = dir === "rtl" ? "left" : "right";
+
+  // Phase 17 finding: opened via a `?task=` query-param change (a task
+  // row/card button, not a Radix Trigger), so Radix's own focus-restore
+  // bookkeeping never captures it — closing (e.g. Escape) otherwise
+  // drops focus to <body>. Same self-contained fix as SidePanel.tsx.
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (open) {
+      previouslyFocusedRef.current = document.activeElement as HTMLElement;
+    } else if (previouslyFocusedRef.current) {
+      previouslyFocusedRef.current.focus();
+      previouslyFocusedRef.current = null;
+    }
+  }, [open]);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>

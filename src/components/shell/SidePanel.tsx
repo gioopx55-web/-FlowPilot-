@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import {
   Sheet,
   SheetContent,
@@ -43,6 +43,22 @@ export function SidePanel({
   const { dir } = getLocale();
   const endSide = dir === "rtl" ? "left" : "right";
   const isMobile = useIsMobile();
+
+  // Phase 17 finding: Radix only auto-restores focus to the trigger for
+  // *modal* dialogs — this panel is non-modal on desktop/tablet (D-032),
+  // so closing it (e.g. via Escape) otherwise drops focus to <body>
+  // with no restoration at all. Track the element that had focus when
+  // the panel opened (always the trigger button) and restore it
+  // ourselves on close, regardless of modal state.
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (open) {
+      previouslyFocusedRef.current = document.activeElement as HTMLElement;
+    } else if (previouslyFocusedRef.current) {
+      previouslyFocusedRef.current.focus();
+      previouslyFocusedRef.current = null;
+    }
+  }, [open]);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange} modal={isMobile}>
