@@ -1,32 +1,61 @@
+import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { RevealOnScroll } from "@/components/marketing/RevealOnScroll";
+import { IconFrame } from "@/components/marketing/IconFrame";
+import { DotGrid } from "@/components/marketing/DotGrid";
 import { cn } from "@/lib/utils";
+
+export interface ShowcaseBullet {
+  icon: LucideIcon;
+  text: string;
+}
 
 /**
  * The shared two-column "copy + real product visual" layout every
  * feature section uses (Phase 13.5 §3/§20) — alternates sides via
  * `reverse` for visual rhythm down the page, same reveal-on-scroll
- * treatment everywhere via `RevealOnScroll`.
+ * treatment everywhere via `RevealOnScroll`. Phase 13.6 adds
+ * restrained per-section differentiation (Phase 13.6 §7) without
+ * seven different layouts: an `IconFrame` per bullet instead of a
+ * plain dot, an optional `eyebrowIcon`, and an alternating `tone`
+ * background so sections read as a sequence, not one component
+ * repeated — the dot-grid motif appears only on `tone="surface"`
+ * sections, at very low opacity, so it registers as rhythm rather
+ * than noise.
  */
 export function ShowcaseLayout({
   id,
   eyebrow,
+  eyebrowIcon: EyebrowIcon,
   title,
   description,
   bullets,
   visual,
   reverse = false,
+  tone = "canvas",
 }: {
   id?: string;
   eyebrow: string;
+  eyebrowIcon?: LucideIcon;
   title: string;
   description: string;
-  bullets?: string[];
+  bullets?: ShowcaseBullet[];
   visual: ReactNode;
   reverse?: boolean;
+  tone?: "canvas" | "surface";
 }) {
   return (
-    <section id={id} className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+    <section
+      id={id}
+      className={cn(
+        "relative overflow-hidden px-4 py-16 sm:px-6 sm:py-20 lg:px-8",
+        tone === "surface" && "bg-[var(--fp-bg-surface)]",
+      )}
+    >
+      {tone === "surface" && (
+        <DotGrid className="pointer-events-none absolute inset-0 -z-10 text-border/40" />
+      )}
+
       <div
         className={cn(
           "mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-2 lg:gap-16",
@@ -34,7 +63,8 @@ export function ShowcaseLayout({
         )}
       >
         <RevealOnScroll className="min-w-0">
-          <span className="text-xs font-semibold tracking-wide text-[var(--fp-accent)] uppercase">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-wide text-[var(--fp-accent)] uppercase">
+            {EyebrowIcon && <EyebrowIcon className="size-3.5" aria-hidden="true" />}
             {eyebrow}
           </span>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
@@ -42,14 +72,11 @@ export function ShowcaseLayout({
           </h2>
           <p className="mt-3 text-base text-muted-foreground">{description}</p>
           {bullets && bullets.length > 0 && (
-            <ul className="mt-5 space-y-2.5">
+            <ul className="mt-5 space-y-3">
               {bullets.map((bullet) => (
-                <li key={bullet} className="flex items-start gap-2 text-sm text-foreground">
-                  <span
-                    className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[var(--fp-accent)]"
-                    aria-hidden="true"
-                  />
-                  {bullet}
+                <li key={bullet.text} className="flex items-center gap-2.5 text-sm text-foreground">
+                  <IconFrame icon={bullet.icon} />
+                  {bullet.text}
                 </li>
               ))}
             </ul>
