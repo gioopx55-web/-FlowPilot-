@@ -12,6 +12,7 @@ import {
   type TaskMutationResult,
 } from "@/domain/taskMutations";
 import { resetClientOverrides } from "@/domain/clientMutations";
+import { resetSettingsOverrides } from "@/domain/settingsMutations";
 
 /**
  * Next.js Server Action glue (thin — all real logic lives in
@@ -60,9 +61,10 @@ export async function updateTaskFieldsAction(
   return result;
 }
 
-/** Resets ALL demo-state overrides (tasks + Phase 10 client edits/added interactions). */
+/** Resets ALL demo-state overrides (tasks + Phase 10 client edits/added interactions + Phase 14 settings). */
 export async function resetDemoDataAction(): Promise<void> {
   resetTaskOverrides();
   resetClientOverrides();
+  resetSettingsOverrides();
   revalidateEverything();
 }

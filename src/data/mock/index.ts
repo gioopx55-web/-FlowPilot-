@@ -11,6 +11,7 @@ import { withDerivedClientFields } from "@/domain/clients/deriveClientFields";
 import { validateDemoDataset, type DemoDataset } from "@/domain/validation";
 import { applyTaskOverride } from "@/domain/taskMutations";
 import { applyClientOverride, getAddedInteractions } from "@/domain/clientMutations";
+import { applyUserOverride } from "@/domain/settingsMutations";
 
 export type { DemoDataset };
 export { WORKSPACE_ID };
@@ -80,6 +81,7 @@ export function getDemoDataset(): DemoDataset {
   );
   return {
     ...base,
+    users: base.users.map(applyUserOverride),
     tasks: base.tasks.map(applyTaskOverride),
     clients,
     clientInteractions,
