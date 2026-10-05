@@ -45,7 +45,7 @@ export function KanbanCard({
         <button
           type="button"
           onClick={() => onOpen(task.id)}
-          className="rounded-sm text-start font-medium text-foreground outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/70"
+          className="-my-3 rounded-sm py-3 text-start font-medium text-foreground outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/70"
         >
           {task.title}
         </button>
