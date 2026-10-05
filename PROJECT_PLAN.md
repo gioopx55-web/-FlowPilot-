@@ -1178,6 +1178,36 @@ The complete Team module: `/team` (filterable/sortable dense list, default sort 
 
 **Known limitation (carried over from Phase 11, re-verified, not resolved):** `next build` still fails with the identical `fonts.googleapis.com` connection-timeout error (re-confirmed via direct `curl`: that host times out while `api.github.com`/`registry.npmjs.org` return 200) — this environment still has no network route to it. Not a Team regression; `tsc`, `eslint`, the full test suite, and a live Turbopack dev server serving every route with zero console errors are the evidence of correctness in its place, exactly as documented for Phase 11. No change was made to the font architecture to work around this.
 
+## 29. Phase 13 — AI Assistant (IMPLEMENTED)
+
+The complete V1 AI Assistant experience, built on the existing Phase 5 global side-panel architecture — no new route, no real LLM/API.
+
+**No new route, reused panel architecture:** the AI Assistant opens via the existing Topbar trigger and `SidePanel` (Phase 5) — docked on desktop/tablet, full-screen sheet on mobile, mutually exclusive with Notifications (D-014), underlying page context preserved. `AppShell.tsx`'s placeholder AI panel content was replaced with the real `AIPanelContent`.
+
+**Finite deterministic intent system (D-048):** `domain/ai/intents.ts` defines exactly 9 supported intents and matches free text against a fixed keyword table — never unrestricted natural-language understanding. Unmatched input returns the exact honest fallback sentence ("I can currently help with project risk, overdue tasks, client follow-up, workload, and weekly summaries."), never a guessed or fabricated answer. Entity name resolution (D-049) matches a project's/member's full name or any individual name word by whole-word match — found and fixed a real bug where "why is Sana overloaded?" (first name only) fell through to the unscoped answer.
+
+**One data source, zero new business logic:** `executeIntent.ts` and the 4 detail builders (`projectSummary.ts`/`projectRiskExplanation.ts`/`workloadExplanation.ts`/`weeklyReport.ts`) are pure orchestration over existing selectors — `getDailyBriefItems` (Phase 7, reused directly, proven byte-identical to the Dashboard's own Daily Brief by `executeIntent.test.ts`), `getOverdueTasksSorted`/`getAtRiskProjectsSorted`/`getClientsNeedingFollowUpSorted`/`getTeamWorkloadSnapshot` (Phase 7), `getProjectRisk`/`getProjectTaskSummary`/`getProjectAssignedMembers`/`getProjectActivity` (Phase 8), `getTeamMemberDetail`/`getMemberWorkloadContributors` (Phase 12). Risk explanations use `computeProjectRisk`'s exact conditions via `RISK_CONDITION_LABELS` — never paraphrased.
+
+**Structured, linked answers:** every answer is an already-shaped `AIAnswer` (list rows or a detail object) rendered by dumb components (`AIResultList` + 4 detail cards) — nothing in `components/ai/` computes business state. Every row/card links to the real record (`/projects/:id`, `/tasks/:id`, `/clients/:id`, `/team/:id`). The workload explanation card (`AIWorkloadExplanationCard`) literally reuses Team Member Detail's own `MemberWorkloadExplanation` component (Phase 12) — the AI's answer and the Team page can never disagree because they're the same component.
+
+**Contextual entry points (Phase 13 §12):** Project Detail gained "Summarize"/"Explain risk" buttons (`ProjectAIActions`); Team Member Detail gained "Explain workload" (`TeamMemberAIActions`). Both open the one global AI panel pre-scoped via a new `aiPendingRequest` on `panel-context.tsx`, consumed once (a `useRef` guard prevents React Strict Mode's dev-only double-invoke from double-appending the answer — found and fixed during visual verification). Client Detail intentionally got no contextual AI button, per the brief's explicit "Draft/update assistance remains P1."
+
+**Conversation state (D-048):** plain `useState` inside `AIPanelContent` — a lightweight, current-session-only history that resets on reload. Nothing uses the `AIConversation`/`AIMessage` entities or the D-039 demo-state layer; V1 doesn't need chat history to survive a reload.
+
+**Honest demo disclosure (Phase 13 §14):** one line at the top of the panel — "Demo AI — powered by workspace rules, not a live model." — not repeated elsewhere.
+
+**No composing delay (D-050):** answers render as soon as the Server Action resolves; the brief explicitly discouraged faking latency for a deterministic V1.
+
+**Mutable-state integration, proven:** `ai.integration.test.ts` — reassigning a task changes both members' workload answers; completing overdue tasks clears a project's risk explanation; resolving a blocker shrinks the risk explanation's linked blocked-tasks list; adding a client interaction removes that client from the follow-up answer; resetting overrides returns every answer to fixture-derived values.
+
+**No feature creep:** no real AI API, no autonomous actions, no email/Slack/calendar actions, no vector search, no AI-driven project/task creation, no multi-chat history manager.
+
+**Tests:** `intents.test.ts` (13), `executeIntent.test.ts` (13, including the Daily Brief/Dashboard consistency proof), `ai.integration.test.ts` (5) — 31 new tests.
+
+**Verified:** `tsc --noEmit` and `eslint` clean. Full test suite 142/142 (31 new, zero regressions). `npm run validate:data` clean. Whole-app route smoke check all 200. **`next build` passed** — run twice, including once from a fully clean `.next`, both successful (D-051: the Phase 11/12 `fonts.googleapis.com` network gap has resolved on its own; no font-architecture change was made). Playwright: landing state, all 5 quick actions, free-text queries (supported and unsupported), both contextual entry points, multi-turn conversation, "Clear conversation," desktop light/dark/RTL, tablet, mobile (full-screen sheet, no horizontal overflow), `prefers-reduced-motion: reduce`, and AI/Notifications mutual exclusivity — all zero console errors. One real bug found and fixed during verification (the Strict-Mode double-append above); the entity name-matching bug (D-049) was caught by the test suite before visual verification even started.
+
+**Known limitations:** none carried forward — the build gap from Phases 11-12 is resolved.
+
 ## 25. Phase Roadmap (corrected — see DECISIONS.md D-024)
 
 - **Phase 1 — Product Definition & V1 Scope:** ✅ Approved, all open items resolved.
@@ -1190,6 +1220,7 @@ The complete Team module: `/team` (filterable/sortable dense list, default sort 
 - **Phase 8 — Projects:** ✅ IMPLEMENTED 2026-10-04 (see §22).
 - **Phase 9 — Tasks / Kanban:** ✅ IMPLEMENTED 2026-10-04 (see §24).
 - **Phase 10 — Clients / CRM:** ✅ IMPLEMENTED 2026-10-04 (see §26).
-- **Phase 11 — Analytics:** ✅ IMPLEMENTED 2026-10-04 (see §27; `next build` network-limited, see §27's known limitation).
-- **Phase 12 — Team:** ✅ IMPLEMENTED 2026-10-04 (see §28; `next build` still network-limited, re-verified not resolved).
-- **Phase 13+ — TBD**, not yet proposed.
+- **Phase 11 — Analytics:** ✅ IMPLEMENTED 2026-10-04 (see §27).
+- **Phase 12 — Team:** ✅ IMPLEMENTED 2026-10-04 (see §28).
+- **Phase 13 — AI Assistant:** ✅ IMPLEMENTED 2026-10-05 (see §29; `next build` network gap from Phases 11-12 now resolved, D-051).
+- **Phase 14+ — TBD**, not yet proposed.

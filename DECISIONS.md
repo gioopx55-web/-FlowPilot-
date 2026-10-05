@@ -251,11 +251,31 @@ All changes verified in both light and dark themes after the fix. Primary text, 
 **Decision:** The Team list has no active/inactive filter control, and weekly capacity is read-only everywhere in Phase 12.
 **Why:** Every Phase 6 fixture team member has `active: true` — an active/inactive filter would never actually filter anything, which the brief explicitly calls out as adding a control "solely for visual completeness" (Phase 12 §11). Capacity editing was explicitly gated behind "don't add it automatically... if it would create scope creep, keep it read-only" (Phase 12 §12); nothing in this phase's actual requirements needed it, so it was left out rather than spent on a feature no requirement asked for.
 
+### D-048 — AI Assistant orchestration: a finite deterministic intent layer behind a read-only Server Action
+**Date:** 2026-10-05
+**Decision:** `domain/ai/` holds the entire AI "brain": `intents.ts` (the 9-intent union, the 5 approved quick actions, and `matchFreeText` — a fixed keyword-table matcher, never a model call), `executeIntent.ts` (runs one intent against live selectors and returns an already-structured `AIAnswer`), and `projectSummary.ts`/`projectRiskExplanation.ts`/`workloadExplanation.ts`/`weeklyReport.ts` (one builder per detail-style answer, each pure orchestration over existing Phase 7-12 selectors — no new risk/workload/follow-up math anywhere in this directory). `lib/aiActions.ts` is the one Server Action boundary (`runAIIntentAction`/`runAIQueryAction`), mirroring the existing `taskActions.ts`/`clientActions.ts` pattern; it calls no `revalidatePath` since the AI only reads current state and never mutates it.
+**Why:** Keeps "React components should not contain business reasoning" (Phase 13 §23) literally true — `components/ai/*` only renders an already-shaped `AIAnswer`, never decides what counts as "at risk" or matches user intent. Using a Server Action rather than calling `domain/ai/*` directly from the client panel matches the established client/server boundary every other interactive feature (Phase 9/10 mutations) already uses, instead of introducing a one-off "call selectors straight from a client component" pattern.
+
+### D-049 — Free-text entity matching: full name OR any individual name word, word-boundary only
+**Date:** 2026-10-05
+**Decision:** `matchFreeText`'s project/team-member name resolution (`domain/ai/intents.ts`) matches a real entity's full name, or any individual word of that name at least 3 characters long, as a whole word (`\bword\b`) — never a bare substring. A project-/member-scoped intent with no name found in the text falls back to the panel's current `activeScope` only if the text doesn't name a different entity; otherwise it returns `needsScope` with an honest message, never a guessed record.
+**Why:** The first implementation matched only a user's exact full name (e.g. "Sana Iyer"), so "why is Sana overloaded?" — the natural way someone would actually type it — silently fell through to the generic, unscoped `workload_analysis` answer instead of the scoped explanation. Found via Phase 13's own intent tests before this reached visual verification. Whole-word matching (not substring) avoids the opposite failure mode — a short name word accidentally matching inside an unrelated longer word.
+
+### D-050 — No artificial "composing" delay
+**Date:** 2026-10-05
+**Decision:** The AI panel renders an answer as soon as the Server Action resolves — no `setTimeout`-based "Thinking…" delay was added. The input/quick actions disable for the (genuinely brief) duration of the actual async call via `useTransition`, which is the only latency a user ever sees.
+**Why:** Phase 13 §16 made a composing state explicitly optional ("may be used... if useful") and explicitly warned against intentionally delaying responses — V1 is deterministic and the computation is already near-instant, so adding fake latency would work against the Phase 13 §14 honesty requirement (this is rule-based output, not a model "thinking") for no real UX benefit.
+
+### D-051 — Phase 11/12 `next build` network gap: RESOLVED, re-verified passing
+**Date:** 2026-10-05
+**Decision:** The `fonts.googleapis.com` connection-timeout documented at the end of Phase 11 and re-confirmed unresolved at the end of Phase 12 is now resolved. `next build` was run twice during Phase 13 — once mid-phase, once from a fully clean `rm -rf .next` — and both completed successfully, generating the full expected route tree. No font-architecture change was made; the environment's network access to that host returned on its own (confirmed separately: `curl` to `fonts.googleapis.com` now returns a real HTTP response instead of a connection timeout).
+**Why:** Per the explicit standing instruction across Phases 11-13 ("do not mark it resolved unless `next build` actually passes"), this is logged only now that two independent clean builds have actually succeeded — not on the first sign the network might be back.
+
 ---
 
 ## Open
 
-As of 2026-10-04: none outstanding. D-033 through D-047 are all resolved above.
+As of 2026-10-05: none outstanding. D-033 through D-051 are all resolved above.
 
 ---
 
