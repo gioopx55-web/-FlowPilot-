@@ -1208,6 +1208,36 @@ The complete V1 AI Assistant experience, built on the existing Phase 5 global si
 
 **Known limitations:** none carried forward — the build gap from Phases 11-12 is resolved.
 
+## 30. Phase 13.5 — Public Landing Page (IMPLEMENTED)
+
+The public marketing experience — `/` is now a premium Landing Page, structurally separate from the authenticated app shell under `(app)`.
+
+**Route/layout architecture (D-052):** `src/app/page.tsx` (previously `redirect("/dashboard")`) renders the Landing Page using only the root layout's existing theme/locale/font/skip-link setup — no `AppShell`, no sidebar/topbar. Every `(app)` route is unchanged. CTAs are the one entry point into the real demo (`/dashboard`).
+
+**Sections (Phase 13.5 §3):** `MarketingNav`, `Hero` + `HeroProductPreview`, `DashboardShowcase` (the fuller At-Risk/Overdue proof section), then 7 feature showcases via a shared `ShowcaseLayout` (`AttentionShowcase`, `RiskShowcase`, `KanbanShowcase`, `ClientShowcase`, `TeamShowcase`, `AIShowcase`, `AnalyticsShowcase`), `FinalCTA`, `MarketingFooter`.
+
+**Motion system (D-053):** `motion` (`^14.0.0`) — scroll-reveal (`RevealOnScroll`, `StaggerGroup`/`StaggerItem`) and the Hero's scroll-driven tilt. The nav's scroll-triggered background uses a plain scroll listener + CSS transition, not Motion, since a single threshold needs nothing more.
+
+**Depth/3D (D-054):** a CSS-perspective tilt on the Hero product preview only (`rotateX`/`rotateY` settling flat as the hero scrolls past) — no 3D library, no other section attempts depth.
+
+**Truthful previews (D-055):** every showcase reads the SAME domain selectors and renders the SAME primitive components the authenticated app uses, against the CURRENT demo workspace's real data — not a separate marketing fixture set. `AttentionShowcase` renders the real `DailyBrief` component unmodified. Two documented, narrow exceptions: the Hero's glance-tiles use plain `Badge` chips instead of the full `RiskBadge`/`WorkloadBadge` (D-056), and `AnalyticsShowcase`'s workload bars are a small CSS-only visualization rather than importing the Recharts-based `WorkloadDistributionChart`, keeping Recharts out of the public bundle entirely.
+
+**Reduced motion:** every motion primitive checks `useReducedMotion` (the same hook Phase 11 built) and renders final-state content immediately with no transform, verified by a full-page reduced-motion screenshot showing complete, correctly laid-out content.
+
+**Responsive:** mobile prioritizes headline/CTA, the Kanban preview scrolls horizontally within its own contained box (not the page), no horizontal page overflow anywhere (verified via `document.documentElement.scrollWidth`).
+
+**RTL:** verified live — nav, hero, CTAs, mini-cards, showcase copy/visual order, and the Kanban/follow-up/workload rows all mirror correctly with no hardcoded left/right; English product terms inside RTL truncate from their logical end per standard browser behavior, consistent with the rest of the app.
+
+**Real bugs found and fixed (D-056):** a `ConditionsDisclosure` button-shrinking bug (`shrink-0` added, a corrective fix to the shared primitive with no effect on any existing wider usage), a `RiskBadge`-in-a-180px-tile overflow (the Hero's two glance-tiles simplified to plain badges instead), and a CSS Grid width-blowout causing real mobile horizontal scroll (`min-w-0` added to 3 grid layouts' direct children).
+
+**Performance:** transform/opacity-only animation throughout; no images; no Recharts on `/`; `/` prerenders statically (`next build` confirms `○` for `/`); zero console/page errors across every verification pass.
+
+**No feature creep:** no pricing/checkout, no CMS/blog, no fake testimonials/logos/stats, no production signup backend, no new AI features, no 3D game-like scene, no video pipeline.
+
+**Verified:** `tsc --noEmit`, `eslint` clean. Full existing test suite 142/142 (no new tests needed — no new business logic was added, only presentation). `npm run validate:data` clean. `next build` passes, `/` statically prerendered. Whole-app route smoke check all 200 (`/`, `/dashboard`, `/projects`, `/tasks`, `/clients`, `/team`, `/analytics`, `/settings`, `/login`). CTA-to-demo navigation confirmed end-to-end. Playwright visual verification: full scroll sweep desktop light/dark, full RTL sweep (hero + scrolled sections), mobile (hero, mobile nav menu, no overflow), tablet, and a complete reduced-motion pass — zero console errors throughout.
+
+**Known limitations:** none.
+
 ## 25. Phase Roadmap (corrected — see DECISIONS.md D-024)
 
 - **Phase 1 — Product Definition & V1 Scope:** ✅ Approved, all open items resolved.
@@ -1223,4 +1253,5 @@ The complete V1 AI Assistant experience, built on the existing Phase 5 global si
 - **Phase 11 — Analytics:** ✅ IMPLEMENTED 2026-10-04 (see §27).
 - **Phase 12 — Team:** ✅ IMPLEMENTED 2026-10-04 (see §28).
 - **Phase 13 — AI Assistant:** ✅ IMPLEMENTED 2026-10-05 (see §29; `next build` network gap from Phases 11-12 now resolved, D-051).
+- **Phase 13.5 — Public Landing Page:** ✅ IMPLEMENTED 2026-10-05 (see §30).
 - **Phase 14+ — TBD**, not yet proposed.

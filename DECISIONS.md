@@ -271,11 +271,39 @@ All changes verified in both light and dark themes after the fix. Primary text, 
 **Decision:** The `fonts.googleapis.com` connection-timeout documented at the end of Phase 11 and re-confirmed unresolved at the end of Phase 12 is now resolved. `next build` was run twice during Phase 13 — once mid-phase, once from a fully clean `rm -rf .next` — and both completed successfully, generating the full expected route tree. No font-architecture change was made; the environment's network access to that host returned on its own (confirmed separately: `curl` to `fonts.googleapis.com` now returns a real HTTP response instead of a connection timeout).
 **Why:** Per the explicit standing instruction across Phases 11-13 ("do not mark it resolved unless `next build` actually passes"), this is logged only now that two independent clean builds have actually succeeded — not on the first sign the network might be back.
 
+### D-052 — Public Landing Page: `/` is now marketing, not a dashboard redirect; app shell untouched
+**Date:** 2026-10-05
+**Decision:** `src/app/page.tsx` (previously `redirect("/dashboard")`) is now the public Landing Page. It renders outside the `(app)` route group — no `AppShell`, no sidebar/topbar — using only the root layout's existing theme/locale/font/skip-link setup, which it inherits automatically. Every authenticated route (`/dashboard`, `/projects`, `/tasks`, `/clients`, `/team`, `/analytics`, etc.) is unchanged; nothing in `components/shell/` was touched. The CTA buttons are the only link from `/` into the app (`/dashboard`).
+**Why:** Phase 13.5 required the public marketing experience to not interfere with the application shell, and for the app to remain calm/motion-restrained while the Landing Page is free to use premium motion. Keeping them as two structurally separate route trees (new `components/marketing/*`, zero shared composition with `components/shell/*`) makes that boundary enforced by the file structure itself, not just a styling convention.
+
+### D-053 — Motion (`motion` npm package) is the one animation library; CSS-only depth preferred everywhere it was sufficient
+**Date:** 2026-10-05
+**Decision:** Installed `motion` (`^14.0.0`, the unified successor to Framer Motion, `motion/react` import) — pre-approved by the Phase 13.5 brief. It is used only for: scroll-reveal (`RevealOnScroll`, `StaggerGroup`/`StaggerItem` — `whileInView` + `viewport:{once:true}`) and the Hero product preview's scroll-driven tilt (`useScroll`/`useTransform` on `rotateX`/`rotateY`/`y`). The sticky nav's scroll-triggered background (`MarketingNav`) uses a plain `scroll` event listener + CSS transition, not Motion, since a single boolean threshold needs nothing more. No second animation library was installed.
+**Why:** Matches "if CSS + IntersectionObserver is enough for a specific interaction, do not add complexity unnecessarily" (Phase 13.5 §7) — Motion is reserved for genuinely scroll-progress-linked effects (the reveal pattern repeated ~10 times, and the hero's continuous tilt-to-flat transform), while the nav's simple on/off state uses the cheaper plain-DOM approach.
+
+### D-054 — Lightweight depth: CSS-perspective tilt on the Hero preview only, no 3D library
+**Date:** 2026-10-05
+**Decision:** The only "3D" treatment is a CSS `perspective`/`rotateX`/`rotateY` tilt on the Hero's product-preview card, driven by Motion's `useScroll`/`useTransform` (tilted ~8° at rest, settling flat as the hero scrolls past) — transform/opacity only, no Three.js/WebGL/canvas. Every other showcase visual is a flat bordered card (`PreviewCard`), matching the real app's actual surface styling.
+**Why:** Phase 13.5 §6 explicitly set the default expectation as "lightweight depth illusion, not a heavy 3D scene" and required a strong visual reason before reaching for a real 3D library — one hero moment justified it; six more tilted cards down the page would not have, and would have fought the real app's flat, calm visual language this same page is trying to sell.
+
+### D-055 — Product previews reuse real selectors and real primitive components, not a marketing fixture set
+**Date:** 2026-10-05
+**Decision:** Every showcase visual on the Landing Page is built from the SAME domain selectors and primitive components the authenticated app uses, reading the CURRENT demo workspace's real data at render time — `getDailyBriefItems`, `getAtRiskProjectsSorted`, `getOverdueTasksSorted`, `getClientsNeedingFollowUpSorted`, `getTeamWorkloadSnapshot`, `getOnTimeDeliveryRate`, `getWorkloadDistribution`, `executeAIIntent`, and components `RiskBadge`, `WorkloadBadge`, `FollowUpBadge`, `TaskPriorityBadge`, `OnTimeDeliveryCard`, `AIResultList`, and the real `DailyBrief` component rendered unmodified. The two exceptions, both documented inline: the Hero's two glance-tiles use plain `Badge` chips instead of the full `RiskBadge`/`WorkloadBadge` (D-056), and `AnalyticsShowcase`'s workload-distribution bars are a small CSS-only visualization rather than importing `WorkloadDistributionChart` (to keep Recharts out of the public bundle, Phase 13.5 §8).
+**Why:** The most direct way to satisfy "the preview must reflect the real features already built... cannot invent product functionality" (Phase 13.5 §16) is for the preview to literally be the real computation, not a hand-authored approximation that can drift from the product as it evolves. This also means the Landing Page's product proof updates automatically if the demo dataset ever changes, with no separate marketing content to keep in sync.
+
+### D-056 — Two real bugs found during Phase 13.5 visual verification, both fixed at the shared-primitive level
+**Date:** 2026-10-05
+**Decision:**
+1. `ConditionsDisclosure`'s Popover trigger button (`components/primitives/ConditionsDisclosure.tsx`) gained `shrink-0`. Without it, a flex container narrower than its combined content (the Hero's ~190px glance-tile) shrank the fixed 44×44px button down to its icon's own min-content width (~17px) instead of letting sibling text wrap, visually colliding the button with the badge text. This had never surfaced before because every prior usage (Team list, Dashboard widgets, Team Member Detail) had enough width.
+2. The Hero's two glance-tiles were changed from the full `RiskBadge`/`WorkloadBadge` to plain `Badge` chips (no `ConditionsDisclosure`, no critical-risk reason line). `RiskBadge`'s reason text has a deliberate `max-w-[16rem]` (256px) truncation ceiling that is correct for every wider context it's used in, but is itself wider than the Hero tile's ~180px available content width — even truncated, it still doesn't fit alongside a 44px disclosure button in that specific space.
+3. `min-w-0` was added to the direct children of three `lg:grid-cols-2` layouts (`Hero`'s text/preview columns, `ShowcaseLayout`'s copy/visual columns) — a classic CSS Grid blowout: without it, a grid item's content can force its own track wider than the viewport even though the item visually appears to fit, which only showed up as a real mobile horizontal-scroll bug (document `scrollWidth` 528 vs. a 390px viewport), not as any visible clipping.
+**Why:** All three are documented together because they share a root cause — components built and tested only in wide/established contexts had a latent assumption (enough width) that Phase 13.5's genuinely narrow marketing tiles were the first thing to violate. (1) and (3) are corrective fixes to shared primitives/patterns with no visual change in any existing wider usage; (2) is a one-place simplification of the Hero specifically, consistent with Phase 13.5 §2's explicit allowance to simplify the preview for marketing presentation.
+
 ---
 
 ## Open
 
-As of 2026-10-05: none outstanding. D-033 through D-051 are all resolved above.
+As of 2026-10-05: none outstanding. D-033 through D-056 are all resolved above.
 
 ---
 
