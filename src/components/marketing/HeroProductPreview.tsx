@@ -39,6 +39,13 @@ const WORKLOAD_TONE: Record<string, BadgeTone> = {
  * badge is one click away at `/dashboard`. The lightweight 3D depth
  * (Phase 13.5 §6) is a CSS-perspective tilt at rest that settles flat
  * as the hero scrolls past — no 3D library.
+ *
+ * Phase 17.6: widened `max-w-md` → `max-w-lg` — a stronger, more
+ * immersive focal point per the visual-direction upgrade, paired with
+ * a second, tighter ambient glow layer behind this side of the Hero
+ * (`Hero.tsx`) rather than any change to this component's own depth
+ * treatment, which was already judged sufficient (backdrop fragment +
+ * floating chip + tilt).
  */
 export function HeroProductPreview({
   briefItems,
@@ -95,7 +102,7 @@ export function HeroProductPreview({
         initial={reducedMotion ? undefined : { opacity: 0, y: 32 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0, 0, 0.2, 1] }}
-        className="relative mx-auto w-full max-w-md overflow-hidden rounded-[var(--fp-radius-lg)] border border-border bg-[var(--fp-bg-surface-raised)] shadow-[var(--fp-shadow-level-2)]"
+        className="relative mx-auto w-full max-w-lg overflow-hidden rounded-[var(--fp-radius-lg)] border border-border bg-[var(--fp-bg-surface-raised)] shadow-[var(--fp-shadow-level-2)]"
       >
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <span className="text-xs font-medium text-muted-foreground">Daily Brief</span>
