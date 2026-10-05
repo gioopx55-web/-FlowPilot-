@@ -1368,6 +1368,36 @@ A correction-only responsive audit across the entire product — no new product 
 
 **Known limitation:** `next build` could not be re-confirmed this phase — the same `fonts.googleapis.com` network gap documented since Phase 11 (D-060) was still failing; re-confirmed via `curl` (connection timeout, `http_code=000`). Not a Phase 16 code issue.
 
+## 35. Phase 17 — Accessibility Audit (IMPLEMENTED)
+
+A correction-only accessibility audit across the entire product against WCAG 2.2 AA — no new product features, per the phase's explicit scope.
+
+**Automated tool (D-070):** `axe-core` (already present as a transitive dependency of `eslint-plugin-jsx-a11y`/`eslint-config-next` — zero new npm dependency) was injected into live Playwright pages and run against `wcag2a`/`wcag2aa`/`wcag21a`/`wcag21aa`/`wcag22aa` rule sets across all 21 real app routes. Baseline: only 2 routes showed any violations; after fixes, **zero violations remain on any route**. Static JSX a11y linting (`eslint-plugin-jsx-a11y`'s recommended rules) has also been running continuously since Phase 5 — confirmed by every clean `eslint` pass across all 17 phases, noted here explicitly for the first time.
+
+**Semantic structure:** landmarks (`main`/`nav`/`header`/`footer`), heading hierarchy, and accessible names were reviewed across the product and found already sound — no new ARIA was added where native HTML semantics already carried the meaning.
+
+**A false positive investigated and ruled out:** the Landing Page's primary CTA and body copy initially flagged `color-contrast` failures (foreground/background pairs as low as 2.07:1). Traced to axe running mid-entrance-animation (the CTA's background was still interpolating from a lighter in-transit color toward its settled indigo). A re-check with `prefers-reduced-motion: reduce` and a full programmatic scroll-through (settling every reveal animation) showed the button's true computed state (`rgb(58, 79, 224)` background, white text) and **zero contrast violations** — confirmed as a test-timing artifact, not a real defect, consistent with the same category of false positive already documented in Phases 14/15.
+
+**D-071 — focus management, a real defect:** the AI Assistant panel, Notifications panel, and Task Detail panel all dropped keyboard focus to `<body>` on close (via Escape) instead of returning it to their trigger. Root cause: Radix only auto-restores focus for genuinely modal dialogs opened via its own `Trigger` component — `SidePanel` is deliberately non-modal on desktop/tablet (D-032), and `TaskDetailPanel` is opened via a `?task=` query-param change from an arbitrary task row/card button, not a Radix `Trigger`, so neither qualified. Fixed identically in both: a `useRef` snapshots `document.activeElement` when `open` becomes `true` and restores it when `open` becomes `false`. Verified via real click-then-Escape interaction (a direct-URL-navigation test doesn't exercise the actual focus-capture moment and gave a false negative during investigation) — all three panels now correctly return focus to their trigger.
+
+**D-072 — tab semantics, a real defect:** `SettingsTabs`, `ClientTabs`, and `ProjectTabs` all applied `role="tablist"`/`role="tab"`/`aria-selected` to `<nav>`+`<Link>` structures where every "tab" is a genuinely separate, deep-linkable route — not an in-page panel switcher. `ProjectTabs.tsx`'s own docblock had said as much ("real navigation links, not a client-state panel switcher") since Phase 8 while its markup contradicted it. The ARIA tab pattern commits to arrow-key navigation and `aria-controls`/`tabpanel` relationships that don't exist here. Fixed by removing the tab roles and adding `aria-current={active ? "page" : undefined}` — the correct native pattern for "this link represents the current page."
+
+**D-073 — chart accessibility, a real defect:** all 4 Analytics charts wrap their SVG in a `dir="ltr"` `aria-hidden="true"` container (D-044's deliberate "hide SVG, provide a real textual equivalent" pattern) — but Recharts v3 defaults `accessibilityLayer` to `true`, rendering the SVG root with `tabindex="0" role="application"` *inside* that hidden container, a genuine WCAG 4.1.2/1.3.1 conflict (confirmed by axe's `aria-hidden-focus` rule, 4 nodes across 3 of the 4 charts). Fixed with `accessibilityLayer={false}` on each chart — D-044's existing textual equivalent already covers what Recharts' competing built-in layer would otherwise provide.
+
+**D-074 — Kanban preview keyboard access, a real defect:** the Landing Page's static Kanban preview (`KanbanShowcase.tsx`) has a horizontally-scrollable region with no way for a keyboard user to reach or operate it (axe's `scrollable-region-focusable`). Fixed with `tabIndex={0}` + `role="group"` + a descriptive `aria-label` + a visible focus ring, enabling native arrow-key/Home/End scrolling.
+
+**D-075 — the long-standing dnd-kit hydration warning, finally root-caused and fixed:** Phase 17 §26 asked to revisit the console warning Phases 15/16 had isolated as a pre-existing dev-mode artifact but left undiagnosed. Traced precisely: `@dnd-kit/utilities`'s `useUniqueId` keeps its counter in a plain module-level object, not React's hydration-safe `useId()` — React Strict Mode's dev-only double-invoke increments it twice per mount, so the client-computed `DndDescribedBy-N` id diverges from what SSR embedded. `DndContext` already exposes a public `id` prop that bypasses the counter entirely when supplied; `KanbanBoard.tsx` now passes a fixed `id="kanban-board"`. Confirmed fixed via the exact repro scripts that previously proved the bug in Phases 15/16 — both now show zero console errors. No patch-package, no fork, no architectural change — just a documented prop the library already provides for this purpose.
+
+**Reviewed and found already correct, no change needed:** color-independent state (every risk/workload/priority/status indicator already pairs color with text/icon, per D-016/D-027's binding rule from Phase 2/4); clickable-div anti-patterns (zero `<div onClick>` instances found anywhere in the app); the 4 real `<table>` elements (`TasksTable`/`ClientsTable`/`ProjectsTable`/`TeamTable`) already use proper `<thead>`/`<tbody>`/`<th>` semantics; Kanban's keyboard-accessible `StatusSelect` alternative to drag (D-038/Phase 9 §17) remains the guaranteed non-pointer path to change a task's status, untouched.
+
+**No feature creep:** no new product modules, AI capabilities, authentication, localization system, or unrelated redesign. Every fix is a narrow markup/prop/behavior correction to existing components.
+
+**Tests:** no new automated tests added. Every fix this phase is DOM/CSS/prop-level behavior (focus timing, ARIA role choice, a chart library prop, a context id prop) with no extractable pure business logic for the project's `node --test` non-rendering environment to meaningfully assert on. Regression coverage is the documented axe-core sweep results and the manual verification scripts referenced in D-071 through D-075.
+
+**Verified:** `tsc --noEmit`, `eslint` clean. Full test suite 158/158, unchanged (no business logic touched). `npm run validate:data` clean. Whole-app route smoke check unchanged. `axe-core` WCAG sweep: 21/21 routes, zero violations after fixes. Manual keyboard-only and focus-management verification via Playwright across the AI panel, Notifications panel, account menu, and Task Detail panel.
+
+**Known limitation:** `next build` could not be re-confirmed this phase — the same `fonts.googleapis.com` network gap documented since Phase 11 (D-060) was still failing; re-confirmed via `curl` (connection timeout, `http_code=000`). Not a Phase 17 code issue.
+
 ## 25. Phase Roadmap (corrected — see DECISIONS.md D-024)
 
 - **Phase 1 — Product Definition & V1 Scope:** ✅ Approved, all open items resolved.
@@ -1388,4 +1418,5 @@ A correction-only responsive audit across the entire product — no new product 
 - **Phase 14 — Auth / Settings / Billing Demo:** ✅ IMPLEMENTED 2026-10-05 (see §32; `next build` gap unchanged from D-060 — not re-confirmed this phase).
 - **Phase 15 — Arabic / RTL QA:** ✅ IMPLEMENTED 2026-10-05 (see §33; `next build` gap unchanged from D-060 — not re-confirmed this phase).
 - **Phase 16 — Responsive QA:** ✅ IMPLEMENTED 2026-10-05 (see §34; `next build` gap unchanged from D-060 — not re-confirmed this phase).
-- **Phase 17+ — TBD**, not yet proposed.
+- **Phase 17 — Accessibility Audit:** ✅ IMPLEMENTED 2026-10-05 (see §35; `next build` gap unchanged from D-060 — not re-confirmed this phase).
+- **Phase 18+ — TBD**, not yet proposed.
