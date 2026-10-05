@@ -24,6 +24,10 @@ import { cn } from "@/lib/utils";
  * physical side from the current writing direction here, once: in LTR the
  * inline-end is physically right; in RTL the inline-end is physically left.
  * Do not hardcode "right" below — it must stay derived from `dir`.
+ *
+ * Phase 18: on desktop/tablet the panel now starts below the topbar
+ * (`top-14`/adjusted height) instead of underlapping it — see the
+ * className comment below for why.
  */
 export interface SidePanelProps {
   open: boolean;
@@ -78,6 +82,25 @@ export function SidePanel({
           // non-modal panel docked at the same screen edge. Mobile keeps
           // the default z-50 to match its modal overlay.
           !isMobile && "z-30",
+          // Phase 18 bug fix: the base primitive docks the panel at
+          // `inset-y-0`/`h-full` (the full viewport height, starting at
+          // y=0) on every breakpoint, relying on the topbar's higher
+          // z-index to visually hide the ~56px of panel header that
+          // underlaps it. That worked only while the topbar had an
+          // opaque background — Phase 17.5 made it a translucent
+          // `backdrop-blur` surface, which let the panel's own title/
+          // description bleed through underneath it (confirmed via
+          // `getBoundingClientRect`: the SheetHeader's top 56px sat
+          // directly behind the topbar). Desktop/tablet now starts the
+          // panel below the topbar instead of underlapping it — mobile
+          // is untouched (it's a true full-screen modal at z-50, above
+          // the topbar entirely, so this never applied there). Needs
+          // the same `data-[side=...]:` variant form as the Phase 16
+          // width fix (D-068) — a plain `top-14`/`h-[...]` loses to the
+          // primitive's own `data-[side=...]:inset-y-0`/`h-full` at
+          // equal specificity.
+          !isMobile &&
+            "data-[side=left]:top-14 data-[side=right]:top-14 data-[side=left]:h-[calc(100%-3.5rem)] data-[side=right]:h-[calc(100%-3.5rem)]",
         )}
       >
         <SheetHeader>
