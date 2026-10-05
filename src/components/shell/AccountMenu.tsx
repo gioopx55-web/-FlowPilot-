@@ -1,6 +1,6 @@
 "use client";
 
-import { User as UserIcon, LogOut, Settings } from "lucide-react";
+import { User as UserIcon, LogOut, Settings, Globe } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +15,13 @@ import { signOutOfDemoAction } from "@/lib/demoSessionActions";
  * rather than adding a new dropdown-menu/avatar shadcn component for
  * one small menu (same reuse-over-new-dependency reasoning as
  * `ConditionsDisclosure.tsx`). Compact by design: a profile/settings
- * link, and logout — no account-management features or upsells.
+ * link, a link back to the public site, and logout — no account-
+ * management features or upsells.
+ *
+ * Phase 17.6: "Back to website" added — a restrained, honest way out
+ * of the app that doesn't end the demo session (unlike Log out,
+ * right below it). The Sidebar's own brand mark also links to `/`
+ * now, so this is a second, equally-obvious path, not the only one.
  */
 export function AccountMenu({
   displayName,
@@ -50,6 +56,14 @@ export function AccountMenu({
         >
           <Settings className="size-4" aria-hidden="true" />
           Profile &amp; settings
+        </Link>
+
+        <Link
+          href="/"
+          className="flex h-9 items-center gap-2 rounded-sm px-2 text-sm text-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/70"
+        >
+          <Globe className="size-4" aria-hidden="true" />
+          Back to website
         </Link>
 
         <form action={signOutOfDemoAction}>

@@ -41,6 +41,10 @@ const collapsedStore = createLocalStorageStore<boolean>(
  * the hidden label used to be) and wraps every item in a Tooltip so
  * the icon-only state never leaves a sighted mouse/keyboard user
  * guessing a label.
+ *
+ * Phase 17.6: the brand mark/name is now a real link to `/` (the
+ * public Landing Page) — previously plain text with no way back to
+ * the marketing site from inside the app short of editing the URL.
  */
 export function Sidebar() {
   const pathname = usePathname();
@@ -69,21 +73,35 @@ export function Sidebar() {
       )}
       aria-label="Primary navigation"
     >
-      <div className="flex h-14 items-center gap-2.5 px-4">
-        <span
-          aria-hidden="true"
-          className="flex size-7 shrink-0 items-center justify-center rounded-md bg-[var(--fp-accent)] text-xs font-bold text-[var(--fp-accent-foreground)]"
-        >
-          N
-        </span>
-        <span
-          className={cn(
-            "truncate text-sm font-semibold text-foreground",
-            collapsed && "sr-only",
-          )}
-        >
-          Northbound Studio
-        </span>
+      <div className="flex h-14 items-center px-4">
+        {collapsed ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                href="/"
+                className="flex size-7 shrink-0 items-center justify-center rounded-md bg-[var(--fp-accent)] text-xs font-bold text-[var(--fp-accent-foreground)] outline-none focus-visible:ring-2 focus-visible:ring-ring/70"
+              >
+                N
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side={tooltipSide}>Back to website</TooltipContent>
+          </Tooltip>
+        ) : (
+          <Link
+            href="/"
+            className="flex items-center gap-2.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/70"
+          >
+            <span
+              aria-hidden="true"
+              className="flex size-7 shrink-0 items-center justify-center rounded-md bg-[var(--fp-accent)] text-xs font-bold text-[var(--fp-accent-foreground)]"
+            >
+              N
+            </span>
+            <span className="truncate text-sm font-semibold text-foreground">
+              Northbound Studio
+            </span>
+          </Link>
+        )}
       </div>
 
       <nav className="flex-1 space-y-0.5 px-2" aria-label="Main">
