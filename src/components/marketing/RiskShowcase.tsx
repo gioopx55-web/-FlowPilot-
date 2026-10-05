@@ -1,3 +1,4 @@
+import { CircleCheck, ListChecks, ShieldAlert } from "lucide-react";
 import type { AtRiskProjectEntry } from "@/domain/selectors";
 import { ShowcaseLayout } from "@/components/marketing/ShowcaseLayout";
 import { PreviewCard, PreviewCardHeader } from "@/components/marketing/PreviewCard";
@@ -15,18 +16,20 @@ export function RiskShowcase({ entry }: { entry: AtRiskProjectEntry | undefined 
   return (
     <ShowcaseLayout
       eyebrow="Projects"
+      eyebrowIcon={ShieldAlert}
       title="Risk you can explain, not just a red dot."
       description="FlowPilot computes project risk from four concrete conditions — overdue task ratio, stale high-priority work, due-soon-with-low-progress, and unresolved blockers — and always shows which ones are true. Never a bare status label."
       bullets={[
-        "Four named, always-visible risk conditions",
-        "Critical Risk vs. At Risk is a real distinction, not a vibe",
-        "Completed and on-hold work never pollutes the risk view",
+        { icon: ListChecks, text: "Four named, always-visible risk conditions" },
+        { icon: ShieldAlert, text: "Critical Risk vs. At Risk is a real distinction, not a vibe" },
+        { icon: CircleCheck, text: "Completed and on-hold work never pollutes the risk view" },
       ]}
+      tone="surface"
       reverse
       visual={
         entry ? (
           <PreviewCard>
-            <PreviewCardHeader title="Project Risk" />
+            <PreviewCardHeader title="Project Risk" icon={ShieldAlert} />
             <div className="p-4">
               <div className="mb-3 flex items-center justify-between gap-2">
                 <span className="truncate text-sm font-medium text-foreground">

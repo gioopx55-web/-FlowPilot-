@@ -1,3 +1,4 @@
+import { AlignLeft, CalendarCheck, Info, LineChart } from "lucide-react";
 import type { WorkloadDistributionEntry } from "@/domain/analytics";
 import type { OnTimeDeliveryResult } from "@/domain/analytics";
 import { ShowcaseLayout } from "@/components/marketing/ShowcaseLayout";
@@ -25,20 +26,21 @@ export function AnalyticsShowcase({
   return (
     <ShowcaseLayout
       eyebrow="Analytics"
+      eyebrowIcon={LineChart}
       title="Operational answers, not a wall of charts."
       description="On-time delivery, overdue trend, and workload distribution — the handful of numbers that actually tell you whether the workspace is healthy, each one answering a real question instead of decorating a dashboard."
       bullets={[
-        "On-time delivery compares real due dates against real completion dates",
-        "No metric renders until there's enough data to mean something",
-        "Every chart has a plain-text equivalent, not just a shape to read",
+        { icon: CalendarCheck, text: "On-time delivery compares real due dates against real completion dates" },
+        { icon: Info, text: "No metric renders until there's enough data to mean something" },
+        { icon: AlignLeft, text: "Every chart has a plain-text equivalent, not just a shape to read" },
       ]}
       visual={
         <PreviewCard>
-          <PreviewCardHeader title="On-Time Delivery" />
+          <PreviewCardHeader title="On-Time Delivery" icon={CalendarCheck} />
           <div className="p-4">
             <OnTimeDeliveryCard result={onTimeDelivery} />
           </div>
-          <PreviewCardHeader title="Workload Distribution" />
+          <PreviewCardHeader title="Workload Distribution" icon={LineChart} />
           <div className="space-y-2 p-4">
             {workloadDistribution.map((entry) => (
               <div key={entry.band} className="flex items-center gap-2 text-xs">

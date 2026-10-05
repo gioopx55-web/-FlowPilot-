@@ -1,13 +1,18 @@
+import { AlertTriangle, Clock } from "lucide-react";
 import type { AtRiskProjectEntry, OverdueTaskEntry } from "@/domain/selectors";
 import { RevealOnScroll } from "@/components/marketing/RevealOnScroll";
 import { PreviewCard, PreviewCardHeader } from "@/components/marketing/PreviewCard";
+import { DotGrid } from "@/components/marketing/DotGrid";
 import { RiskBadge } from "@/components/primitives/RiskBadge";
 import { formatShortDate } from "@/lib/format";
 
 /**
  * Product proof (Phase 13.5 §3.2) — a fuller two-panel view of the
  * real Dashboard's At-Risk Projects / Overdue Tasks sections, using
- * the current demo workspace's actual data.
+ * the current demo workspace's actual data. Phase 13.6 adds a
+ * restrained dot-grid backdrop and icon-framed card headers so this
+ * (the page's second major visual moment after the Hero) reads as
+ * authored rather than a plain two-card grid.
  */
 export function DashboardShowcase({
   atRiskEntries,
@@ -17,7 +22,9 @@ export function DashboardShowcase({
   overdueEntries: OverdueTaskEntry[];
 }) {
   return (
-    <section id="product-preview" className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+    <section id="product-preview" className="relative overflow-hidden px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+      <DotGrid className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-80 text-border/50" />
+
       <RevealOnScroll className="mx-auto max-w-2xl text-center">
         <span className="text-xs font-semibold tracking-wide text-[var(--fp-accent)] uppercase">
           The Dashboard
@@ -33,7 +40,7 @@ export function DashboardShowcase({
 
       <RevealOnScroll delay={0.1} className="mx-auto mt-10 grid max-w-4xl gap-5 sm:grid-cols-2">
         <PreviewCard className="max-w-none">
-          <PreviewCardHeader title="At-Risk Projects" />
+          <PreviewCardHeader title="At-Risk Projects" icon={AlertTriangle} />
           <ul className="divide-y divide-border">
             {atRiskEntries.slice(0, 4).map((entry) => (
               <li key={entry.project.id} className="space-y-1.5 p-3">
@@ -47,7 +54,7 @@ export function DashboardShowcase({
         </PreviewCard>
 
         <PreviewCard className="max-w-none">
-          <PreviewCardHeader title="Overdue Tasks" />
+          <PreviewCardHeader title="Overdue Tasks" icon={Clock} />
           <ul className="divide-y divide-border">
             {overdueEntries.slice(0, 4).map((entry) => (
               <li key={entry.task.id} className="p-3">

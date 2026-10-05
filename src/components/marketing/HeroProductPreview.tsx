@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "motion/react";
+import { AlertTriangle } from "lucide-react";
 import type { DailyBriefItem } from "@/domain/dailyBrief";
 import type { AtRiskProjectEntry, TeamWorkloadEntry } from "@/domain/selectors";
 import { Badge, type BadgeTone } from "@/components/primitives/Badge";
@@ -52,6 +53,9 @@ export function HeroProductPreview({
   const { dir } = getLocale();
   const tiltSign = dir === "rtl" ? -1 : 1;
   const containerRef = useRef<HTMLDivElement>(null);
+  const overdueSignalCount = briefItems.filter(
+    (item) => item.kind === "critical_risk" || item.kind === "at_risk",
+  ).length;
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -74,13 +78,24 @@ export function HeroProductPreview({
     // verification (the disclosure button rendered visually displaced
     // over sibling text). `transformPerspective` on the motion.div's
     // own style below is enough for the 3D tilt when motion is active.
-    <div ref={containerRef} className="min-w-0">
+    <div ref={containerRef} className="relative min-w-0 px-3 pt-3">
+      {/* Layered backdrop fragment (Phase 13.6 §5/§6) — a second,
+          smaller surface peeking out behind the main card, purely
+          decorative, giving the composition depth beyond the single
+          tilted card. Sized/positioned so it never extends past the
+          column it sits in, even on narrow viewports. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-3 top-6 -z-10 rounded-[var(--fp-radius-lg)] border border-border bg-[var(--fp-bg-surface)] opacity-60"
+        style={reducedMotion ? undefined : { transform: `rotate(${2 * tiltSign}deg)` }}
+      />
+
       <motion.div
         style={style}
         initial={reducedMotion ? undefined : { opacity: 0, y: 32 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0, 0, 0.2, 1] }}
-        className="mx-auto w-full max-w-md overflow-hidden rounded-[var(--fp-radius-lg)] border border-border bg-[var(--fp-bg-surface-raised)] shadow-[var(--fp-shadow-level-2)]"
+        className="relative mx-auto w-full max-w-md overflow-hidden rounded-[var(--fp-radius-lg)] border border-border bg-[var(--fp-bg-surface-raised)] shadow-[var(--fp-shadow-level-2)]"
       >
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <span className="text-xs font-medium text-muted-foreground">Daily Brief</span>
@@ -132,6 +147,23 @@ export function HeroProductPreview({
           </div>
         )}
       </motion.div>
+
+      {/* Floating operational signal (Phase 13.6 §6) — a small chip
+          overlapping the card's top edge, echoing the Dashboard's own
+          at-risk count without duplicating business logic (it's just
+          a count of the same briefItems already passed in). Rendered
+          as a sibling of the card, not a child, since the card itself
+          is `overflow-hidden` and would clip anything meant to float
+          past its own edge. */}
+      {overdueSignalCount > 0 && (
+        <div
+          aria-hidden="true"
+          className="absolute top-0 end-6 z-10 flex items-center gap-1 rounded-full border border-border bg-[var(--fp-bg-surface-raised)] px-2.5 py-1 text-xs font-medium text-[var(--fp-danger)] shadow-[var(--fp-shadow-level-1)]"
+        >
+          <AlertTriangle className="size-3" aria-hidden="true" />
+          {overdueSignalCount} need attention
+        </div>
+      )}
     </div>
   );
 }
