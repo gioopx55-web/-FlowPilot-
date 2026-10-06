@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import type { AIIntentId, AIScope } from "@/domain/ai/intents";
+import type { AIIntentId, AIScope } from "@/domain/ai/contracts";
 
 export type ShellPanelId = "ai" | "notifications";
 

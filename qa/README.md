@@ -25,6 +25,8 @@ npm run qa:axe          # accessibility sweep, light + dark, 15 routes
 npm run qa:responsive   # horizontal-overflow + panel-docking sweep, 6 viewports
 npm run qa:rtl          # RTL overflow + Sidebar-docking sweep, 5 routes
 npm run qa:all          # all three in sequence
+npm run qa:production   # Server Action → render persistence/reset E2E
+npm run qa:routes       # every page route 200 + representative real 404s
 ```
 
 Override the target with `QA_BASE_URL` (default `http://localhost:3000`), e.g.:
@@ -35,4 +37,4 @@ QA_BASE_URL=http://localhost:3101 npm run qa:axe
 
 ## What's covered
 
-The route matrix lives in `routes.mjs` — update it there, not per-script, so all three scripts stay in sync. `axe.mjs` uses `axe-core` via plain Node resolution against the copy already present transitively (through `eslint-plugin-jsx-a11y`/`eslint-config-next`) rather than a second declared dependency; if that ever stops resolving, the script fails loudly rather than silently skipping.
+The route matrix lives in `routes.mjs`. The harness also opens onboarding, Notifications, and AI; project create/edit forms are in the shared route matrix. `qa:production` must target `next build --webpack` + `next start` and verifies mutations across navigation and refresh, then resets the shared process-lifetime store. `axe.mjs` uses `axe-core` via plain Node resolution against the copy already present transitively (through `eslint-plugin-jsx-a11y`/`eslint-config-next`) rather than a second declared dependency; if that ever stops resolving, the script fails loudly rather than silently skipping.

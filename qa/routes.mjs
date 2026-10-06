@@ -23,3 +23,17 @@ export const APP_ROUTES = [
 ];
 
 export const ALL_ROUTES = [...PUBLIC_ROUTES, ...APP_ROUTES];
+
+/** Every implemented page route, used by the production route smoke test. */
+export const SMOKE_ROUTES = [
+  ...ALL_ROUTES,
+  "/projects/proj_harbor_refresh/tasks",
+  "/projects/proj_harbor_refresh/team",
+  "/projects/proj_harbor_refresh/activity",
+  "/clients/cl_harbor_thistle/projects",
+  "/clients/cl_harbor_thistle/interactions",
+  "/settings/workspace",
+  "/settings/appearance",
+  "/settings/notifications",
+  "/settings/billing",
+];

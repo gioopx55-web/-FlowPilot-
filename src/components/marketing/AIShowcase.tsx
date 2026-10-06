@@ -1,6 +1,6 @@
 import { CheckCircle2, Database, Link2, Sparkles, Target } from "lucide-react";
 import type { AIAnswer } from "@/domain/ai/executeIntent";
-import { AI_QUICK_ACTIONS } from "@/domain/ai/intents";
+import { AI_QUICK_ACTIONS } from "@/domain/ai/contracts";
 import { RevealOnScroll } from "@/components/marketing/RevealOnScroll";
 import { IconFrame } from "@/components/marketing/IconFrame";
 import { PreviewCard } from "@/components/marketing/PreviewCard";

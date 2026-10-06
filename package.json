@@ -13,7 +13,9 @@
     "qa:axe": "node qa/axe.mjs",
     "qa:responsive": "node qa/responsive.mjs",
     "qa:rtl": "node qa/rtl.mjs",
-    "qa:all": "npm run qa:axe && npm run qa:responsive && npm run qa:rtl"
+    "qa:all": "npm run qa:axe && npm run qa:responsive && npm run qa:rtl",
+    "qa:production": "node qa/production-mutations.mjs",
+    "qa:routes": "node qa/route-smoke.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -10,7 +10,17 @@
  */
 import { launchSignedIn, BASE_URL } from "./lib.mjs";
 
-const ROUTES = ["/", "/dashboard", "/tasks", "/clients", "/settings"];
+const ROUTES = [
+  "/",
+  "/dashboard",
+  "/projects",
+  "/projects/new",
+  "/projects/proj_harbor_refresh/edit",
+  "/tasks",
+  "/clients",
+  "/analytics",
+  "/settings",
+];
 
 async function forceRtl(page) {
   await page.evaluate(() => {
@@ -42,6 +52,32 @@ async function main() {
     }
   }
 
+  await page.goto(`${BASE_URL}/dashboard`, { waitUntil: "networkidle" });
+  await forceRtl(page);
+  for (const [name, triggerName] of [
+    ["Notifications", /^Notifications/],
+    ["AI", /^AI Assistant$/],
+  ]) {
+    await page.getByRole("button", { name: triggerName }).click();
+    const panel = page.getByRole("dialog");
+    await panel.waitFor();
+    const panelOverflow = await panel.evaluate((element) => element.scrollWidth > element.clientWidth + 1);
+    console.log(panelOverflow ? `[FAIL] ${name} panel overflows under RTL` : `[pass] ${name} panel under RTL`);
+    if (panelOverflow) failures += 1;
+    await panel.getByRole("button", { name: "Close" }).click();
+    await panel.waitFor({ state: "hidden", timeout: 5000 });
+  }
+
+  await page.evaluate(() => localStorage.removeItem("flowpilot-onboarding-complete"));
+  await page.reload({ waitUntil: "networkidle" });
+  await forceRtl(page);
+  const onboarding = page.getByRole("dialog");
+  await onboarding.waitFor();
+  const onboardingOverflow = await onboarding.evaluate((element) => element.scrollWidth > element.clientWidth + 1);
+  console.log(onboardingOverflow ? "[FAIL] onboarding overflows under RTL" : "[pass] onboarding under RTL");
+  if (onboardingOverflow) failures += 1;
+  await page.getByRole("button", { name: "Skip" }).click();
+
   // Sidebar should dock to the physical right under RTL (inline-start).
   await page.goto(`${BASE_URL}/dashboard`, { waitUntil: "networkidle" });
   await forceRtl(page);
@@ -61,7 +97,7 @@ async function main() {
     console.error(`\n${failures} RTL failure(s) found.`);
     process.exit(1);
   }
-  console.log("\nZero RTL overflow/layout failures across the route matrix.");
+  console.log("\nZero RTL overflow/layout failures across routes, workflows, onboarding, Notifications, and AI.");
 }
 
 main().catch((err) => {

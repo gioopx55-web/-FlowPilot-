@@ -49,6 +49,22 @@ async function auditRoute(context, path, colorScheme) {
   return results.violations;
 }
 
+async function auditOpenState(context, name, colorScheme, openState) {
+  const page = await context.newPage();
+  await page.emulateMedia({ colorScheme });
+  await page.goto(`${BASE_URL}/dashboard`, { waitUntil: "networkidle" });
+  await openState(page);
+  // Radix/motion surfaces transition for ~200ms; audit the settled state so
+  // axe does not sample blended mid-animation foreground/background colors.
+  await page.waitForTimeout(350);
+  await page.addScriptTag({ content: axeSource });
+  const results = await page.evaluate(async () => await window.axe.run());
+  const skip = page.getByRole("button", { name: "Skip" });
+  if (await skip.isVisible().catch(() => false)) await skip.click();
+  await page.close();
+  return { name, violations: results.violations };
+}
+
 async function main() {
   const { browser, context } = await launchSignedIn();
   let failures = 0;
@@ -62,6 +78,47 @@ async function main() {
       for (const v of serious) {
         failures += 1;
         console.log(`    ${v.impact}: ${v.id} — ${v.help} (${v.nodes.length} node(s))`);
+        for (const node of v.nodes) console.log(`      ${node.target.join(" ")} — ${node.failureSummary}`);
+      }
+    }
+  }
+
+
+  const OPEN_STATES = [
+    {
+      name: "onboarding open",
+      open: async (page) => {
+        await page.evaluate(() => localStorage.removeItem("flowpilot-onboarding-complete"));
+        await page.reload({ waitUntil: "networkidle" });
+        await page.getByRole("dialog").waitFor();
+      },
+    },
+    {
+      name: "Notifications open",
+      open: async (page) => {
+        await page.getByRole("button", { name: /^Notifications/ }).click();
+        await page.getByRole("dialog").waitFor();
+      },
+    },
+    {
+      name: "AI Assistant open",
+      open: async (page) => {
+        await page.getByRole("button", { name: /^AI Assistant$/ }).click();
+        await page.getByRole("dialog").waitFor();
+      },
+    },
+  ];
+
+  for (const state of OPEN_STATES) {
+    for (const colorScheme of ["light", "dark"]) {
+      const { violations } = await auditOpenState(context, state.name, colorScheme, state.open);
+      const serious = violations.filter((v) => FAIL_IMPACTS.has(v.impact));
+      const status = serious.length > 0 ? "FAIL" : "pass";
+      console.log(`[${status}] ${state.name} (${colorScheme}) — ${violations.length} violation(s)`);
+      for (const v of serious) {
+        failures += 1;
+        console.log(`    ${v.impact}: ${v.id} — ${v.help} (${v.nodes.length} node(s))`);
+        for (const node of v.nodes) console.log(`      ${node.target.join(" ")} — ${node.failureSummary}`);
       }
     }
   }
@@ -72,7 +129,7 @@ async function main() {
     console.error(`\n${failures} serious/critical axe violation(s) found.`);
     process.exit(1);
   }
-  console.log("\nZero serious/critical axe violations across the full route matrix.");
+  console.log("\nZero serious/critical axe violations across routes, project forms, onboarding, Notifications, and AI states.");
 }
 
 main().catch((err) => {

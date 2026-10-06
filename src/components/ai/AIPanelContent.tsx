@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { Sparkles } from "lucide-react";
 import type { AIAnswer } from "@/domain/ai/executeIntent";
-import { AI_QUICK_ACTIONS } from "@/domain/ai/intents";
-import type { AIIntentId, AIScope } from "@/domain/ai/intents";
+import { AI_QUICK_ACTIONS, type AIIntentId, type AIScope } from "@/domain/ai/contracts";
 import { runAIIntentAction, runAIQueryAction } from "@/lib/aiActions";
 import { useShellPanels } from "@/components/shell/panel-context";
 import { AIAnswerView } from "@/components/ai/AIAnswerView";

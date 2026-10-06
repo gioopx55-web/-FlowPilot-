@@ -28,14 +28,15 @@ async function checkOverflow(page) {
   });
 }
 
-async function checkPanelDocking(page, viewportWidth) {
-  const trigger = page.getByRole("button", { name: /^AI Assistant$/ });
+async function checkPanelDocking(page, viewportWidth, triggerName) {
+  const trigger = page.getByRole("button", { name: triggerName });
   if (!(await trigger.isVisible().catch(() => false))) return { ok: true, note: "no trigger visible" };
   await trigger.click();
   const panel = page.locator('[role="dialog"]').first();
   await panel.waitFor({ state: "visible", timeout: 5000 });
   const box = await panel.boundingBox();
-  await page.keyboard.press("Escape");
+  await panel.getByRole("button", { name: "Close" }).click();
+  await panel.waitFor({ state: "hidden", timeout: 5000 });
   if (!box) return { ok: false, note: "panel has no bounding box" };
 
   const isMobile = viewportWidth < 640;
@@ -70,13 +71,34 @@ async function main() {
 
     // Panel docking check once per viewport, from /dashboard.
     await page.goto(`${BASE_URL}/dashboard`, { waitUntil: "networkidle" });
-    const panelResult = await checkPanelDocking(page, viewport.width);
-    if (!panelResult.ok) {
-      failures += 1;
-      console.log(`[FAIL] AI panel docking @ ${viewport.width}x${viewport.height} — ${panelResult.note}`);
-    } else {
-      console.log(`[pass] panel docking @ ${viewport.width}x${viewport.height} (${panelResult.note})`);
+    for (const [panelName, triggerName] of [
+      ["AI", /^AI Assistant$/],
+      ["Notifications", /^Notifications/],
+    ]) {
+      const panelResult = await checkPanelDocking(page, viewport.width, triggerName);
+      if (!panelResult.ok) {
+        failures += 1;
+        console.log(`[FAIL] ${panelName} panel docking @ ${viewport.width}x${viewport.height} — ${panelResult.note}`);
+      } else {
+        console.log(`[pass] ${panelName} panel docking @ ${viewport.width}x${viewport.height} (${panelResult.note})`);
+      }
     }
+
+    await page.evaluate(() => localStorage.removeItem("flowpilot-onboarding-complete"));
+    await page.reload({ waitUntil: "networkidle" });
+    const dialog = page.getByRole("dialog");
+    await dialog.waitFor();
+    const dialogBox = await dialog.boundingBox();
+    const dialogFits = Boolean(
+      dialogBox &&
+      dialogBox.x >= -1 &&
+      dialogBox.y >= -1 &&
+      dialogBox.x + dialogBox.width <= viewport.width + 1 &&
+      dialogBox.y + dialogBox.height <= viewport.height + 1,
+    );
+    console.log(dialogFits ? `[pass] onboarding fits @ ${viewport.width}x${viewport.height}` : `[FAIL] onboarding exceeds viewport @ ${viewport.width}x${viewport.height}`);
+    if (!dialogFits) failures += 1;
+    await page.getByRole("button", { name: "Skip" }).click();
 
     await page.close();
   }
@@ -87,7 +109,7 @@ async function main() {
     console.error(`\n${failures} responsive failure(s) found.`);
     process.exit(1);
   }
-  console.log("\nZero horizontal overflow and correct panel docking across the full matrix.");
+  console.log("\nZero horizontal overflow; AI, Notifications, onboarding, and project forms fit across the full matrix.");
 }
 
 main().catch((err) => {

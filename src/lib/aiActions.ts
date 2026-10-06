@@ -1,7 +1,7 @@
 "use server";
 
 import { executeAIIntent, runAIQuery, type AIAnswer } from "@/domain/ai/executeIntent";
-import type { AIIntentId, AIScope } from "@/domain/ai/intents";
+import type { AIIntentId, AIScope } from "@/domain/ai/contracts";
 import { requireDemoSession } from "@/lib/demoSession";
 
 /**
