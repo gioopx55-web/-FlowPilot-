@@ -1561,6 +1561,34 @@ A 24-point security audit was run as a required part of Phase 20, each item clas
 
 **Future full-stack requirements** (mandatory once FlowPilot gains a real database, real auth, multiple workspaces, a real AI API, uploads, or public APIs): row-level security and production RBAC; database backup/recovery testing; a hardened nonce-based CSP; real secret management for AI-provider API keys (never client-exposed); rate limiting on any newly-exposed public endpoint; hosted error/log monitoring; a CORS policy if any cross-origin API consumer is ever introduced.
 
+## 41. Phase 21.1 — Release Blocker Remediation (IMPLEMENTED)
+
+A narrowly-scoped phase existing only to resolve the 7 release blockers an independent Phase 21 audit identified — no unrelated features, no redesign, no reopening of previously-completed phases, no architecture change beyond what a blocker genuinely required.
+
+**1. Project create/edit (D-094):** `domain/projectMutations.ts` extends D-039's exact overrides pattern (mirrors `clientMutations.ts`'s added-records/field-overrides split). Only entity-modeled fields are exposed (name/client/status/progress/dates) — no invented `priority`/`description`. `ProjectForm.tsx` (native controlled form, same precedent as `AddInteractionForm.tsx`) serves both `/projects/new` and `/projects/[projectId]/edit`. `data/mock/index.ts` layers created/edited projects into `getDemoDataset()`, so every existing selector picks them up automatically — proven by `projectMutations.integration.test.ts` (Projects list, client's project list, and Analytics' status distribution all update with zero additional wiring).
+
+**2. Notification Center (D-095):** `domain/notifications.ts`'s `getNotificationFeed()` derives live from the same selectors Daily Brief uses (project risk, overdue tasks, client follow-up, team workload) — never the static fixture `Notification` records, which would go stale after any mutation. `NotificationsPanelContent.tsx` replaces the Phase 5 placeholder inside the existing `SidePanel`. Settings' 4 preference toggles now genuinely gate which categories appear (Phase 14's stale "doesn't gate a real alert yet" copy corrected). Topbar shows a real unread count, not color-only.
+
+**3. Onboarding (D-096):** `OnboardingOverlay.tsx`, a 4-step dismissible dialog reusing the existing Radix `Dialog` primitive (zero new dependency). Completion persisted via `localStorage` (`lib/onboardingState.ts`) — a deliberate choice, documented as such: per-viewer UI state, not shared/security-sensitive demo data, so it does not belong in D-039's server-side layer. "Replay onboarding" added to `AccountMenu.tsx`.
+
+**4. Server Action session guard (D-097):** `requireDemoSession()` (`lib/demoSession.ts`), called first by every mutating Server Action (`taskActions.ts`, `clientActions.ts`, `settingsActions.ts`, the new `projectActions.ts`/`notificationActions.ts`). Verified live (not just by inspection): cleared the session cookie mid-flow and confirmed a project-creation attempt produced zero created project.
+
+**5. Runtime input validation (D-097):** centralized per mutation file (`domain/projectMutations.ts`'s `validateEditableFields`) rather than a new validation framework — rejects empty/oversized names, invalid enums, out-of-range percentages, invalid/out-of-order dates. 14 rejection cases proven in `projectMutations.test.ts`.
+
+**6. Soft 404 (D-098):** root-caused, not just re-documented — a single `(app)/loading.tsx` wrapped every route in one Suspense boundary, forcing an early 200 flush before any deeper `notFound()` could change the response status. Deleting that one file fixed real 404s on all 4 invalid-entity routes with zero navigation regression (this app's data layer is synchronous in-memory, so the route-transition skeleton was never load-bearing) — confirmed via a live production build, not assumed.
+
+**7. Triangular brand mark (D-099):** `components/primitives/BrandMark.tsx` — a small original geometric mark (two overlapping triangles), replacing the Sidebar's plain "N" monogram chip, applied via one reusable component to the Landing navbar, Login, expanded/collapsed Sidebar, and Footer. "Northbound Studio" (the demo tenant workspace name, D-012) is unchanged — distinct from "FlowPilot AI" (the product name) the mark represents, same as any real multi-tenant product's icon next to a workspace name.
+
+**QA harness (D-098):** a small dev-only Playwright harness at `qa/` (`axe.mjs`/`responsive.mjs`/`rtl.mjs`), closing the "independent audit could not reproduce the axe matrix" gap. `playwright` added as a devDependency (pre-approved for exactly this). `axe-core` used via the copy already present transitively (same reuse D-070 relied on), not a new declared dependency.
+
+**A real bug found by the new harness, not introduced by this phase:** the dark-mode `--fp-accent-foreground` (white) only reached 2.85:1 against the dark-mode `--fp-accent` — below WCAG AA's 4.5:1 — affecting every default-variant button and the new Notifications unread badge, sitewide. Fixed by reusing the existing `--fp-accent-subtle-bg` tone as dark-mode `--fp-accent-foreground` instead (5.49:1). This is the first time this codebase's accessibility sweep covered dark mode in a real browser; D-035's Phase 7 fix only re-verified the reverse color pairing.
+
+**Verified:** `tsc --noEmit`, `eslint` clean. Full test suite 182/182 (24 new). `npm run validate:data` clean. `next build` succeeded on a real production build. `qa:axe` — 0 serious/critical violations across 15 routes × light/dark. `qa:responsive` — 0 horizontal overflow across 13 routes × 6 viewports (320-1440px), correct AI-panel docking at every breakpoint. `qa:rtl` — 0 overflow across 5 routes under forced RTL, Sidebar confirmed docking right. `npm audit --omit=dev` — 0 vulnerabilities. Full `npm audit` unchanged from Phase 20 (9 dev-tooling-only findings, not force-upgraded). Security headers/CSP/cookie `Secure` flag re-confirmed present and unchanged on a live production server.
+
+**No feature creep:** no new production dependency (Playwright is dev-only); no unrelated feature; no previously-completed phase's binding decision reopened or reverted; every fix traces directly to one of the 7 named blockers, or (the contrast bug) to this phase's own explicitly-required re-verification work.
+
+**Release posture:** no Critical or High items remain open (D-100). See `DECISIONS.md` D-094 through D-100 for full reasoning per item.
+
 ## 25. Phase Roadmap (corrected — see DECISIONS.md D-024)
 
 - **Phase 1 — Product Definition & V1 Scope:** ✅ Approved, all open items resolved.
