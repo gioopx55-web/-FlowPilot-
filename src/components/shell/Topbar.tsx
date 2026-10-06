@@ -32,10 +32,12 @@ export function Topbar({
   title,
   displayName,
   email,
+  unreadCount = 0,
 }: {
   title: string;
   displayName: string;
   email: string;
+  unreadCount?: number;
 }) {
   const { openPanelId, togglePanel } = useShellPanels();
 
@@ -69,11 +71,23 @@ export function Topbar({
                 variant="ghost"
                 size="icon"
                 aria-pressed={openPanelId === "notifications"}
-                aria-label="Notifications"
-                className="h-11 w-11"
+                aria-label={
+                  unreadCount > 0
+                    ? `Notifications, ${unreadCount} unread`
+                    : "Notifications"
+                }
+                className="relative h-11 w-11"
                 onClick={() => togglePanel("notifications")}
               >
                 <Bell className="size-[18px]" aria-hidden="true" />
+                {unreadCount > 0 && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute right-1.5 top-1.5 flex size-4 items-center justify-center rounded-full bg-[var(--fp-accent)] text-[10px] font-medium text-[var(--fp-accent-foreground)]"
+                  >
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
               </Button>
             </TooltipTrigger>
             <TooltipContent>Notifications</TooltipContent>

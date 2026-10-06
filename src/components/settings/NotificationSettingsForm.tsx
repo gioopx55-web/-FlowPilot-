@@ -28,10 +28,12 @@ const TOGGLES: { key: keyof NotificationPreferences; label: string; description:
 ];
 
 /**
- * Notification preferences (Phase 14 §12) — preference state only.
- * The Notifications panel itself is still the Phase 5 placeholder, so
- * these toggles honestly don't gate a real alert yet; the copy below
- * says so rather than implying otherwise.
+ * Notification preferences (Phase 14 §12, wired to a real in-app
+ * feed in Phase 21.1 §9) — each toggle genuinely gates whether that
+ * category appears in the Notification Center (`domain/notifications.ts`
+ * reads these same preferences). Still honestly scoped: toggling one
+ * off hides that category from the in-app panel only — there is no
+ * email/push/Slack delivery to suppress, per the copy below.
  */
 export function NotificationSettingsForm({
   preferences,
@@ -74,8 +76,8 @@ export function NotificationSettingsForm({
         ))}
       </ul>
       <p className="mt-3 text-xs text-muted-foreground">
-        Preferences only — this demo doesn&apos;t send real emails, push notifications, or Slack
-        messages.
+        In-app notification preferences — each toggle controls what appears in the Notification
+        Center. This demo doesn&apos;t send real emails, push notifications, or Slack messages.
       </p>
     </div>
   );
