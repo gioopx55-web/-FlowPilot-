@@ -26,7 +26,7 @@ export function ResetDemoDataButton() {
 
   function handleReset() {
     const confirmed = window.confirm(
-      "Reset all demo data? This reverts every task, client, and settings change you've made back to the original demo workspace.",
+      "Reset all demo data? This reverts the shared task, client, and settings state for every visitor back to the original demo workspace.",
     );
     if (!confirmed) return;
     setDone(false);
@@ -43,7 +43,7 @@ export function ResetDemoDataButton() {
       </Button>
       <p className="mt-2 text-xs text-muted-foreground">
         Reverts every task, client, and settings change back to the original demo workspace.
-        Only affects this demo session — nothing is shared with other visitors.
+        This demo state is shared across visitors and lasts only until the server restarts.
       </p>
       {done && !isPending && (
         <p className="mt-1 text-xs text-[var(--fp-success)]">Demo data reset.</p>

@@ -76,7 +76,8 @@ export default async function LoginPage({
         </form>
 
         <p className="mt-4 text-center text-xs text-muted-foreground">
-          Demo session only — no real account, password, or data leaves this workspace.
+          Demo session only — no real account or password. Workspace changes are shared across
+          visitors, so use fictional details only.
         </p>
       </div>
     </div>

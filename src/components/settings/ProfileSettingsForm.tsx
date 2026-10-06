@@ -45,6 +45,9 @@ export function ProfileSettingsForm({
 
   return (
     <form onSubmit={handleSubmit} className="max-w-md space-y-4">
+      <p className="text-xs text-muted-foreground">
+        Shared demo workspace — changes may be visible to other visitors. Use fictional details only.
+      </p>
       <div>
         <label htmlFor="profile-name" className="mb-1 block text-xs text-muted-foreground">
           Name
