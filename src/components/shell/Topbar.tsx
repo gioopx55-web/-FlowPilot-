@@ -41,9 +41,9 @@ export function Topbar({
 
   return (
     <header className="relative z-40 flex h-14 shrink-0 items-center gap-2 border-b border-border/70 bg-[var(--fp-bg-surface)]/85 px-4 backdrop-blur-md lg:px-6">
-      <h1 className="truncate text-sm font-semibold text-foreground">
+      <p className="truncate text-sm font-semibold text-foreground">
         {title}
-      </h1>
+      </p>
 
       <div className="ms-auto flex items-center gap-2">
         <div className="flex items-center gap-0.5 rounded-md border border-border/60 bg-[var(--fp-bg-canvas)]/60 p-0.5">
