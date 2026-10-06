@@ -35,7 +35,7 @@ export default async function TaskDetailPage({
         <span className="truncate text-foreground">{detail.task.title}</span>
       </nav>
 
-      <TaskDetailContent detail={detail} teamMembers={teamMembers} />
+      <TaskDetailContent detail={detail} teamMembers={teamMembers} pageHeading />
     </div>
   );
 }
