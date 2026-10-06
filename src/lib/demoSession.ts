@@ -15,6 +15,11 @@ import { cookies } from "next/headers";
  * This is intentionally NOT a general-purpose auth library and NOT a
  * users/sessions table — see DECISIONS.md for the full reasoning and
  * why a real auth dependency was judged unnecessary for V1.
+ *
+ * Phase 20 security gate (D-093): `secure` is gated on `NODE_ENV`
+ * (Next.js sets this automatically — no `.env` file involved) so the
+ * cookie is never sent over plain HTTP once this is actually deployed,
+ * while still working over `http://localhost` in dev.
  */
 export const DEMO_SESSION_COOKIE = "fp_demo_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days
@@ -23,6 +28,7 @@ export async function createDemoSession(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.set(DEMO_SESSION_COOKIE, "1", {
     httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
     maxAge: SESSION_MAX_AGE_SECONDS,

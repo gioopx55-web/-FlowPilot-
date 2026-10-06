@@ -1524,6 +1524,43 @@ A pure cleanup pass, explicitly scoped as correction-only: no new product featur
 
 **No feature creep:** no new routes, no new domain logic, no new design effects, no new dependencies added (one removed), no new testing framework. The only "fixes" were a deletion, two copy corrections, one unused import, one unused dependency, and one safe `package.json` field — every one verified before being made, none assumed.
 
+### Pre-deployment security gate (D-093)
+
+A 24-point security audit was run as a required part of Phase 20, each item classified PASS / FAIL / NOT APPLICABLE / BLOCKED on evidence, never assumed.
+
+| # | Check | Status | Evidence / Action |
+|---|---|---|---|
+| 1 | Secret/credential scan | PASS | Pattern grep across all tracked files + git history scan for `.env`/credential-named files ever committed — zero findings. |
+| 2 | Environment variables | PASS | Zero `process.env`/`NEXT_PUBLIC_*` usage anywhere in `src` — the app has no environment variables at all. |
+| 3 | Dependency security (`npm audit`) | FAIL (documented, non-blocking) | 9 "high" findings, all one root cause (`braces` DoS) via two dev-tooling-only chains (`eslint-config-next`, `shadcn`'s CLI deps). Not shipped to production runtime, not fed attacker-controlled input. Not force-upgraded (would break `shadcn`'s CLI). |
+| 4 | TypeScript/lint/tests/data-validation/build | PASS | `tsc --noEmit`, `eslint`, `npm test` (158/158), `npm run validate:data` all clean; `next build` succeeded on a real production run. |
+| 5 | XSS / input handling | PASS | Zero `dangerouslySetInnerHTML` anywhere; all user-facing text is plain React-rendered (auto-escaped); AI free-text input is keyword-matched, never parsed as markup. |
+| 6 | Injection risks | PASS / NOT APPLICABLE | Zero `eval`/`child_process`/shell-exec anywhere; no database exists (SQL injection N/A). |
+| 7 | Authentication/authorization | PASS (for V1 demo scope) | `proxy.ts` route protection and `sanitizeRedirectTarget`'s open-redirect guard re-confirmed correct. Production RBAC is explicitly out of V1 scope (D-061), not claimed secure. |
+| 8 | Cookie security | FIXED | `fp_demo_session` was missing `Secure` — added `secure: process.env.NODE_ENV === "production"`, verified `true` on a real production build's actual cookie. |
+| 9 | CSRF | PASS (for V1 demo scope) | No custom `route.ts` API handlers exist; all mutation goes through Server Actions (Next's built-in same-origin enforcement) + `sameSite=lax`. Not claimed as independently hardened CSRF protection. |
+| 10 | Rate limiting | NOT APPLICABLE | No exposed public API beyond the app's own pages/Server Actions. |
+| 11 | CORS | NOT APPLICABLE | Zero API routes exist. |
+| 12 | Security headers | FIXED | `next.config.ts` had none. Added `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options: DENY`, `Permissions-Policy`, a CSP, and `poweredByHeader: false`. Verified present on every route (including redirects) on a real production build with zero console/page errors. |
+| 13 | HTTPS | NOT YET ACTIVE (deployment-stage) | Not claimed active pre-deployment; `Strict-Transport-Security` intentionally deferred to real deployment configuration rather than guessed at. |
+| 14 | File uploads | NOT APPLICABLE | No upload functionality exists anywhere. |
+| 15 | localStorage/client trust | PASS | Confirmed localStorage usage is Sidebar-collapse-state and theme-preference only — zero security decisions rely on client-side storage (D-039 intact). |
+| 16 | Error handling/info leakage | PASS | `error.tsx`/not-found boundaries show only generic messages; a live 404 check found zero stack traces/filesystem paths/internal details. |
+| 17 | Route audit | PASS | All 7 protected prefixes re-confirmed enforced; public routes (`/`, `/login`) confirmed unprotected as intended; invalid IDs fail safely (D-036). |
+| 18 | Public-repo safety | PASS | No `.env`, credentials, logs, screenshots, or private files found tracked. |
+| 19 | Asset/file cleanup | PASS | Covered by this phase's own cleanup pass (item 24 of the main report) — zero stray temp/generated files. |
+| 20 | Backend-specific checks | NOT APPLICABLE — V1 demo architecture | No real database/backend exists; recorded as a future-phase requirement, not tested against a system that doesn't exist. |
+| 21 | Database backups | NOT APPLICABLE | No database exists. |
+| 22 | Logging/error monitoring | NOT CONFIGURED (deployment-stage requirement) | No hosted monitoring provider configured; required before/at production deployment, not installed here without approval. |
+| 23 | Browser security check | PASS | A real production build, loaded in an actual browser, showed zero secret exposure, zero stack traces, zero unexpected third-party network requests, zero mixed content. |
+| 24 | Final status | — | See table above and the three sections below. |
+
+**Release blockers:** none. No critical item is FAIL — the one FAIL (`npm audit`, item 3) is dev-tooling-only and does not block a demo deployment.
+
+**Non-blocking limitations (intentional V1/demo scope):** demo-only auth with no real RBAC (D-061); CSP uses `'unsafe-inline'` rather than a nonce (documented trade-off, D-093); HTTPS/HSTS/monitoring are deployment-stage configuration, not yet active; the `braces`/`fast-glob` dev-dependency `npm audit` finding remains open pending an upstream `shadcn` fix.
+
+**Future full-stack requirements** (mandatory once FlowPilot gains a real database, real auth, multiple workspaces, a real AI API, uploads, or public APIs): row-level security and production RBAC; database backup/recovery testing; a hardened nonce-based CSP; real secret management for AI-provider API keys (never client-exposed); rate limiting on any newly-exposed public endpoint; hosted error/log monitoring; a CORS policy if any cross-origin API consumer is ever introduced.
+
 ## 25. Phase Roadmap (corrected — see DECISIONS.md D-024)
 
 - **Phase 1 — Product Definition & V1 Scope:** ✅ Approved, all open items resolved.
