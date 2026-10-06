@@ -1587,7 +1587,25 @@ A narrowly-scoped phase existing only to resolve the 7 release blockers an indep
 
 **No feature creep:** no new production dependency (Playwright is dev-only); no unrelated feature; no previously-completed phase's binding decision reopened or reverted; every fix traces directly to one of the 7 named blockers, or (the contrast bug) to this phase's own explicitly-required re-verification work.
 
-**Release posture:** no Critical or High items remain open (D-100). See `DECISIONS.md` D-094 through D-100 for full reasoning per item.
+**Release posture correction (Phase 21.2):** this Phase 21.1 conclusion was not supported by production mutation testing. The independent re-verification proved that module-local mutable collections were duplicated across production Server Action and Server Component bundles, so project create/edit and notification state could disappear across the action → render boundary. D-100 and this posture statement are superseded by Phase 21.3/D-101 through D-104 below.
+
+## 42. Phase 21.3 — Production State Architecture Fix (COMPLETE)
+
+A correction-only release phase resolving the blockers independently reproduced in Phase 21.2. No database, external persistence, unrelated feature, redesign, or production dependency was added.
+
+**Authoritative demo state (D-101):** every mutable server-side demo-state family now lives in one typed `globalThis.__flowpilotDemoStore` registry (`domain/demoStore.ts`): task overrides; project additions/overrides/counters; client interactions/overrides/counters; profile overrides; notification preferences; and notification read IDs. Next.js may duplicate source modules across production server bundles, but every bundle in the same Node process resolves the same global registry. `getDemoDataset()` still layers current state over immutable fixtures on every read, so Dashboard, Projects, Tasks, Clients, Team, Analytics, AI, and Notifications continue through the existing selector graph. The store is guarded by `server-only`; the build-exposed AI client/server import chain was split into client-safe `domain/ai/contracts.ts` and server matching logic.
+
+**Honest persistence boundary:** state is shared by all visitors routed to the same running Node process, has no account/workspace isolation, is not durable, and resets when that process restarts. Those constraints are acceptable only for this V1 portfolio demo. Consecutive requests within the same process now have guaranteed read-your-own-writes; multiple processes/instances do not share state.
+
+**Reset and runtime validation (D-102):** `resetDemoDataAction()` calls the one authoritative `resetDemoStore()` and restores every family above. A small dependency-free `domain/runtimeValidation.ts` layer now enforces records/allowed keys, bounded strings, booleans, finite numeric ranges, enum membership, email/date formats, and existing references. Tasks, clients/interactions, projects, profile/preferences, and notification read IDs all reject malformed runtime payloads with `{ ok: false, error }`; TypeScript is no longer treated as network-boundary validation. Focused regression coverage includes every malformed case Phase 21.2 proved was previously accepted.
+
+**Expired-session UX (D-103):** all Server Actions—including read-only AI actions—perform the centralized demo-session check. Protected Server Action POSTs are allowed past Proxy so the action guard can issue Next.js's action-aware redirect to `/login?reason=session-expired`; Login renders a restrained visible explanation. Normal unauthenticated page navigation remains protected by Proxy.
+
+**Production and browser QA (D-104):** `qa/production-mutations.mjs` runs against `next build --webpack` + `next start` and verifies project create/edit, related project/client/AI reads, task propagation, notification preference filtering, notification read persistence across reopen/refresh, full reset, real post-reset 404, and expired-session UX. `qa:all` now includes settled open-state axe checks for onboarding/Notifications/AI, both Project forms, six-width responsive coverage for panels/onboarding/forms, and RTL coverage for Landing, Dashboard, Projects/create/edit, Tasks, Clients, Notifications, AI, Analytics, Settings, and onboarding. `qa/route-smoke.mjs` verifies all implemented page routes return 200 and representative missing records return real 404s.
+
+**Verified release gate:** TypeScript clean; ESLint clean; demo-data validation clean; 192/192 tests; production Webpack build clean; production mutation E2E clean on a fresh `next start`; the same mutation flow clean under `next dev`; `qa:all` clean; all route smoke checks clean; security/env/secret/XSS/redirect/action-guard/header checks clean; `npm audit --omit=dev` reports 0 vulnerabilities. Full `npm audit` still reports the same 9 high-severity dev-tooling-only `braces` chain documented in D-093; the suggested forced breaking downgrade remains inappropriate and was not applied.
+
+**Release posture:** **A. READY TO DEPLOY AS V1 DEMO.** No Critical, High, or Medium release blockers remain. This classification is explicitly limited to the honest single-process demo contract above; it is not approval for production-grade multi-instance persistence, authentication, tenancy, or monitoring. No deployment was performed.
 
 ## 25. Phase Roadmap (corrected — see DECISIONS.md D-024)
 
@@ -1614,4 +1632,9 @@ A narrowly-scoped phase existing only to resolve the 7 release blockers an indep
 - **Phase 17.6 — Visual Direction Upgrade:** ✅ IMPLEMENTED 2026-10-05 (see §37; `next build` gap unchanged from D-060 — not re-confirmed this phase).
 - **Phase 18 — Panel Bug Fix + Performance Audit:** ✅ IMPLEMENTED 2026-10-05 (see §38; `next build` gap unchanged from D-060 — not re-confirmed this phase, also blocking an official bundle-size report).
 - **Phase 19 — End-to-End Testing:** ✅ IMPLEMENTED 2026-10-06 (see §39; `next build` succeeded this session, D-088 — not a permanent-fix claim per D-060).
-- **Phase 20+ — TBD**, not yet proposed.
+- **Phase 20 — Cleanup & Release Preparation:** ✅ IMPLEMENTED 2026-10-06 (see §40).
+- **Phase 21 — Independent Audit:** ✅ COMPLETE 2026-10-06; release blockers identified.
+- **Phase 21.1 — Release Blocker Remediation:** ✅ IMPLEMENTED 2026-10-06; release posture later superseded by Phase 21.2.
+- **Phase 21.2 — Independent Release Re-Verification:** ✅ COMPLETE 2026-10-06; production state/validation blockers reproduced.
+- **Phase 21.3 — Production State Architecture Fix:** ✅ COMPLETE 2026-10-06 (see §42; D-101–D-104), ready as V1 demo; not deployed.
+- **Phase 22+ — TBD**, not yet proposed.
