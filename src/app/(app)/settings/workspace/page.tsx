@@ -1,12 +1,20 @@
 import { getDemoDataset } from "@/data/mock";
 import { Section } from "@/components/primitives/Section";
 import { formatShortDate } from "@/lib/format";
+import { ResetDemoDataButton } from "@/components/settings/ResetDemoDataButton";
 
 /**
  * Workspace settings (Phase 14 §10) — display only. The brief asks
  * to "show" workspace identity, not necessarily edit it, and nothing
  * in the product currently needs a renameable workspace — kept
  * read-only rather than adding a mutation surface nothing requires.
+ *
+ * Phase 19: `resetDemoDataAction` (D-039, extended through Phase 14)
+ * had existed and been exercised by the test suite since Phase 9/10,
+ * but no real UI ever called it — found during Phase 19's E2E pass
+ * when "test the reset mechanism" turned out to have no reachable
+ * entry point. Wired up here, the one place Settings already talks
+ * about the workspace being a demo.
  */
 export default function WorkspaceSettingsPage() {
   const { workspace, teamMembers, clients, projects } = getDemoDataset();
@@ -38,6 +46,11 @@ export default function WorkspaceSettingsPage() {
       <p className="mt-4 max-w-md text-xs text-muted-foreground">
         This is a demo workspace — renaming it, domains, and SSO aren&apos;t part of V1.
       </p>
+
+      <div className="mt-8 max-w-md border-t border-border pt-6">
+        <h3 className="mb-1 text-sm font-semibold text-foreground">Reset demo data</h3>
+        <ResetDemoDataButton />
+      </div>
     </Section>
   );
 }
