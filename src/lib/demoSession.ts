@@ -44,3 +44,28 @@ export async function hasDemoSession(): Promise<boolean> {
   const cookieStore = await cookies();
   return cookieStore.get(DEMO_SESSION_COOKIE)?.value === "1";
 }
+
+/**
+ * Phase 21.1 security remediation (D-094) — the independent Phase 21
+ * audit found that state-changing Server Actions relied on
+ * `proxy.ts`'s route-level redirect alone, with no independent check
+ * at the mutation boundary itself. `proxy.ts` only ever protects a
+ * *page navigation*; a Server Action reachable from a protected page
+ * is still its own callable server endpoint and must verify the
+ * session itself — relying solely on "the UI that calls this is
+ * behind a redirect" is exactly the kind of hidden-UI-only
+ * protection this audit flagged as insufficient.
+ *
+ * Every exported mutating Server Action (lib/taskActions.ts,
+ * clientActions.ts, settingsActions.ts, projectActions.ts,
+ * notificationActions.ts) calls this first and returns its own
+ * `{ ok: false, error }` result shape on rejection — never throws past
+ * the action boundary, so a stale/expired session fails the mutation
+ * safely instead of crashing the request. `signInToDemoAction`/
+ * `signOutOfDemoAction` and every read-only AI action are
+ * intentionally exempt (signing in cannot require a prior session;
+ * reads carry no mutation risk).
+ */
+export async function requireDemoSession(): Promise<boolean> {
+  return hasDemoSession();
+}

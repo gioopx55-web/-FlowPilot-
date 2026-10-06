@@ -13,6 +13,14 @@ import {
 } from "@/domain/taskMutations";
 import { resetClientOverrides } from "@/domain/clientMutations";
 import { resetSettingsOverrides } from "@/domain/settingsMutations";
+import { resetProjectOverrides } from "@/domain/projectMutations";
+import { resetNotificationState } from "@/domain/notifications";
+import { requireDemoSession } from "@/lib/demoSession";
+
+const NO_SESSION_RESULT: TaskMutationResult = {
+  ok: false,
+  error: "Your demo session has ended. Sign in again to make changes.",
+};
 
 /**
  * Next.js Server Action glue (thin — all real logic lives in
@@ -32,6 +40,7 @@ export async function changeTaskStatusAction(
   taskId: ID,
   status: TaskStatus,
 ): Promise<TaskMutationResult> {
+  if (!(await requireDemoSession())) return NO_SESSION_RESULT;
   const task = getTaskById(taskId);
   if (!task) return { ok: false, error: "Task not found." };
   const result = setTaskStatus(task, status);
@@ -43,6 +52,7 @@ export async function changeTaskBlockerAction(
   taskId: ID,
   hasActiveBlocker: boolean,
 ): Promise<TaskMutationResult> {
+  if (!(await requireDemoSession())) return NO_SESSION_RESULT;
   const task = getTaskById(taskId);
   if (!task) return { ok: false, error: "Task not found." };
   const result = setTaskBlocker(task, hasActiveBlocker);
@@ -54,6 +64,7 @@ export async function updateTaskFieldsAction(
   taskId: ID,
   edits: TaskEditableFields,
 ): Promise<TaskMutationResult> {
+  if (!(await requireDemoSession())) return NO_SESSION_RESULT;
   const task = getTaskById(taskId);
   if (!task) return { ok: false, error: "Task not found." };
   const result = updateTaskFields(task, edits);
@@ -61,10 +72,13 @@ export async function updateTaskFieldsAction(
   return result;
 }
 
-/** Resets ALL demo-state overrides (tasks + Phase 10 client edits/added interactions + Phase 14 settings). */
+/** Resets ALL demo-state overrides (tasks + client edits/added interactions + settings + projects + notification read-state). */
 export async function resetDemoDataAction(): Promise<void> {
+  if (!(await requireDemoSession())) return;
   resetTaskOverrides();
   resetClientOverrides();
   resetSettingsOverrides();
+  resetProjectOverrides();
+  resetNotificationState();
   revalidateEverything();
 }
