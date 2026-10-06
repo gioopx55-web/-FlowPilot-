@@ -73,11 +73,12 @@ function ShellLayout({
         open={openPanelId === "notifications"}
         onOpenChange={(open) => (open ? undefined : closePanel())}
         title="Notifications"
-        description="Overdue, assigned, mentioned, and follow-up alerts — coming in a later phase."
+        description="Overdue, assigned, mentioned, and follow-up alerts."
       >
         <p className="text-sm text-muted-foreground">
-          The Notifications panel foundation is in place. Real notification
-          data ships once Dashboard/Tasks/Clients business logic exists.
+          A real notification feed isn&apos;t part of this demo&apos;s scope — every
+          alert type it would surface (overdue tasks, follow-ups, workload) is
+          already answerable directly from the Dashboard or the AI Assistant.
         </p>
       </SidePanel>
     </div>

@@ -5,8 +5,7 @@ import Link from "next/link";
  * Shared empty-state pattern (Phase 4 §15.10, Phase 2 §11.19): a
  * small line-icon, one short neutral-to-positive sentence, and an
  * optional action (e.g. "Clear filters") — never a decorative
- * illustration. `ComingSoon` is the same pattern without an action,
- * used for whole placeholder routes.
+ * illustration.
  */
 export function EmptyState({
   icon: Icon,
