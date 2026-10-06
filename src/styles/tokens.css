@@ -94,7 +94,17 @@
   --fp-accent: #8591f5;
   --fp-accent-hover: #9da7f7;
   --fp-accent-subtle-bg: #1c2140;
-  --fp-accent-foreground: #ffffff;
+  /* Phase 21.1 security/QA remediation (D-097): white text on this
+     dark-mode accent only measured 2.85:1 (default-variant buttons,
+     the Notifications unread badge) — below the 4.5:1 AA minimum.
+     The Phase 7 audit (D-034/D-035 above) only re-verified the accent
+     used AS text against a tinted background, not the reverse
+     (solid-accent-filled elements with white text), so this pairing
+     was never re-checked. Reusing the existing `--fp-accent-subtle-bg`
+     tone here (not a new color) measures 5.49:1 — comfortably clears
+     4.5:1 with the same margin D-035 already established as this
+     palette's standard. */
+  --fp-accent-foreground: #1c2140;
 
   --fp-success: #3ec97e;
   --fp-warning: #f0883e;
