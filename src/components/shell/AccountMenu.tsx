@@ -1,6 +1,6 @@
 "use client";
 
-import { User as UserIcon, LogOut, Settings, Globe } from "lucide-react";
+import { User as UserIcon, LogOut, Settings, Globe, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,6 +9,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { signOutOfDemoAction } from "@/lib/demoSessionActions";
+import { onboardingStore } from "@/lib/onboardingState";
 
 /**
  * Account menu (Phase 14 §16) — reuses the existing Popover primitive
@@ -65,6 +66,15 @@ export function AccountMenu({
           <Globe className="size-4" aria-hidden="true" />
           Back to website
         </Link>
+
+        <button
+          type="button"
+          onClick={() => onboardingStore.set(false)}
+          className="flex h-9 w-full items-center gap-2 rounded-sm px-2 text-start text-sm text-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/70"
+        >
+          <Sparkles className="size-4" aria-hidden="true" />
+          Replay onboarding
+        </button>
 
         <form action={signOutOfDemoAction}>
           <button
