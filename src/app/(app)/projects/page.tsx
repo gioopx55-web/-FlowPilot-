@@ -1,5 +1,6 @@
 import { Suspense } from "react";
-import { FolderKanban } from "lucide-react";
+import Link from "next/link";
+import { FolderKanban, Plus } from "lucide-react";
 import type { ProjectListFilters, ProjectSortKey } from "@/domain/selectors";
 import { getFilteredProjects } from "@/domain/selectors";
 import type { ProjectStatus, RiskLevel } from "@/types/entities";
@@ -7,6 +8,7 @@ import { ProjectsFilters } from "@/components/projects/ProjectsFilters";
 import { ProjectsTable } from "@/components/projects/ProjectsTable";
 import { EmptyState } from "@/components/primitives/EmptyState";
 import { PageHeader } from "@/components/primitives/PageHeader";
+import { Button } from "@/components/ui/button";
 
 const VALID_STATUSES: ProjectStatus[] = [
   "kickoff",
@@ -64,6 +66,14 @@ export default async function ProjectsPage({
       <PageHeader
         title="Projects"
         description="Every project's risk, progress, and due date in one scannable list."
+        action={
+          <Button asChild size="sm">
+            <Link href="/projects/new">
+              <Plus className="size-4" aria-hidden="true" />
+              New Project
+            </Link>
+          </Button>
+        }
       />
 
       <Suspense fallback={null}>

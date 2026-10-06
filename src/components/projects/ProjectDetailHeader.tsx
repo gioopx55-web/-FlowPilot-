@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { Pencil } from "lucide-react";
 import type { Client, Project } from "@/types/entities";
 import type { ProjectRiskResult } from "@/domain/risk/risk";
 import { RiskBadge } from "@/components/primitives/RiskBadge";
 import { ProjectAIActions } from "@/components/ai/ProjectAIActions";
+import { Button } from "@/components/ui/button";
 import { formatShortDate } from "@/lib/format";
 import { PROJECT_STATUS_LABEL } from "@/components/projects/projectLabels";
 
@@ -61,6 +63,12 @@ export function ProjectDetailHeader({
         <div className="flex items-center gap-2">
           <RiskBadge risk={risk} />
           <ProjectAIActions projectId={project.id} />
+          <Button asChild size="sm" variant="outline">
+            <Link href={`/projects/${project.id}/edit`}>
+              <Pencil className="size-3.5" aria-hidden="true" />
+              Edit
+            </Link>
+          </Button>
         </div>
       </div>
     </header>

@@ -12,6 +12,7 @@ import { validateDemoDataset, type DemoDataset } from "@/domain/validation";
 import { applyTaskOverride } from "@/domain/taskMutations";
 import { applyClientOverride, getAddedInteractions } from "@/domain/clientMutations";
 import { applyUserOverride } from "@/domain/settingsMutations";
+import { applyProjectOverride, getAddedProjects } from "@/domain/projectMutations";
 
 export type { DemoDataset };
 export { WORKSPACE_ID };
@@ -79,11 +80,13 @@ export function getDemoDataset(): DemoDataset {
   const clients = base.clients.map((client) =>
     withDerivedClientFields(applyClientOverride(client), clientInteractions),
   );
+  const projects = [...base.projects, ...getAddedProjects()].map(applyProjectOverride);
   return {
     ...base,
     users: base.users.map(applyUserOverride),
     tasks: base.tasks.map(applyTaskOverride),
     clients,
     clientInteractions,
+    projects,
   };
 }
