@@ -1,25 +1,32 @@
 import type { ID, User } from "@/types/entities";
+import { users } from "@/data/mock/users";
+import {
+  DEFAULT_NOTIFICATION_PREFERENCES,
+  getDemoStore,
+  type NotificationPreferences,
+  type UserOverride,
+} from "@/domain/demoStore";
+import {
+  hasOnlyKeys,
+  isBoolean,
+  isBoundedString,
+  isEmail,
+  isRecord,
+} from "@/domain/runtimeValidation";
 
-/**
- * Phase 14 settings demo-state — same server-side, in-memory,
- * process-lifetime "overrides" pattern D-039 established for tasks
- * (Phase 9) and extended for clients (Phase 10): nothing here is
- * localStorage or a client store, and base fixture arrays are never
- * mutated. Layered onto `users` at every `getDemoDataset()` call in
- * `data/mock/index.ts`, exactly like `applyTaskOverride`/
- * `applyClientOverride`.
- */
+export type { NotificationPreferences } from "@/domain/demoStore";
+
+const PROFILE_EDITABLE_KEYS = ["displayName", "email"] as const;
+const NOTIFICATION_PREFERENCE_KEYS = [
+  "overdueTaskAlerts",
+  "projectRiskAlerts",
+  "clientFollowUpReminders",
+  "workloadAlerts",
+] as const;
 
 export interface ProfileEditableFields {
   displayName?: string;
   email?: string;
-}
-
-const userOverrides = new Map<ID, Partial<Pick<User, "displayName" | "email">>>();
-
-export function applyUserOverride(user: User): User {
-  const override = userOverrides.get(user.id);
-  return override ? { ...user, ...override } : user;
 }
 
 export interface SettingsMutationResult {
@@ -27,65 +34,60 @@ export interface SettingsMutationResult {
   error?: string;
 }
 
-/**
- * Profile (Phase 14 §9) edits only `displayName`/`email` on the one
- * demo `User` record (`lib/demo-user.ts`'s `DEMO_CURRENT_USER_ID`).
- * `jobTitle` stays read-only here, sourced from the linked
- * `TeamMember` instead of becoming editable through this surface —
- * `TeamMember` mutation was deliberately scoped out of V1 (D-047);
- * editing it via Settings would reopen that decision through a back
- * door rather than extend it cleanly.
- */
-export function updateProfile(userId: ID, edits: ProfileEditableFields): SettingsMutationResult {
-  if (edits.displayName !== undefined && !edits.displayName.trim()) {
-    return { ok: false, error: "Name cannot be empty." };
+export function applyUserOverride(user: User): User {
+  const override = getDemoStore().userOverrides.get(user.id);
+  return override ? { ...user, ...override } : user;
+}
+
+export function updateProfile(
+  userId: ID,
+  edits: ProfileEditableFields,
+): SettingsMutationResult {
+  if (typeof userId !== "string" || !users.some((user) => user.id === userId)) {
+    return { ok: false, error: "User not found." };
   }
-  if (edits.email !== undefined && !edits.email.trim()) {
-    return { ok: false, error: "Email cannot be empty." };
+  if (!isRecord(edits) || !hasOnlyKeys(edits, PROFILE_EDITABLE_KEYS)) {
+    return { ok: false, error: "Profile changes contain unsupported fields." };
   }
-  const patch: Partial<User> = {};
+  if (edits.displayName !== undefined && !isBoundedString(edits.displayName, 1, 120)) {
+    return { ok: false, error: "Name must be between 1 and 120 characters." };
+  }
+  if (edits.email !== undefined && !isEmail(edits.email)) {
+    return { ok: false, error: "Enter a valid email address." };
+  }
+
+  const patch: UserOverride = {};
   if (edits.displayName !== undefined) patch.displayName = edits.displayName.trim();
   if (edits.email !== undefined) patch.email = edits.email.trim();
-
-  userOverrides.set(userId, { ...userOverrides.get(userId), ...patch });
+  const overrides = getDemoStore().userOverrides;
+  overrides.set(userId, { ...overrides.get(userId), ...patch });
   return { ok: true };
 }
 
-export interface NotificationPreferences {
-  overdueTaskAlerts: boolean;
-  projectRiskAlerts: boolean;
-  clientFollowUpReminders: boolean;
-  workloadAlerts: boolean;
-}
-
-const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
-  overdueTaskAlerts: true,
-  projectRiskAlerts: true,
-  clientFollowUpReminders: true,
-  workloadAlerts: true,
-};
-
-let notificationPreferences: NotificationPreferences = { ...DEFAULT_NOTIFICATION_PREFERENCES };
-
-/**
- * Preference-only state (Phase 14 §12) — nothing in the product
- * currently gates a real alert on these (the Notifications panel is
- * still a Phase 5 placeholder), so this is honestly a demo
- * preference surface, not a functioning alert pipeline.
- */
 export function getNotificationPreferences(): NotificationPreferences {
-  return notificationPreferences;
+  return getDemoStore().notificationPreferences;
 }
 
 export function updateNotificationPreferences(
   patch: Partial<NotificationPreferences>,
 ): SettingsMutationResult {
-  notificationPreferences = { ...notificationPreferences, ...patch };
+  if (!isRecord(patch) || !hasOnlyKeys(patch, NOTIFICATION_PREFERENCE_KEYS)) {
+    return { ok: false, error: "Notification changes contain unsupported fields." };
+  }
+  for (const key of NOTIFICATION_PREFERENCE_KEYS) {
+    if (patch[key] !== undefined && !isBoolean(patch[key])) {
+      return { ok: false, error: "Notification preferences must be true or false." };
+    }
+  }
+  getDemoStore().notificationPreferences = {
+    ...getDemoStore().notificationPreferences,
+    ...patch,
+  };
   return { ok: true };
 }
 
-/** Resets both the profile overrides and notification preferences to their fixture-derived defaults. */
 export function resetSettingsOverrides(): void {
-  userOverrides.clear();
-  notificationPreferences = { ...DEFAULT_NOTIFICATION_PREFERENCES };
+  const store = getDemoStore();
+  store.userOverrides.clear();
+  store.notificationPreferences = { ...DEFAULT_NOTIFICATION_PREFERENCES };
 }

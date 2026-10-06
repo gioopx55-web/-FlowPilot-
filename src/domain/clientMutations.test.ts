@@ -12,9 +12,9 @@ import { DEMO_TODAY_ISO } from "@/lib/demo-clock";
 
 function makeClient(overrides: Partial<Client> = {}): Client {
   return {
-    id: "cl_mut_test",
-    workspaceId: "ws_test",
-    name: "Test Client",
+    id: "cl_harbor_thistle",
+    workspaceId: "ws_northbound",
+    name: "Harbor & Thistle",
     status: "active",
     primaryContactName: "Jordan Lee",
     createdAt: "2026-01-01T09:00:00.000Z",
@@ -27,26 +27,26 @@ test.afterEach(() => {
 });
 
 test("addClientInteraction: rejects an empty/whitespace-only summary", () => {
-  const result = addClientInteraction("cl1", "note", "   ", "usr_maya");
+  const result = addClientInteraction("cl_harbor_thistle", "note", "   ", "usr_maya");
   assert.equal(result.ok, false);
   assert.equal(getAddedInteractions().length, 0);
 });
 
 test("addClientInteraction: appends a trimmed interaction stamped with today by default", () => {
-  const result = addClientInteraction("cl1", "call", "  Discussed renewal.  ", "usr_maya");
+  const result = addClientInteraction("cl_harbor_thistle", "call", "  Discussed renewal.  ", "usr_maya");
   assert.equal(result.ok, true);
   const added = getAddedInteractions();
   assert.equal(added.length, 1);
   assert.equal(added[0]!.summary, "Discussed renewal.");
-  assert.equal(added[0]!.clientId, "cl1");
+  assert.equal(added[0]!.clientId, "cl_harbor_thistle");
   assert.equal(added[0]!.type, "call");
   assert.equal(added[0]!.createdByUserId, "usr_maya");
   assert.equal(added[0]!.occurredAt, DEMO_TODAY_ISO);
 });
 
 test("addClientInteraction: each call gets a distinct id", () => {
-  addClientInteraction("cl1", "note", "First note", "usr_maya");
-  addClientInteraction("cl1", "note", "Second note", "usr_maya");
+  addClientInteraction("cl_harbor_thistle", "note", "First note", "usr_maya");
+  addClientInteraction("cl_harbor_thistle", "note", "Second note", "usr_maya");
   const added = getAddedInteractions();
   assert.equal(added.length, 2);
   assert.notEqual(added[0]!.id, added[1]!.id);
@@ -98,4 +98,36 @@ test("resetClientOverrides: clears both field overrides and added interactions",
 
   assert.equal(applyClientOverride(client).status, "active");
   assert.equal(getAddedInteractions().length, 0);
+});
+
+test("runtime validation: rejects nonexistent client, invalid interaction type, and nonexistent user", () => {
+  assert.equal(addClientInteraction("cl_missing", "note", "Test", "usr_maya").ok, false);
+  assert.equal(
+    addClientInteraction(
+      "cl_harbor_thistle",
+      "invalid" as Parameters<typeof addClientInteraction>[1],
+      "Test",
+      "usr_maya",
+    ).ok,
+    false,
+  );
+  assert.equal(
+    addClientInteraction("cl_harbor_thistle", "note", "Test", "usr_missing").ok,
+    false,
+  );
+  assert.equal(getAddedInteractions().length, 0);
+});
+
+test("runtime validation: rejects invalid client status, malformed email, and unknown fields", () => {
+  const client = makeClient();
+  assert.equal(
+    updateClientFields(client.id, { status: "prospect" as Client["status"] }).ok,
+    false,
+  );
+  assert.equal(updateClientFields(client.id, { primaryContactEmail: "not-an-email" }).ok, false);
+  assert.equal(
+    updateClientFields(client.id, { name: "Injected" } as unknown as Parameters<typeof updateClientFields>[1]).ok,
+    false,
+  );
+  assert.deepEqual(applyClientOverride(client), client);
 });

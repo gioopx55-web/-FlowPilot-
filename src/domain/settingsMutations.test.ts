@@ -84,3 +84,34 @@ test("resetSettingsOverrides: clears profile overrides and notification preferen
     workloadAlerts: true,
   });
 });
+
+test("runtime validation: rejects malformed email, nonexistent user, and unknown profile fields", () => {
+  assert.equal(updateProfile(DEMO_CURRENT_USER_ID, { email: "bad-email" }).ok, false);
+  assert.equal(updateProfile("usr_missing", { displayName: "Nobody" }).ok, false);
+  assert.equal(
+    updateProfile(
+      DEMO_CURRENT_USER_ID,
+      { workspaceRole: "owner" } as unknown as Parameters<typeof updateProfile>[1],
+    ).ok,
+    false,
+  );
+});
+
+test("runtime validation: notification preferences accept only approved boolean fields", () => {
+  assert.equal(
+    updateNotificationPreferences({ workloadAlerts: "yes" as unknown as boolean }).ok,
+    false,
+  );
+  assert.equal(
+    updateNotificationPreferences(
+      { emailDigest: true } as unknown as Parameters<typeof updateNotificationPreferences>[0],
+    ).ok,
+    false,
+  );
+  assert.deepEqual(getNotificationPreferences(), {
+    overdueTaskAlerts: true,
+    projectRiskAlerts: true,
+    clientFollowUpReminders: true,
+    workloadAlerts: true,
+  });
+});

@@ -1,4 +1,3 @@
-import type { ID } from "@/types/entities";
 import { DEMO_TODAY_ISO } from "@/lib/demo-clock";
 import {
   getAtRiskProjectsSorted,
@@ -7,6 +6,8 @@ import {
   getTeamWorkloadSnapshot,
 } from "@/domain/selectors";
 import { getNotificationPreferences } from "@/domain/settingsMutations";
+import { getDemoStore } from "@/domain/demoStore";
+import { isBoundedString } from "@/domain/runtimeValidation";
 
 /**
  * In-app Notification Center (Phase 21.1 §2 — release blocker:
@@ -50,10 +51,8 @@ export interface NotificationFeedItem {
   read: boolean;
 }
 
-const readOverrides = new Set<ID>();
-
 function isRead(id: string): boolean {
-  return readOverrides.has(id);
+  return getDemoStore().readNotificationIds.has(id);
 }
 
 /**
@@ -145,18 +144,21 @@ export interface NotificationMutationResult {
 }
 
 export function markNotificationRead(id: string): NotificationMutationResult {
-  readOverrides.add(id);
+  if (!isBoundedString(id, 1, 200) || !getNotificationFeed().some((item) => item.id === id)) {
+    return { ok: false, error: "Notification not found." };
+  }
+  getDemoStore().readNotificationIds.add(id);
   return { ok: true };
 }
 
 export function markAllNotificationsRead(): NotificationMutationResult {
   for (const item of getNotificationFeed()) {
-    readOverrides.add(item.id);
+    getDemoStore().readNotificationIds.add(item.id);
   }
   return { ok: true };
 }
 
 /** Clears read-state — part of the shared "reset to demo data" capability. */
 export function resetNotificationState(): void {
-  readOverrides.clear();
+  getDemoStore().readNotificationIds.clear();
 }

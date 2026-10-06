@@ -39,6 +39,7 @@ export default async function LoginPage({
   const sp = await searchParams;
   const redirectParam = Array.isArray(sp.redirect) ? sp.redirect[0] : sp.redirect;
   const redirectTo = sanitizeRedirectTarget(redirectParam);
+  const reason = Array.isArray(sp.reason) ? sp.reason[0] : sp.reason;
 
   const { workspace } = getDemoDataset();
   const demoUser = getUserById(DEMO_CURRENT_USER_ID);
@@ -69,6 +70,12 @@ export default async function LoginPage({
           This is a demo workspace — there&apos;s no account to create and nothing to type.
           Continue to explore {workspace.name} as {demoUser?.displayName ?? "the demo user"}.
         </p>
+
+        {reason === "session-expired" && (
+          <p role="status" className="mt-4 rounded-sm border border-border bg-muted/40 p-3 text-sm text-foreground">
+            Your demo session ended. Continue again before making changes.
+          </p>
+        )}
 
         <form action={signIn} className="mt-6">
           <Button type="submit" size="lg" className="w-full">

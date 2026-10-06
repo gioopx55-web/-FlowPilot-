@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 /**
  * Demo session (Phase 14 §3) — the smallest clean mechanism that
@@ -66,6 +67,8 @@ export async function hasDemoSession(): Promise<boolean> {
  * intentionally exempt (signing in cannot require a prior session;
  * reads carry no mutation risk).
  */
-export async function requireDemoSession(): Promise<boolean> {
-  return hasDemoSession();
+export async function requireDemoSession(): Promise<void> {
+  if (!(await hasDemoSession())) {
+    redirect("/login?reason=session-expired");
+  }
 }

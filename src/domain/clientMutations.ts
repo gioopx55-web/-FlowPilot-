@@ -1,74 +1,25 @@
 import type { Client, ClientInteraction, ID, InteractionType } from "@/types/entities";
 import { demoToday } from "@/lib/demo-clock";
 import { WORKSPACE_ID } from "@/data/mock/workspace";
+import { clients } from "@/data/mock/clients";
+import { users } from "@/data/mock/users";
+import { getDemoStore, type ClientOverride } from "@/domain/demoStore";
+import {
+  hasOnlyKeys,
+  isBoundedString,
+  isEmail,
+  isEnumValue,
+  isIsoTimestamp,
+  isRecord,
+} from "@/domain/runtimeValidation";
 
-/**
- * Client-side of the D-039 demo-state architecture — same pattern as
- * domain/taskMutations.ts, extended for Phase 10: a server-side,
- * in-memory, process-lifetime store, never localStorage, base
- * fixture arrays never mutated. Two pieces of state:
- *
- * - `addedInteractions`: new ClientInteraction records appended by
- *   "Add interaction." Logging an interaction means only that
- *   FlowPilot recorded it — nothing is sent externally (Phase 10 §9).
- * - `clientOverrides`: edits to a client's own fields (contact name/
- *   email/status).
- *
- * data/mock/index.ts merges both into the base dataset on every
- * getDemoDataset() call, and re-runs withDerivedClientFields with the
- * FULL (base + added) interaction list so `lastInteractionAt` is
- * always correct — it is never set directly here.
- */
-
-let addedInteractions: ClientInteraction[] = [];
-let interactionCounter = 0;
-
-const clientOverrides = new Map<
-  ID,
-  Partial<Pick<Client, "primaryContactName" | "primaryContactEmail" | "status">>
->();
-
-export function getAddedInteractions(): ClientInteraction[] {
-  return addedInteractions;
-}
-
-export function applyClientOverride(client: Client): Client {
-  const override = clientOverrides.get(client.id);
-  return override ? { ...client, ...override } : client;
-}
+const INTERACTION_TYPES = ["call", "email", "meeting", "update_sent", "note"] as const;
+const CLIENT_STATUSES = ["active", "retainer", "dormant"] as const;
+const CLIENT_EDITABLE_KEYS = ["primaryContactName", "primaryContactEmail", "status"] as const;
 
 export interface ClientMutationResult {
   ok: boolean;
   error?: string;
-}
-
-/**
- * Appends a new ClientInteraction (Phase 10 §8). `occurredAt`
- * defaults to the demo clock's "now" — never the real system clock,
- * consistent with every other demo-date calculation in this codebase.
- */
-export function addClientInteraction(
-  clientId: ID,
-  type: InteractionType,
-  summary: string,
-  createdByUserId: ID,
-  occurredAt?: string,
-): ClientMutationResult {
-  if (!summary.trim()) {
-    return { ok: false, error: "Summary is required." };
-  }
-  interactionCounter += 1;
-  const interaction: ClientInteraction = {
-    id: `ci_added_${interactionCounter}`,
-    workspaceId: WORKSPACE_ID,
-    clientId,
-    type,
-    summary: summary.trim(),
-    occurredAt: occurredAt ?? demoToday().toISOString(),
-    createdByUserId,
-  };
-  addedInteractions = [...addedInteractions, interaction];
-  return { ok: true };
 }
 
 export interface ClientEditableFields {
@@ -77,26 +28,94 @@ export interface ClientEditableFields {
   status?: Client["status"];
 }
 
+export function getAddedInteractions(): ClientInteraction[] {
+  return getDemoStore().addedInteractions;
+}
+
+export function applyClientOverride(client: Client): Client {
+  const override = getDemoStore().clientOverrides.get(client.id);
+  return override ? { ...client, ...override } : client;
+}
+
+export function addClientInteraction(
+  clientId: ID,
+  type: InteractionType,
+  summary: string,
+  createdByUserId: ID,
+  occurredAt?: string,
+): ClientMutationResult {
+  if (typeof clientId !== "string" || !clients.some((client) => client.id === clientId)) {
+    return { ok: false, error: "Client not found." };
+  }
+  if (!isEnumValue(type, INTERACTION_TYPES)) {
+    return { ok: false, error: "Select a valid interaction type." };
+  }
+  if (!isBoundedString(summary, 1, 1000)) {
+    return { ok: false, error: "Summary must be between 1 and 1,000 characters." };
+  }
+  if (typeof createdByUserId !== "string" || !users.some((user) => user.id === createdByUserId)) {
+    return { ok: false, error: "User not found." };
+  }
+  if (occurredAt !== undefined && !isIsoTimestamp(occurredAt)) {
+    return { ok: false, error: "Interaction date is invalid." };
+  }
+
+  const store = getDemoStore();
+  store.interactionCounter += 1;
+  store.addedInteractions.push({
+    id: `ci_added_${store.interactionCounter}`,
+    workspaceId: WORKSPACE_ID,
+    clientId,
+    type,
+    summary: summary.trim(),
+    occurredAt: occurredAt ?? demoToday().toISOString(),
+    createdByUserId,
+  });
+  return { ok: true };
+}
+
 export function updateClientFields(
   clientId: ID,
   edits: ClientEditableFields,
 ): ClientMutationResult {
-  if (edits.primaryContactName !== undefined && !edits.primaryContactName.trim()) {
-    return { ok: false, error: "Primary contact name cannot be empty." };
+  if (typeof clientId !== "string" || !clients.some((client) => client.id === clientId)) {
+    return { ok: false, error: "Client not found." };
   }
-  const patch: Partial<Client> = {};
-  if (edits.primaryContactName !== undefined) patch.primaryContactName = edits.primaryContactName;
+  if (!isRecord(edits) || !hasOnlyKeys(edits, CLIENT_EDITABLE_KEYS)) {
+    return { ok: false, error: "Client changes contain unsupported fields." };
+  }
+  if (
+    edits.primaryContactName !== undefined &&
+    !isBoundedString(edits.primaryContactName, 1, 120)
+  ) {
+    return { ok: false, error: "Primary contact name must be between 1 and 120 characters." };
+  }
+  if (
+    edits.primaryContactEmail !== undefined &&
+    edits.primaryContactEmail !== null &&
+    !isEmail(edits.primaryContactEmail)
+  ) {
+    return { ok: false, error: "Enter a valid email address." };
+  }
+  if (edits.status !== undefined && !isEnumValue(edits.status, CLIENT_STATUSES)) {
+    return { ok: false, error: "Select a valid client status." };
+  }
+
+  const patch: ClientOverride = {};
+  if (edits.primaryContactName !== undefined) patch.primaryContactName = edits.primaryContactName.trim();
   if (edits.primaryContactEmail !== undefined) {
-    patch.primaryContactEmail = edits.primaryContactEmail ?? undefined;
+    patch.primaryContactEmail = edits.primaryContactEmail === null ? undefined : edits.primaryContactEmail.trim();
   }
   if (edits.status !== undefined) patch.status = edits.status;
 
-  clientOverrides.set(clientId, { ...clientOverrides.get(clientId), ...patch });
+  const overrides = getDemoStore().clientOverrides;
+  overrides.set(clientId, { ...overrides.get(clientId), ...patch });
   return { ok: true };
 }
 
-/** Clears client-field overrides and added interactions — part of the shared "reset to demo data" capability. */
 export function resetClientOverrides(): void {
-  clientOverrides.clear();
-  addedInteractions = [];
+  const store = getDemoStore();
+  store.clientOverrides.clear();
+  store.addedInteractions.length = 0;
+  store.interactionCounter = 0;
 }

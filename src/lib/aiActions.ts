@@ -2,6 +2,7 @@
 
 import { executeAIIntent, runAIQuery, type AIAnswer } from "@/domain/ai/executeIntent";
 import type { AIIntentId, AIScope } from "@/domain/ai/intents";
+import { requireDemoSession } from "@/lib/demoSession";
 
 /**
  * Server Action boundary for the AI Assistant (Phase 13 §23) — same
@@ -14,9 +15,11 @@ export async function runAIIntentAction(
   intentId: AIIntentId,
   scope?: AIScope,
 ): Promise<AIAnswer> {
+  await requireDemoSession();
   return executeAIIntent(intentId, scope);
 }
 
 export async function runAIQueryAction(rawInput: string, activeScope?: AIScope): Promise<AIAnswer> {
+  await requireDemoSession();
   return runAIQuery(rawInput, activeScope);
 }

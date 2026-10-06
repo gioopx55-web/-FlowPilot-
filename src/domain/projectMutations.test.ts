@@ -15,7 +15,7 @@ test.afterEach(() => {
 function validFields(overrides: Partial<Parameters<typeof createProject>[0]> = {}) {
   return {
     name: "New Website",
-    clientId: "cl_test",
+    clientId: "cl_harbor_thistle",
     status: "kickoff" as const,
     progressPct: 0,
     startDate: "2026-10-01",
@@ -81,8 +81,8 @@ test("createProject: rejects a due date before the start date", () => {
 test("updateProjectFields: edits are visible via applyProjectOverride", () => {
   const created = createProject(validFields({ name: "Original" }));
   const id = created.projectId!;
-  updateProjectFields(id, "kickoff", { name: "Renamed" });
   const base = getAddedProjects().find((p) => p.id === id)!;
+  updateProjectFields(base, { name: "Renamed" });
   const withOverride = applyProjectOverride(base);
   assert.equal(withOverride.name, "Renamed");
 });
@@ -90,8 +90,8 @@ test("updateProjectFields: edits are visible via applyProjectOverride", () => {
 test("updateProjectFields: transitioning to completed sets completedAt", () => {
   const created = createProject(validFields());
   const id = created.projectId!;
-  updateProjectFields(id, "kickoff", { status: "completed" });
   const base = getAddedProjects().find((p) => p.id === id)!;
+  updateProjectFields(base, { status: "completed" });
   const withOverride = applyProjectOverride(base);
   assert.equal(withOverride.status, "completed");
   assert.ok(withOverride.completedAt);
@@ -100,9 +100,9 @@ test("updateProjectFields: transitioning to completed sets completedAt", () => {
 test("updateProjectFields: transitioning away from completed clears completedAt", () => {
   const created = createProject(validFields());
   const id = created.projectId!;
-  updateProjectFields(id, "kickoff", { status: "completed" });
-  updateProjectFields(id, "completed", { status: "in_progress" });
   const base = getAddedProjects().find((p) => p.id === id)!;
+  updateProjectFields(base, { status: "completed" });
+  updateProjectFields(applyProjectOverride(base), { status: "in_progress" });
   const withOverride = applyProjectOverride(base);
   assert.equal(withOverride.status, "in_progress");
   assert.equal(withOverride.completedAt, undefined);
@@ -110,13 +110,35 @@ test("updateProjectFields: transitioning away from completed clears completedAt"
 
 test("updateProjectFields: rejects invalid edits the same way createProject does", () => {
   const created = createProject(validFields());
-  const result = updateProjectFields(created.projectId!, "kickoff", { progressPct: 999 });
+  const base = getAddedProjects().find((p) => p.id === created.projectId)!;
+  const result = updateProjectFields(base, { progressPct: 999 });
   assert.equal(result.ok, false);
 });
 
 test("resetProjectOverrides: clears added projects and field overrides", () => {
   const created = createProject(validFields());
-  updateProjectFields(created.projectId!, "kickoff", { name: "Edited" });
+  const base = getAddedProjects().find((p) => p.id === created.projectId)!;
+  updateProjectFields(base, { name: "Edited" });
   resetProjectOverrides();
   assert.equal(getAddedProjects().length, 0);
+});
+
+test("runtime validation: rejects malformed, incomplete, unknown-key, and nonexistent-client payloads", () => {
+  assert.equal(createProject(null as unknown as Parameters<typeof createProject>[0]).ok, false);
+  assert.equal(
+    createProject({ name: "Missing fields" } as unknown as Parameters<typeof createProject>[0]).ok,
+    false,
+  );
+  assert.equal(
+    createProject({ ...validFields(), injected: true } as unknown as Parameters<typeof createProject>[0]).ok,
+    false,
+  );
+  assert.equal(createProject(validFields({ clientId: "cl_missing" })).ok, false);
+  assert.equal(getAddedProjects().length, 0);
+});
+
+test("updateProjectFields: validates date ordering across a partial edit", () => {
+  const created = createProject(validFields({ startDate: "2026-10-10", dueDate: "2026-10-20" }));
+  const project = getAddedProjects().find((p) => p.id === created.projectId)!;
+  assert.equal(updateProjectFields(project, { dueDate: "2026-10-01" }).ok, false);
 });

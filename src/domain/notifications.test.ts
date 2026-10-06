@@ -73,3 +73,10 @@ test("resetNotificationState: unread count returns after a reset", () => {
   resetNotificationState();
   assert.equal(getUnreadNotificationCount(), before);
 });
+
+test("markNotificationRead: rejects malformed and nonexistent notification IDs", () => {
+  const before = getUnreadNotificationCount();
+  assert.equal(markNotificationRead(42 as unknown as string).ok, false);
+  assert.equal(markNotificationRead("notif_missing").ok, false);
+  assert.equal(getUnreadNotificationCount(), before);
+});

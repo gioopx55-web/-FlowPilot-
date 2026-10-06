@@ -21,6 +21,11 @@ function resolveExtension(absPath) {
 }
 
 export async function resolve(specifier, context, nextResolve) {
+  // Next.js aliases this marker internally. Plain Node test/validation runs
+  // need a no-op module so server-only domain modules remain importable there.
+  if (specifier === "server-only") {
+    return { url: "data:text/javascript,export%20default%20undefined", shortCircuit: true };
+  }
   if (specifier.startsWith("@/")) {
     const absPath = resolveExtension(
       path.join(srcRoot, specifier.slice(2)),

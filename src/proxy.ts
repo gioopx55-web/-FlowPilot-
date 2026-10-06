@@ -19,8 +19,12 @@ import { isProtectedPath } from "@/lib/protectedRoutes";
 export function proxy(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
   const hasSession = request.cookies.get(DEMO_SESSION_COOKIE)?.value === "1";
+  const isServerAction = request.method === "POST" && request.headers.has("next-action");
 
-  if (isProtectedPath(pathname) && !hasSession) {
+  // Let action POSTs reach their own session guard. That guard uses Next's
+  // action-aware redirect response, so an expired session produces a useful
+  // client navigation instead of Proxy returning an opaque redirect payload.
+  if (isProtectedPath(pathname) && !hasSession && !isServerAction) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);

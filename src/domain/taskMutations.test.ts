@@ -125,3 +125,22 @@ test("overrides merge across multiple mutation calls on the same task", () => {
   assert.equal(result.status, "in_progress");
   assert.equal(result.priority, "high");
 });
+
+test("runtime validation: rejects invalid status, blocker state, and priority", () => {
+  const task = makeTask({ id: "t_invalid_enums" });
+  assert.equal(setTaskStatus(task, "invalid" as Task["status"]).ok, false);
+  assert.equal(setTaskBlocker(task, "yes" as unknown as boolean).ok, false);
+  assert.equal(updateTaskFields(task, { priority: "urgent" as Task["priority"] }).ok, false);
+  assert.deepEqual(applyTaskOverride(task), task);
+});
+
+test("runtime validation: rejects NaN hours, nonexistent assignee, and unknown patch keys", () => {
+  const task = makeTask({ id: "t_invalid_patch" });
+  assert.equal(updateTaskFields(task, { estimatedHours: Number.NaN }).ok, false);
+  assert.equal(updateTaskFields(task, { assigneeId: "tm_missing" }).ok, false);
+  assert.equal(
+    updateTaskFields(task, { title: "Injected" } as unknown as Parameters<typeof updateTaskFields>[1]).ok,
+    false,
+  );
+  assert.deepEqual(applyTaskOverride(task), task);
+});

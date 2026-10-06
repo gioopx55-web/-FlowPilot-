@@ -1,11 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import type { ID, ProjectStatus } from "@/types/entities";
-import { getProjectById, getClientById } from "@/domain/selectors";
+import type { ID } from "@/types/entities";
+import { getProjectById } from "@/domain/selectors";
 import {
   createProject,
   updateProjectFields,
+  type ProjectCreateFields,
   type ProjectEditableFields,
   type ProjectMutationResult,
 } from "@/domain/projectMutations";
@@ -18,27 +19,14 @@ import { requireDemoSession } from "@/lib/demoSession";
  * closes ("Project creation/editing is declared P0 but absent").
  */
 
-const NO_SESSION_RESULT: ProjectMutationResult = {
-  ok: false,
-  error: "Your demo session has ended. Sign in again to make changes.",
-};
-
 function revalidateEverything() {
   revalidatePath("/", "layout");
 }
 
-export async function createProjectAction(fields: {
-  name: string;
-  clientId: string;
-  status: ProjectStatus;
-  progressPct: number;
-  startDate: string;
-  dueDate?: string | null;
-}): Promise<ProjectMutationResult> {
-  if (!(await requireDemoSession())) return NO_SESSION_RESULT;
-  if (!getClientById(fields.clientId)) {
-    return { ok: false, error: "Select a valid client." };
-  }
+export async function createProjectAction(
+  fields: ProjectCreateFields,
+): Promise<ProjectMutationResult> {
+  await requireDemoSession();
   const result = createProject(fields);
   if (result.ok) revalidateEverything();
   return result;
@@ -48,13 +36,10 @@ export async function updateProjectAction(
   projectId: ID,
   edits: ProjectEditableFields,
 ): Promise<ProjectMutationResult> {
-  if (!(await requireDemoSession())) return NO_SESSION_RESULT;
+  await requireDemoSession();
   const project = getProjectById(projectId);
   if (!project) return { ok: false, error: "Project not found." };
-  if (edits.clientId !== undefined && !getClientById(edits.clientId)) {
-    return { ok: false, error: "Select a valid client." };
-  }
-  const result = updateProjectFields(projectId, project.status, edits);
+  const result = updateProjectFields(project, edits);
   if (result.ok) revalidateEverything();
   return result;
 }

@@ -56,7 +56,7 @@ test("editing a project's status changes Analytics' status distribution", () => 
   const afterCreateKickoff = afterCreate.find((e) => e.status === "kickoff")?.count ?? 0;
   assert.equal(afterCreateKickoff, beforeKickoff + 1);
 
-  updateProjectFields(created.projectId!, "kickoff", { status: "review" });
+  updateProjectFields(getProjectById(created.projectId!)!, { status: "review" });
   const afterEdit = getProjectStatusDistribution();
   const afterEditKickoff = afterEdit.find((e) => e.status === "kickoff")?.count ?? 0;
   const afterEditReview = afterEdit.find((e) => e.status === "review")?.count ?? 0;
