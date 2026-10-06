@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandLockup } from "@/components/primitives/BrandMark";
 
 const PRODUCT_LINKS = [
   { href: "#product-preview", label: "Product" },
@@ -23,7 +24,7 @@ export function MarketingFooter() {
       <div className="mx-auto max-w-6xl">
         <div className="grid gap-10 sm:grid-cols-[1.5fr_1fr_1fr]">
           <div>
-            <span className="text-sm font-semibold text-foreground">FlowPilot AI</span>
+            <BrandLockup className="opacity-80" />
             <p className="mt-2 max-w-xs text-sm text-muted-foreground">
               An AI-assisted operations cockpit for small agency teams — risk, workload,
               and follow-up, surfaced before they become problems.

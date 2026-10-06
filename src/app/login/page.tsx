@@ -7,6 +7,7 @@ import { signInToDemoAction } from "@/lib/demoSessionActions";
 import { sanitizeRedirectTarget } from "@/lib/protectedRoutes";
 import { Button } from "@/components/ui/button";
 import { DotGrid } from "@/components/marketing/DotGrid";
+import { BrandLockup } from "@/components/primitives/BrandMark";
 
 export const metadata: Metadata = {
   title: "Sign in — FlowPilot AI",
@@ -58,9 +59,9 @@ export default async function LoginPage({
       <div className="w-full max-w-sm rounded-[var(--fp-radius-lg)] border border-border bg-[var(--fp-bg-surface-raised)] p-8 shadow-[var(--fp-shadow-level-2)]">
         <Link
           href="/"
-          className="mb-6 inline-block rounded-sm text-sm font-semibold text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/70"
+          className="mb-6 inline-block rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/70"
         >
-          FlowPilot AI
+          <BrandLockup />
         </Link>
 
         <h1 className="text-xl font-semibold tracking-tight text-foreground">Sign in</h1>

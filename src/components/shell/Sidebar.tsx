@@ -15,6 +15,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { BrandMark } from "@/components/primitives/BrandMark";
 
 const STORAGE_KEY = "flowpilot-sidebar-collapsed";
 
@@ -79,9 +80,9 @@ export function Sidebar() {
             <TooltipTrigger asChild>
               <Link
                 href="/"
-                className="flex size-7 shrink-0 items-center justify-center rounded-md bg-[var(--fp-accent)] text-xs font-bold text-[var(--fp-accent-foreground)] outline-none focus-visible:ring-2 focus-visible:ring-ring/70"
+                className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/70"
               >
-                N
+                <BrandMark />
               </Link>
             </TooltipTrigger>
             <TooltipContent side={tooltipSide}>Back to website</TooltipContent>
@@ -91,12 +92,7 @@ export function Sidebar() {
             href="/"
             className="flex items-center gap-2.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/70"
           >
-            <span
-              aria-hidden="true"
-              className="flex size-7 shrink-0 items-center justify-center rounded-md bg-[var(--fp-accent)] text-xs font-bold text-[var(--fp-accent-foreground)]"
-            >
-              N
-            </span>
+            <BrandMark />
             <span className="truncate text-sm font-semibold text-foreground">
               Northbound Studio
             </span>

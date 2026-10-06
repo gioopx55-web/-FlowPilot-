@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { getLocale } from "@/lib/locale";
+import { BrandLockup } from "@/components/primitives/BrandMark";
 
 const NAV_LINKS = [
   { href: "#product-preview", label: "Product" },
@@ -54,9 +55,9 @@ export function MarketingNav() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
-          className="rounded-sm text-sm font-semibold text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/70"
+          className="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/70"
         >
-          FlowPilot AI
+          <BrandLockup />
         </Link>
 
         <nav aria-label="Main" className="hidden items-center gap-6 md:flex">
