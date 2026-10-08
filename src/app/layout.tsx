@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import Script from "next/script";
 import "./globals.css";
 import { getLocale } from "@/lib/locale";
 import { ThemeProvider, noFlashThemeScript } from "@/lib/theme/ThemeProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-const inter = Inter({
+const inter = localFont({
+  src: "./fonts/InterVariable.woff2",
   variable: "--font-inter",
-  subsets: ["latin"],
+  weight: "100 900",
+  style: "normal",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
