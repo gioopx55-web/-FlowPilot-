@@ -2,94 +2,43 @@
 
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "motion/react";
-import { AlertTriangle } from "lucide-react";
-import type { DailyBriefItem } from "@/domain/dailyBrief";
-import type { AtRiskProjectEntry, TeamWorkloadEntry } from "@/domain/selectors";
-import { Badge, type BadgeTone } from "@/components/primitives/Badge";
+import { CheckCircle2 } from "lucide-react";
+import type { HeroSnapshot } from "@/components/marketing/landingCuration";
+import { Badge } from "@/components/primitives/Badge";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { getLocale } from "@/lib/locale";
 
-const AMBIENT_ICON_BY_KIND: Record<DailyBriefItem["kind"], string> = {
-  critical_risk: "var(--fp-danger)",
-  at_risk: "var(--fp-warning)",
-  overdue_task: "var(--fp-warning)",
-  follow_up: "var(--fp-info)",
-  overloaded_member: "var(--fp-warning)",
-  activity: "var(--fp-text-tertiary)",
-};
-
-const WORKLOAD_TONE: Record<string, BadgeTone> = {
-  Available: "neutral",
-  Healthy: "success",
-  High: "warning",
-  Overloaded: "warning",
-};
+const DOT_COLOR = {
+  success: "var(--fp-success)",
+  neutral: "var(--fp-text-tertiary)",
+  warning: "var(--fp-warning)",
+} as const;
 
 /**
- * Hero product preview (Phase 13.5 §2) — real `getDailyBriefItems`/
- * `getAtRiskProjectsSorted`/`getTeamWorkloadSnapshot` data (passed in
- * from the Server Component page). The two glance tiles use plain
- * `Badge` chips rather than the full `RiskBadge`/`WorkloadBadge`
- * primitives deliberately: those primitives' critical-risk reason
- * line and 44px disclosure trigger need more width than this ~190px
- * tile has, and overflowed into the sibling tile when tried (found
- * via visual verification) — a non-interactive marketing glance card
- * is also not a place a clickable disclosure belongs. Phase 13.5 §2
- * explicitly allows simplifying the preview; the full interactive
- * badge is one click away at `/dashboard`. The lightweight 3D depth
- * (Phase 13.5 §6) is a CSS-perspective tilt at rest that settles flat
- * as the hero scrolls past — no 3D library.
+ * Hero product preview (Phase 13.5 §2; redesigned for the Landing
+ * Page warning-balance pass, see DECISIONS.md) — a curated "workspace
+ * snapshot" built from `landingCuration.ts`'s `HeroSnapshot`: up to 2
+ * real on-track projects, at most one real attention item, and two
+ * real summary metrics. Unlike the Phase 13.5/17.6 version, this
+ * deliberately does NOT default to the worst available signal
+ * (Critical Risk / Overloaded) — the public marketing page's job is
+ * to demonstrate "operations are healthy, problems surface early,"
+ * not to lead with the worst real record in the demo dataset. The
+ * real, uncurated, worst-first Daily Brief is one click away at
+ * `/dashboard`.
  *
- * Phase 17.6: widened `max-w-md` → `max-w-lg` — a stronger, more
- * immersive focal point per the visual-direction upgrade, paired with
- * a second, tighter ambient glow layer behind this side of the Hero
- * (`Hero.tsx`) rather than any change to this component's own depth
- * treatment, which was already judged sufficient (backdrop fragment +
- * floating chip + tilt).
+ * The two glance tiles use plain `Badge` chips rather than the full
+ * `RiskBadge`/`WorkloadBadge` primitives deliberately: those
+ * primitives' disclosure trigger needs more width than this ~190px
+ * tile has (Phase 13.5 §2 finding, still true). The lightweight 3D
+ * depth (Phase 13.5 §6) is a CSS-perspective tilt at rest that
+ * settles flat as the hero scrolls past — no 3D library.
  */
-const SERIOUS_KINDS = new Set<DailyBriefItem["kind"]>([
-  "critical_risk",
-  "at_risk",
-  "overloaded_member",
-]);
-
-/**
- * Picks 3 of the real Daily Brief items to show in this card —
- * presentational curation only, never a second ranking of the
- * underlying data (`domain/dailyBrief.ts`'s own priority order is
- * untouched, and no item is invented). `getDailyBriefItems()` ranks
- * worst-first, so a naive `.slice(0, 3)` tends to show 3 warning-tier
- * items in a row — this instead keeps the single most important
- * signal, then balances the remaining 2 slots toward whatever calmer
- * real items exist (overdue/follow-up/activity) before reaching for
- * more serious ones, so the Hero demonstrates "FlowPilot surfaces
- * problems early," not "everything is failing" (visual-balance pass).
- */
-function pickBalancedPreviewItems(items: DailyBriefItem[]): DailyBriefItem[] {
-  if (items.length <= 3) return items;
-  const [first, ...rest] = items;
-  const calmer = rest.filter((item) => !SERIOUS_KINDS.has(item.kind));
-  const remainder = rest.filter((item) => SERIOUS_KINDS.has(item.kind));
-  return [first!, ...calmer, ...remainder].slice(0, 3);
-}
-
-export function HeroProductPreview({
-  briefItems,
-  topRisk,
-  topWorkload,
-}: {
-  briefItems: DailyBriefItem[];
-  topRisk: AtRiskProjectEntry | undefined;
-  topWorkload: TeamWorkloadEntry | undefined;
-}) {
-  const previewItems = pickBalancedPreviewItems(briefItems);
+export function HeroProductPreview({ snapshot }: { snapshot: HeroSnapshot }) {
   const reducedMotion = useReducedMotion();
   const { dir } = getLocale();
   const tiltSign = dir === "rtl" ? -1 : 1;
   const containerRef = useRef<HTMLDivElement>(null);
-  const overdueSignalCount = briefItems.filter(
-    (item) => item.kind === "critical_risk" || item.kind === "at_risk",
-  ).length;
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -103,21 +52,47 @@ export function HeroProductPreview({
     ? undefined
     : { rotateX, rotateY, y: translateY, transformPerspective: 1400 };
 
+  const rows: { id: string; tone: keyof typeof DOT_COLOR; title: string; description: string }[] =
+    [];
+
+  snapshot.healthyProjects.forEach((entry, index) => {
+    rows.push({
+      id: `hero_project_${entry.project.id}`,
+      tone: "success",
+      title: `${entry.project.name} is on track`,
+      description:
+        index === 0
+          ? `${entry.client?.name ?? "Client"} · ${entry.project.progressPct}% complete`
+          : `Progressing normally · ${entry.project.progressPct}% complete`,
+    });
+  });
+
+  if (snapshot.attentionItem) {
+    rows.push({
+      id: `hero_attention_${snapshot.attentionItem.id}`,
+      tone: "warning",
+      title: snapshot.attentionItem.title,
+      description: snapshot.attentionItem.description,
+    });
+  }
+
+  rows.push({
+    id: "hero_team_metric",
+    tone: "neutral",
+    title: `${snapshot.teamHealthyCount} of ${snapshot.teamTotalCount} team members at healthy capacity`,
+    description: "Workload tracked against real weekly capacity, not guesswork",
+  });
+
   return (
     // No static `perspective` CSS here: it would establish a 3D
-    // rendering context for every descendant (including the Radix
-    // Popover trigger buttons inside RiskBadge/WorkloadBadge) even
-    // when reduced motion removes the actual transform, which caused
-    // a real Chromium compositing glitch found via visual
-    // verification (the disclosure button rendered visually displaced
-    // over sibling text). `transformPerspective` on the motion.div's
-    // own style below is enough for the 3D tilt when motion is active.
+    // rendering context for every descendant even when reduced motion
+    // removes the actual transform, which caused a real Chromium
+    // compositing glitch found via visual verification. `transformPerspective`
+    // on the motion.div's own style below is enough when motion is active.
     <div ref={containerRef} className="relative min-w-0 px-3 pt-3">
       {/* Layered backdrop fragment (Phase 13.6 §5/§6) — a second,
           smaller surface peeking out behind the main card, purely
-          decorative, giving the composition depth beyond the single
-          tilted card. Sized/positioned so it never extends past the
-          column it sits in, even on narrow viewports. */}
+          decorative. */}
       <div
         aria-hidden="true"
         className="absolute inset-3 top-6 -z-10 rounded-[var(--fp-radius-lg)] border border-border bg-[var(--fp-bg-surface)] opacity-60"
@@ -132,50 +107,44 @@ export function HeroProductPreview({
         className="relative mx-auto w-full max-w-lg overflow-hidden rounded-[var(--fp-radius-lg)] border border-border bg-[var(--fp-bg-surface-raised)] shadow-[var(--fp-shadow-level-2)]"
       >
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <span className="text-xs font-medium text-muted-foreground">Daily Brief</span>
+          <span className="text-xs font-medium text-muted-foreground">Workspace snapshot</span>
           <span className="text-xs text-muted-foreground">Today</span>
         </div>
 
         <ul className="divide-y divide-border">
-          {previewItems.map((item) => (
-            <li key={item.id} className="flex items-start gap-2.5 p-3">
+          {rows.map((row) => (
+            <li key={row.id} className="flex items-start gap-2.5 p-3">
               <span
                 className="mt-1 size-1.5 shrink-0 rounded-full"
-                style={{ backgroundColor: AMBIENT_ICON_BY_KIND[item.kind] }}
+                style={{ backgroundColor: DOT_COLOR[row.tone] }}
                 aria-hidden="true"
               />
               <span className="min-w-0">
                 <span className="block truncate text-sm font-medium text-foreground">
-                  {item.title}
+                  {row.title}
                 </span>
                 <span className="block truncate text-xs text-muted-foreground">
-                  {item.description}
+                  {row.description}
                 </span>
               </span>
             </li>
           ))}
         </ul>
 
-        {(topRisk || topWorkload) && (
+        {(snapshot.healthyProjects[0] || snapshot.onTimeDeliveryPct !== undefined) && (
           <div className="grid grid-cols-2 gap-3 border-t border-border p-3">
-            {topRisk && (
+            {snapshot.healthyProjects[0] && (
               <div className="rounded-[var(--fp-radius-md)] border border-border p-2.5">
                 <p className="mb-1.5 truncate text-xs text-muted-foreground">
-                  {topRisk.project.name}
+                  {snapshot.healthyProjects[0].project.name}
                 </p>
-                <Badge tone={topRisk.risk.level === "critical_risk" ? "danger" : "warning"}>
-                  {topRisk.risk.level === "critical_risk" ? "Critical Risk" : "At Risk"}
-                </Badge>
+                <Badge tone="success">On Track</Badge>
               </div>
             )}
-            {topWorkload && (
+            {snapshot.onTimeDeliveryPct !== undefined && (
               <div className="rounded-[var(--fp-radius-md)] border border-border p-2.5">
-                <p className="mb-1.5 truncate text-xs text-muted-foreground">
-                  {topWorkload.member.name}
-                </p>
-                <Badge tone={WORKLOAD_TONE[topWorkload.workload.band] ?? "neutral"}>
-                  {topWorkload.workload.band} · {Math.round(topWorkload.workload.workloadPct)}%
-                </Badge>
+                <p className="mb-1.5 truncate text-xs text-muted-foreground">On-time delivery</p>
+                <Badge tone="neutral">{snapshot.onTimeDeliveryPct}%</Badge>
               </div>
             )}
           </div>
@@ -183,19 +152,21 @@ export function HeroProductPreview({
       </motion.div>
 
       {/* Floating operational signal (Phase 13.6 §6) — a small chip
-          overlapping the card's top edge, echoing the Dashboard's own
-          at-risk count without duplicating business logic (it's just
-          a count of the same briefItems already passed in). Rendered
+          overlapping the card's top edge. Now a POSITIVE count (real
+          on-track projects), not an alarm: the warning-balance pass
+          judged a floating, amber, alert-triangle "N need attention"
+          chip too loud a first impression for a public marketing page
+          to lead with, however real the count behind it was. Rendered
           as a sibling of the card, not a child, since the card itself
           is `overflow-hidden` and would clip anything meant to float
           past its own edge. */}
-      {overdueSignalCount > 0 && (
+      {snapshot.onTrackProjectCount > 0 && (
         <div
           aria-hidden="true"
-          className="absolute top-0 end-6 z-10 flex items-center gap-1 rounded-full border border-border bg-[var(--fp-bg-surface-raised)] px-2.5 py-1 text-xs font-medium text-[var(--fp-warning)] shadow-[var(--fp-shadow-level-1)]"
+          className="absolute top-0 end-6 z-10 flex items-center gap-1 rounded-full border border-border bg-[var(--fp-bg-surface-raised)] px-2.5 py-1 text-xs font-medium text-[var(--fp-success)] shadow-[var(--fp-shadow-level-1)]"
         >
-          <AlertTriangle className="size-3" aria-hidden="true" />
-          {overdueSignalCount} need attention
+          <CheckCircle2 className="size-3" aria-hidden="true" />
+          {snapshot.onTrackProjectCount} projects on track
         </div>
       )}
     </div>

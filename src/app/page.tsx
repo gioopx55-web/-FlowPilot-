@@ -3,8 +3,10 @@ import { getDailyBriefItems } from "@/domain/dailyBrief";
 import {
   getAtRiskProjectsSorted,
   getOverdueTasksSorted,
-  getClientsNeedingFollowUpSorted,
   getTeamWorkloadSnapshot,
+  getProjectsWithRisk,
+  getClientsFiltered,
+  getRecentActivities,
 } from "@/domain/selectors";
 import { getOnTimeDeliveryRate, getWorkloadDistribution } from "@/domain/analytics";
 import { executeAIIntent } from "@/domain/ai/executeIntent";
@@ -21,6 +23,14 @@ import { AIShowcase } from "@/components/marketing/AIShowcase";
 import { AnalyticsShowcase } from "@/components/marketing/AnalyticsShowcase";
 import { FinalCTA } from "@/components/marketing/FinalCTA";
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
+import {
+  buildHeroSnapshot,
+  pickProjectHealthExamples,
+  pickMarketingRiskExample,
+  pickMarketingClients,
+  pickMarketingTeam,
+  buildMarketingDailyBrief,
+} from "@/components/marketing/landingCuration";
 
 export const metadata: Metadata = {
   title: "FlowPilot AI — See what needs attention before it becomes a problem",
@@ -35,22 +45,43 @@ export const metadata: Metadata = {
  * separate marketing fixture set (Phase 13.5 §16).
  */
 export default function LandingPage() {
-  // A wider pool than the Dashboard's own default limit (5) — HeroProductPreview
-  // curates a balanced 3-item sample from this (visual-balance pass); a
-  // workspace with several concurrent at-risk/critical projects can fill all 5
-  // default slots with warning-tier items before a calmer one ever gets a
-  // chance, even though real calmer signals exist further down the real
-  // priority order. Still the same domain ranking, just a longer slice of it.
+  // Real, unmodified domain reads — identical to what the authenticated
+  // app itself calls. Nothing about risk/workload/follow-up computation
+  // changes here or anywhere below.
   const briefItems = getDailyBriefItems(10);
   const atRiskEntries = getAtRiskProjectsSorted();
   const overdueEntries = getOverdueTasksSorted();
-  const followUpEntries = getClientsNeedingFollowUpSorted();
   const workloadEntries = getTeamWorkloadSnapshot();
+  const allProjects = getProjectsWithRisk();
+  const allClients = getClientsFiltered({}, "name");
+  const recentActivities = getRecentActivities(20);
+  const onTimeDelivery = getOnTimeDeliveryRate();
+  const workloadDistribution = getWorkloadDistribution();
 
-  const topRisk =
-    atRiskEntries.find((e) => e.risk.level === "critical_risk") ?? atRiskEntries[0];
-  const topWorkload =
-    workloadEntries.find((e) => e.workload.band === "Overloaded") ?? workloadEntries[0];
+  // Marketing-only CURATION (src/components/marketing/landingCuration.ts)
+  // — selects a representative, mostly-healthy subset of the real data
+  // above for this public page only. The authenticated Dashboard/
+  // Projects/Clients/Team/Analytics pages are untouched and keep using
+  // the real worst-first selector output directly, exactly as before.
+  const heroSnapshot = buildHeroSnapshot({
+    allProjects,
+    briefItems,
+    workloadEntries,
+    onTimeDeliveryPct: onTimeDelivery?.onTimePct,
+  });
+  const projectHealthEntries = pickProjectHealthExamples(allProjects, 4);
+  const marketingRiskExample = pickMarketingRiskExample(atRiskEntries);
+  const marketingClients = pickMarketingClients(allClients, 4);
+  const marketingTeam = pickMarketingTeam(workloadEntries, 4);
+  const marketingDailyBrief = buildMarketingDailyBrief({
+    healthyProject: heroSnapshot.healthyProjects[0],
+    upToDateClient: allClients.find((e) => !e.followUp.needsFollowUp),
+    completedActivity: recentActivities.find((a) => a.type === "completed"),
+    healthyMember: workloadEntries.find(
+      (e) => e.workload.band === "Healthy" || e.workload.band === "Available",
+    ),
+    attentionItem: heroSnapshot.attentionItem,
+  });
 
   const { tasks } = getDemoDataset();
   const kanbanColumns = (["todo", "in_progress", "review"] as const).map((status) => ({
@@ -59,21 +90,19 @@ export default function LandingPage() {
   }));
 
   const aiAnswer = executeAIIntent("clients_follow_up");
-  const onTimeDelivery = getOnTimeDeliveryRate();
-  const workloadDistribution = getWorkloadDistribution();
 
   return (
     <div className="min-h-dvh bg-[var(--fp-bg-canvas)]">
       <MarketingNav />
       <main id="main-content">
-        <Hero briefItems={briefItems} topRisk={topRisk} topWorkload={topWorkload} />
-        <DashboardShowcase atRiskEntries={atRiskEntries} overdueEntries={overdueEntries} />
+        <Hero snapshot={heroSnapshot} />
+        <DashboardShowcase projectHealthEntries={projectHealthEntries} overdueEntries={overdueEntries} />
         <div id="features">
-          <AttentionShowcase />
-          <RiskShowcase entry={topRisk} />
+          <AttentionShowcase items={marketingDailyBrief} />
+          <RiskShowcase entry={marketingRiskExample} />
           <KanbanShowcase columns={kanbanColumns} />
-          <ClientShowcase entries={followUpEntries} />
-          <TeamShowcase entries={workloadEntries} />
+          <ClientShowcase entries={marketingClients} />
+          <TeamShowcase entries={marketingTeam} />
           <AIShowcase answer={aiAnswer} />
           <AnalyticsShowcase
             onTimeDelivery={onTimeDelivery}

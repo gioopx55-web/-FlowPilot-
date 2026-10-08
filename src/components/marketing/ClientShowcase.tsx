@@ -5,9 +5,14 @@ import { PreviewCard, PreviewCardHeader } from "@/components/marketing/PreviewCa
 import { FollowUpBadge } from "@/components/primitives/FollowUpBadge";
 
 /**
- * Clients / Follow-up (Phase 13.5 §3.6) — real
- * `getClientsNeedingFollowUpSorted` entries shown with the exact
- * `FollowUpBadge` the Clients list uses.
+ * Clients / Follow-up (Phase 13.5 §3.6; reframed for the Landing Page
+ * warning-balance pass, see DECISIONS.md) — `entries` arrives here
+ * already curated (`landingCuration.ts`'s `pickMarketingClients`,
+ * called from `app/page.tsx`): mostly real "Up to date" clients, with
+ * at most one real "Needs Follow-Up" example, rendered with the exact
+ * `FollowUpBadge` the real Clients list uses. The real, uncurated
+ * `getClientsNeedingFollowUpSorted()` list is still exactly what the
+ * authenticated Clients page/Dashboard show.
  */
 export function ClientShowcase({ entries }: { entries: ClientFollowUpEntry[] }) {
   return (
@@ -25,7 +30,7 @@ export function ClientShowcase({ entries }: { entries: ClientFollowUpEntry[] }) 
       reverse
       visual={
         <PreviewCard>
-          <PreviewCardHeader title="Clients Needing Follow-Up" icon={Users} />
+          <PreviewCardHeader title="Client Status" icon={Users} />
           <ul className="divide-y divide-border">
             {entries.slice(0, 4).map((entry) => (
               <li key={entry.client.id} className="flex items-center justify-between gap-3 p-3">

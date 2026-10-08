@@ -1,26 +1,31 @@
-import { AlertTriangle, Clock } from "lucide-react";
-import type { AtRiskProjectEntry, OverdueTaskEntry } from "@/domain/selectors";
+import { FolderKanban, Clock } from "lucide-react";
+import type { ProjectListEntry, OverdueTaskEntry } from "@/domain/selectors";
 import { RevealOnScroll } from "@/components/marketing/RevealOnScroll";
 import { PreviewCard, PreviewCardHeader } from "@/components/marketing/PreviewCard";
 import { DotGrid } from "@/components/marketing/DotGrid";
 import { RiskBadge } from "@/components/primitives/RiskBadge";
+import { Badge } from "@/components/primitives/Badge";
 import { formatShortDate } from "@/lib/format";
 
 /**
- * Product proof (Phase 13.5 §3.2) — a fuller two-panel view of the
- * real Dashboard's At-Risk Projects / Overdue Tasks sections, using
- * the current demo workspace's actual data. Phase 13.6 adds a
- * restrained dot-grid backdrop and icon-framed card headers so this
- * (the page's second major visual moment after the Hero) reads as
- * authored rather than a plain two-card grid. Phase 17.6: `isolate`
- * added to the section — without it the DotGrid backdrop never
- * actually painted (see Hero.tsx's note on the same stacking bug).
+ * Product proof (Phase 13.5 §3.2; reframed for the Landing Page
+ * warning-balance pass, see DECISIONS.md) — a fuller two-panel view
+ * using the current demo workspace's actual data. Previously titled
+ * "At-Risk Projects" and fed every at-risk project unfiltered
+ * (worst-first) — for a public marketing page that reads as "every
+ * project is a problem." Now "Project Health": mostly real on-track
+ * projects (progress/due date shown plainly, no badge needed) plus at
+ * most one real at-risk example, curated by
+ * `landingCuration.ts`'s `pickProjectHealthExamples` — the real,
+ * uncurated at-risk list is still exactly what `/projects` shows.
+ * Overdue Tasks stays an honest, small callout (capped at 2, not 4)
+ * rather than the dominant half of the section.
  */
 export function DashboardShowcase({
-  atRiskEntries,
+  projectHealthEntries,
   overdueEntries,
 }: {
-  atRiskEntries: AtRiskProjectEntry[];
+  projectHealthEntries: ProjectListEntry[];
   overdueEntries: OverdueTaskEntry[];
 }) {
   return (
@@ -35,21 +40,29 @@ export function DashboardShowcase({
           One screen, the questions that actually matter.
         </h2>
         <p className="mt-3 text-base text-muted-foreground">
-          Every project at risk and every overdue task, ranked and linked — this is
-          the real `/dashboard` the demo opens into.
+          Project health and what&apos;s outstanding, ranked and linked — this is the
+          real `/dashboard` the demo opens into.
         </p>
       </RevealOnScroll>
 
       <RevealOnScroll delay={0.1} className="mx-auto mt-10 grid max-w-4xl gap-5 sm:grid-cols-2">
         <PreviewCard className="max-w-none">
-          <PreviewCardHeader title="At-Risk Projects" icon={AlertTriangle} />
+          <PreviewCardHeader title="Project Health" icon={FolderKanban} />
           <ul className="divide-y divide-border">
-            {atRiskEntries.slice(0, 4).map((entry) => (
+            {projectHealthEntries.map((entry) => (
               <li key={entry.project.id} className="space-y-1.5 p-3">
                 <p className="truncate text-sm font-medium text-foreground">
                   {entry.project.name}
                 </p>
-                <RiskBadge risk={entry.risk} />
+                {entry.risk.level === "none" ? (
+                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Badge tone="success">On Track</Badge>
+                    {entry.project.progressPct}% complete
+                    {entry.project.dueDate && ` · due ${formatShortDate(entry.project.dueDate)}`}
+                  </p>
+                ) : (
+                  <RiskBadge risk={entry.risk} />
+                )}
               </li>
             ))}
           </ul>
@@ -58,7 +71,7 @@ export function DashboardShowcase({
         <PreviewCard className="max-w-none">
           <PreviewCardHeader title="Overdue Tasks" icon={Clock} />
           <ul className="divide-y divide-border">
-            {overdueEntries.slice(0, 4).map((entry) => (
+            {overdueEntries.slice(0, 2).map((entry) => (
               <li key={entry.task.id} className="p-3">
                 <p className="truncate text-sm font-medium text-foreground">
                   {entry.task.title}

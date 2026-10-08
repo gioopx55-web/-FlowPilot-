@@ -1,19 +1,10 @@
 import Link from "next/link";
-import type { DailyBriefItem } from "@/domain/dailyBrief";
-import type { AtRiskProjectEntry, TeamWorkloadEntry } from "@/domain/selectors";
+import type { HeroSnapshot } from "@/components/marketing/landingCuration";
 import { Button } from "@/components/ui/button";
 import { StaggerGroup, StaggerItem } from "@/components/marketing/StaggerGroup";
 import { HeroProductPreview } from "@/components/marketing/HeroProductPreview";
 
-export function Hero({
-  briefItems,
-  topRisk,
-  topWorkload,
-}: {
-  briefItems: DailyBriefItem[];
-  topRisk: AtRiskProjectEntry | undefined;
-  topWorkload: TeamWorkloadEntry | undefined;
-}) {
+export function Hero({ snapshot }: { snapshot: HeroSnapshot }) {
   return (
     <section className="relative isolate overflow-hidden px-4 pb-24 pt-28 sm:px-6 sm:pt-36 lg:px-8">
       {/* Phase 17.6: a taller, softer two-layer glow (a wide ambient
@@ -78,7 +69,7 @@ export function Hero({
           </StaggerItem>
         </StaggerGroup>
 
-        <HeroProductPreview briefItems={briefItems} topRisk={topRisk} topWorkload={topWorkload} />
+        <HeroProductPreview snapshot={snapshot} />
       </div>
     </section>
   );
