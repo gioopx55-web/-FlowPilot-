@@ -1,43 +1,29 @@
 import { getRecentActivities, getProjectById } from "@/domain/selectors";
+import { ActivityFeed, type ActivityFeedEntry } from "@/components/activity/ActivityFeed";
 
 const RECENT_LIMIT = 8;
 
 /**
- * Recent Activity (Phase 7 §6). Lowest visual priority of the six
- * sections, per the approved information hierarchy — a plain
- * chronological feed, no badges or color coding.
+ * Recent Activity (Phase 7 §6) — workspace-wide feed, newest first.
+ * Lowest visual priority of the six Dashboard sections per the
+ * approved information hierarchy, but no longer plain unstyled text
+ * (visual-balance pass): renders through the shared `ActivityFeed`,
+ * the same component the Project Overview/Activity tab use.
  */
 export function RecentActivity() {
   const activities = getRecentActivities(RECENT_LIMIT);
 
-  if (activities.length === 0) {
-    return <p className="text-sm text-muted-foreground">No recent activity.</p>;
-  }
+  const entries: ActivityFeedEntry[] = activities.map((activity) => {
+    const project = getProjectById(activity.projectId);
+    return {
+      id: activity.id,
+      type: activity.type,
+      summary: activity.summary,
+      occurredAt: activity.occurredAt,
+      relatedLabel: project?.name,
+      relatedHref: project ? `/projects/${project.id}` : undefined,
+    };
+  });
 
-  return (
-    <ul className="space-y-2">
-      {activities.map((activity) => {
-        const project = getProjectById(activity.projectId);
-        return (
-          <li key={activity.id} className="flex items-baseline justify-between gap-4 text-xs">
-            <span className="text-foreground">
-              {activity.summary}
-              {project && (
-                <span className="text-muted-foreground"> · {project.name}</span>
-              )}
-            </span>
-            <time
-              dateTime={activity.occurredAt}
-              className="shrink-0 whitespace-nowrap text-muted-foreground"
-            >
-              {new Date(activity.occurredAt).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-              })}
-            </time>
-          </li>
-        );
-      })}
-    </ul>
-  );
+  return <ActivityFeed entries={entries} emptyDescription="Workspace activity will appear here." />;
 }

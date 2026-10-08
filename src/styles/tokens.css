@@ -56,7 +56,10 @@
   --fp-workload-available: var(--fp-text-tertiary);
   --fp-workload-healthy: var(--fp-success);
   --fp-workload-high: var(--fp-warning);
-  --fp-workload-overloaded: var(--fp-danger);
+  /* Red is reserved for Critical Risk only — Overloaded is a
+     warning-tier workload band (visual-balance pass, matches
+     WorkloadBadge.tsx's tone mapping). */
+  --fp-workload-overloaded: var(--fp-warning);
 
   /* Radius scale (D-028: ceiling is --fp-radius-lg, 12px) */
   --fp-radius-sm: 0.375rem; /* 6px */

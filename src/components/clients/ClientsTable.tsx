@@ -54,7 +54,7 @@ export function ClientsTable({ entries }: { entries: ClientListEntry[] }) {
               <td className="px-3 py-2.5 text-muted-foreground">
                 {activeProjectCount}
                 {atRiskProjectCount > 0 && (
-                  <span className="text-[var(--fp-danger)]"> ({atRiskProjectCount} at risk)</span>
+                  <span className="text-[var(--fp-warning)]"> ({atRiskProjectCount} at risk)</span>
                 )}
               </td>
               <td className="px-3 py-2.5">
@@ -79,7 +79,7 @@ export function ClientsTable({ entries }: { entries: ClientListEntry[] }) {
                 {client.primaryContactName} · {activeProjectCount} active project
                 {activeProjectCount === 1 ? "" : "s"}
                 {atRiskProjectCount > 0 && (
-                  <span className="text-[var(--fp-danger)]"> ({atRiskProjectCount} at risk)</span>
+                  <span className="text-[var(--fp-warning)]"> ({atRiskProjectCount} at risk)</span>
                 )}
               </span>
             </Link>

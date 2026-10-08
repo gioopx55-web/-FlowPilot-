@@ -3,10 +3,12 @@ import {
   getProjectTaskSummary,
   getProjectAssignedMembers,
   getProjectActivity,
+  getTasksForProject,
 } from "@/domain/selectors";
 import { requireProject } from "@/components/projects/requireProject";
 import { Section } from "@/components/primitives/Section";
 import { RISK_CONDITION_LABELS } from "@/components/primitives/riskConditionLabels";
+import { ActivityFeed, type ActivityFeedEntry } from "@/components/activity/ActivityFeed";
 import { formatShortDate } from "@/lib/format";
 
 /**
@@ -21,6 +23,15 @@ export function ProjectOverview({ projectId }: { projectId: string }) {
   const taskSummary = getProjectTaskSummary(projectId);
   const members = getProjectAssignedMembers(projectId);
   const recentActivity = getProjectActivity(projectId, 5);
+  const taskTitleById = new Map(getTasksForProject(projectId).map((t) => [t.id, t.title]));
+  const activityEntries: ActivityFeedEntry[] = recentActivity.map((activity) => ({
+    id: activity.id,
+    type: activity.type,
+    summary: activity.summary,
+    occurredAt: activity.occurredAt,
+    relatedLabel: activity.taskId ? taskTitleById.get(activity.taskId) : undefined,
+    relatedHref: activity.taskId ? `/tasks/${activity.taskId}` : undefined,
+  }));
 
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
@@ -96,26 +107,7 @@ export function ProjectOverview({ projectId }: { projectId: string }) {
           title="Recent Activity"
           action={{ label: "View activity", href: `/projects/${projectId}/activity` }}
         >
-          {recentActivity.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No activity recorded yet.</p>
-          ) : (
-            <ul className="space-y-2">
-              {recentActivity.map((activity) => (
-                <li
-                  key={activity.id}
-                  className="flex items-baseline justify-between gap-4 text-xs"
-                >
-                  <span className="text-foreground">{activity.summary}</span>
-                  <time
-                    dateTime={activity.occurredAt}
-                    className="shrink-0 whitespace-nowrap text-muted-foreground"
-                  >
-                    {formatShortDate(activity.occurredAt)}
-                  </time>
-                </li>
-              ))}
-            </ul>
-          )}
+          <ActivityFeed entries={activityEntries} emptyDescription="No activity recorded yet." />
         </Section>
       </div>
     </div>

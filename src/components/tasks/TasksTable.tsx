@@ -75,7 +75,7 @@ export function TasksTable({
               <td className="px-3 py-2.5">
                 <TaskPriorityBadge priority={task.priority} />
               </td>
-              <td className={`px-3 py-2.5 ${isOverdue ? "text-[var(--fp-danger)]" : "text-muted-foreground"}`}>
+              <td className={`px-3 py-2.5 ${isOverdue ? "text-[var(--fp-warning)]" : "text-muted-foreground"}`}>
                 {formatShortDate(task.dueDate)}
               </td>
               <td className="px-3 py-2.5 text-muted-foreground">
@@ -100,7 +100,7 @@ export function TasksTable({
               <span className="block text-xs text-muted-foreground">
                 {showProject && `${project?.name ?? "Unknown project"} · `}
                 {assignee?.name ?? "Unassigned"} ·{" "}
-                <span className={isOverdue ? "text-[var(--fp-danger)]" : undefined}>
+                <span className={isOverdue ? "text-[var(--fp-warning)]" : undefined}>
                   due {formatShortDate(task.dueDate)}
                 </span>
               </span>

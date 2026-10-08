@@ -82,7 +82,7 @@ export function MemberAssignmentsView({
                   <div className="flex flex-wrap items-center gap-2 text-xs">
                     <TaskStatusBadge status={task.status} />
                     <TaskPriorityBadge priority={task.priority} />
-                    <span className={isOverdue ? "text-[var(--fp-danger)]" : "text-muted-foreground"}>
+                    <span className={isOverdue ? "text-[var(--fp-warning)]" : "text-muted-foreground"}>
                       {formatShortDate(task.dueDate)}
                     </span>
                   </div>

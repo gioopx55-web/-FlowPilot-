@@ -35,7 +35,7 @@ const PRIORITY_LABEL: Record<TaskPriority, string> = {
 const PRIORITY_TONE: Record<TaskPriority, BadgeTone> = {
   low: "neutral",
   medium: "accent",
-  high: "danger",
+  high: "warning",
 };
 
 /** Task workflow status, per the Phase 4 §15.4 status-color mapping. */
@@ -55,7 +55,7 @@ export function TaskPriorityBadge({ priority }: { priority: TaskPriority }) {
  */
 export function TaskBlockerIndicator() {
   return (
-    <Badge tone="danger" icon={<AlertCircle className="size-3" aria-hidden="true" />}>
+    <Badge tone="warning" icon={<AlertCircle className="size-3" aria-hidden="true" />}>
       Blocked
     </Badge>
   );

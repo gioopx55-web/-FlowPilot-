@@ -6,7 +6,10 @@ const TONE_BY_BAND: Record<TeamMemberWorkloadResult["band"], BadgeTone> = {
   Available: "neutral",
   Healthy: "success",
   High: "warning",
-  Overloaded: "danger",
+  // Red is reserved for Critical Risk (project level) only — Overloaded
+  // is a warning-tier workload band, not a critical state (visual-
+  // balance pass, see DECISIONS.md).
+  Overloaded: "warning",
 };
 
 /**

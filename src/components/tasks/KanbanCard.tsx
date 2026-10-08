@@ -71,7 +71,7 @@ export function KanbanCard({
         {task.dueDate && (
           <>
             {" · "}
-            <span className={isOverdue ? "text-[var(--fp-danger)]" : undefined}>
+            <span className={isOverdue ? "text-[var(--fp-warning)]" : undefined}>
               due {formatShortDate(task.dueDate)}
             </span>
           </>

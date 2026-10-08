@@ -35,7 +35,13 @@ export const metadata: Metadata = {
  * separate marketing fixture set (Phase 13.5 §16).
  */
 export default function LandingPage() {
-  const briefItems = getDailyBriefItems();
+  // A wider pool than the Dashboard's own default limit (5) — HeroProductPreview
+  // curates a balanced 3-item sample from this (visual-balance pass); a
+  // workspace with several concurrent at-risk/critical projects can fill all 5
+  // default slots with warning-tier items before a calmer one ever gets a
+  // chance, even though real calmer signals exist further down the real
+  // priority order. Still the same domain ranking, just a longer slice of it.
+  const briefItems = getDailyBriefItems(10);
   const atRiskEntries = getAtRiskProjectsSorted();
   const overdueEntries = getOverdueTasksSorted();
   const followUpEntries = getClientsNeedingFollowUpSorted();

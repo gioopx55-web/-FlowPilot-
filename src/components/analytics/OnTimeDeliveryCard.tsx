@@ -40,7 +40,7 @@ export function OnTimeDeliveryCard({ result }: { result: OnTimeDeliveryResult | 
         />
         <div
           className="h-full"
-          style={{ width: `${100 - onTimeWidthPct}%`, backgroundColor: "var(--fp-danger)" }}
+          style={{ width: `${100 - onTimeWidthPct}%`, backgroundColor: "var(--fp-warning)" }}
         />
       </div>
     </div>

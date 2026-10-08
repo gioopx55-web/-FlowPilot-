@@ -14,7 +14,7 @@ const AMBIENT_ICON_BY_KIND: Record<DailyBriefItem["kind"], string> = {
   at_risk: "var(--fp-warning)",
   overdue_task: "var(--fp-warning)",
   follow_up: "var(--fp-info)",
-  overloaded_member: "var(--fp-danger)",
+  overloaded_member: "var(--fp-warning)",
   activity: "var(--fp-text-tertiary)",
 };
 
@@ -22,7 +22,7 @@ const WORKLOAD_TONE: Record<string, BadgeTone> = {
   Available: "neutral",
   Healthy: "success",
   High: "warning",
-  Overloaded: "danger",
+  Overloaded: "warning",
 };
 
 /**
@@ -47,6 +47,32 @@ const WORKLOAD_TONE: Record<string, BadgeTone> = {
  * treatment, which was already judged sufficient (backdrop fragment +
  * floating chip + tilt).
  */
+const SERIOUS_KINDS = new Set<DailyBriefItem["kind"]>([
+  "critical_risk",
+  "at_risk",
+  "overloaded_member",
+]);
+
+/**
+ * Picks 3 of the real Daily Brief items to show in this card —
+ * presentational curation only, never a second ranking of the
+ * underlying data (`domain/dailyBrief.ts`'s own priority order is
+ * untouched, and no item is invented). `getDailyBriefItems()` ranks
+ * worst-first, so a naive `.slice(0, 3)` tends to show 3 warning-tier
+ * items in a row — this instead keeps the single most important
+ * signal, then balances the remaining 2 slots toward whatever calmer
+ * real items exist (overdue/follow-up/activity) before reaching for
+ * more serious ones, so the Hero demonstrates "FlowPilot surfaces
+ * problems early," not "everything is failing" (visual-balance pass).
+ */
+function pickBalancedPreviewItems(items: DailyBriefItem[]): DailyBriefItem[] {
+  if (items.length <= 3) return items;
+  const [first, ...rest] = items;
+  const calmer = rest.filter((item) => !SERIOUS_KINDS.has(item.kind));
+  const remainder = rest.filter((item) => SERIOUS_KINDS.has(item.kind));
+  return [first!, ...calmer, ...remainder].slice(0, 3);
+}
+
 export function HeroProductPreview({
   briefItems,
   topRisk,
@@ -56,6 +82,7 @@ export function HeroProductPreview({
   topRisk: AtRiskProjectEntry | undefined;
   topWorkload: TeamWorkloadEntry | undefined;
 }) {
+  const previewItems = pickBalancedPreviewItems(briefItems);
   const reducedMotion = useReducedMotion();
   const { dir } = getLocale();
   const tiltSign = dir === "rtl" ? -1 : 1;
@@ -110,7 +137,7 @@ export function HeroProductPreview({
         </div>
 
         <ul className="divide-y divide-border">
-          {briefItems.slice(0, 3).map((item) => (
+          {previewItems.map((item) => (
             <li key={item.id} className="flex items-start gap-2.5 p-3">
               <span
                 className="mt-1 size-1.5 shrink-0 rounded-full"
@@ -165,7 +192,7 @@ export function HeroProductPreview({
       {overdueSignalCount > 0 && (
         <div
           aria-hidden="true"
-          className="absolute top-0 end-6 z-10 flex items-center gap-1 rounded-full border border-border bg-[var(--fp-bg-surface-raised)] px-2.5 py-1 text-xs font-medium text-[var(--fp-danger)] shadow-[var(--fp-shadow-level-1)]"
+          className="absolute top-0 end-6 z-10 flex items-center gap-1 rounded-full border border-border bg-[var(--fp-bg-surface-raised)] px-2.5 py-1 text-xs font-medium text-[var(--fp-warning)] shadow-[var(--fp-shadow-level-1)]"
         >
           <AlertTriangle className="size-3" aria-hidden="true" />
           {overdueSignalCount} need attention

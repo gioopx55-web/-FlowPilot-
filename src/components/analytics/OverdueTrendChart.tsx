@@ -2,7 +2,7 @@
 
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { OverdueTrendPoint } from "@/domain/analytics";
-import { CHART_DANGER, CHART_GRID, CHART_AXIS_TEXT } from "@/components/analytics/analyticsColors";
+import { CHART_WARNING, CHART_GRID, CHART_AXIS_TEXT } from "@/components/analytics/analyticsColors";
 import { ChartTooltip } from "@/components/analytics/charts/ChartTooltip";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { formatShortDate } from "@/lib/format";
@@ -56,9 +56,9 @@ export function OverdueTrendChart({ points }: { points: OverdueTrendPoint[] }) {
               type="monotone"
               dataKey="overdueCount"
               name="Overdue tasks"
-              stroke={CHART_DANGER}
+              stroke={CHART_WARNING}
               strokeWidth={2}
-              dot={{ r: 3, fill: CHART_DANGER }}
+              dot={{ r: 3, fill: CHART_WARNING }}
               isAnimationActive={!reducedMotion}
             />
           </LineChart>

@@ -63,7 +63,7 @@ export function DashboardShowcase({
                 <p className="truncate text-sm font-medium text-foreground">
                   {entry.task.title}
                 </p>
-                <p className="truncate text-xs text-[var(--fp-danger)]">
+                <p className="truncate text-xs text-[var(--fp-warning)]">
                   {entry.daysOverdue} day{entry.daysOverdue === 1 ? "" : "s"} overdue
                   {entry.task.dueDate && ` · was due ${formatShortDate(entry.task.dueDate)}`}
                 </p>
