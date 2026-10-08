@@ -5,7 +5,7 @@ import {
   UserRoundCog,
   CalendarClock,
   CheckCircle2,
-  AlertCircle,
+  Ban,
   History,
   type LucideIcon,
 } from "lucide-react";
@@ -13,13 +13,17 @@ import type { ActivityType } from "@/types/entities";
 import { formatShortDate } from "@/lib/format";
 import { EmptyState } from "@/components/primitives/EmptyState";
 
+// `Ban` (not an exclamation/alert shape) reads as "blocked," not
+// "warning" — alert-triangle/circle iconography is reserved for a
+// genuinely critical state, never an ordinary activity row
+// (alert-styling correction).
 const ICON_BY_TYPE: Record<ActivityType, LucideIcon> = {
   created: FilePlus2,
   status_changed: RefreshCw,
   reassigned: UserRoundCog,
   due_date_changed: CalendarClock,
   completed: CheckCircle2,
-  blocker_opened: AlertCircle,
+  blocker_opened: Ban,
   blocker_resolved: CheckCircle2,
 };
 

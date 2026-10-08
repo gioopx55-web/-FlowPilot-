@@ -1,4 +1,3 @@
-import { AlertCircle } from "lucide-react";
 import type { TaskPriority, TaskStatus } from "@/types/entities";
 import { Badge, type BadgeTone } from "@/components/primitives/Badge";
 
@@ -54,9 +53,5 @@ export function TaskPriorityBadge({ priority }: { priority: TaskPriority }) {
  * status; it never implies or is implied by `status === "blocked"`.
  */
 export function TaskBlockerIndicator() {
-  return (
-    <Badge tone="warning" icon={<AlertCircle className="size-3" aria-hidden="true" />}>
-      Blocked
-    </Badge>
-  );
+  return <Badge tone="warning">Blocked</Badge>;
 }

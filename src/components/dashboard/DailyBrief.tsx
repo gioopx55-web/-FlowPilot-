@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   AlertTriangle,
-  TriangleAlert,
+  FolderKanban,
   Clock,
   UserRound,
   Users,
@@ -9,9 +9,13 @@ import {
 } from "lucide-react";
 import { getDailyBriefItems, type DailyBriefItemKind } from "@/domain/dailyBrief";
 
+// Alert/warning-triangle iconography is reserved for the genuinely
+// critical row only (alert-styling correction) — every other kind
+// uses a plain entity/clock/user icon, never an exclamation shape, so
+// the list doesn't read as a stack of warning notices.
 const ICON_BY_KIND: Record<DailyBriefItemKind, typeof AlertTriangle> = {
   critical_risk: AlertTriangle,
-  at_risk: TriangleAlert,
+  at_risk: FolderKanban,
   overdue_task: Clock,
   follow_up: Users,
   overloaded_member: UserRound,

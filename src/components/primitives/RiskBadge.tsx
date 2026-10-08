@@ -1,4 +1,4 @@
-import { AlertTriangle, TriangleAlert } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import type { ProjectRiskResult } from "@/domain/risk/risk";
 import { Badge } from "@/components/primitives/Badge";
 import { ConditionsDisclosure } from "@/components/primitives/ConditionsDisclosure";
@@ -23,12 +23,11 @@ export function RiskBadge({ risk }: { risk: ProjectRiskResult }) {
       <div className="flex flex-col items-start gap-0.5">
         <Badge
           tone={isCritical ? "danger" : "warning"}
+          // Alert/warning-triangle iconography is reserved for the
+          // genuinely critical state only (alert-styling correction) —
+          // "At Risk" reads as a plain, calmer badge with no icon.
           icon={
-            isCritical ? (
-              <AlertTriangle className="size-3" aria-hidden="true" />
-            ) : (
-              <TriangleAlert className="size-3" aria-hidden="true" />
-            )
+            isCritical ? <AlertTriangle className="size-3" aria-hidden="true" /> : undefined
           }
         >
           {isCritical ? "Critical Risk" : "At Risk"}

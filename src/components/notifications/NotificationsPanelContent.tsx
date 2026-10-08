@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import Link from "next/link";
-import { AlertTriangle, Clock, Users, Gauge, BellOff } from "lucide-react";
+import { FolderKanban, Clock, Users, Gauge, BellOff } from "lucide-react";
 import type { NotificationFeedCategory, NotificationFeedItem } from "@/domain/notifications";
 import { markNotificationReadAction, markAllNotificationsReadAction } from "@/lib/notificationActions";
 import { useShellPanels } from "@/components/shell/panel-context";
@@ -10,8 +10,12 @@ import { formatShortDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/primitives/EmptyState";
 
-const CATEGORY_ICON: Record<NotificationFeedCategory, typeof AlertTriangle> = {
-  project_risk: AlertTriangle,
+// This category covers both Critical Risk and At Risk projects, so a
+// plain project icon reads correctly for both — a warning/exclamation
+// shape is reserved for a genuinely critical state, never a routine
+// notification row (alert-styling correction).
+const CATEGORY_ICON: Record<NotificationFeedCategory, typeof FolderKanban> = {
+  project_risk: FolderKanban,
   overdue_task: Clock,
   client_follow_up: Users,
   workload: Gauge,
