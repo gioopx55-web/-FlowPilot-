@@ -30,12 +30,17 @@ export default function DashboardPage() {
           </Section>
         </div>
 
-        <Section
-          title="At-Risk Projects"
-          action={{ label: "View all projects", href: "/projects" }}
-        >
-          <AtRiskProjects />
-        </Section>
+        {/* self-start: this cell's content is shorter than its row sibling
+            (Overdue Tasks); without it, CSS Grid's default stretch leaves a
+            large empty gap below the bordered list box. */}
+        <div className="self-start">
+          <Section
+            title="At-Risk Projects"
+            action={{ label: "View all projects", href: "/projects" }}
+          >
+            <AtRiskProjects />
+          </Section>
+        </div>
 
         <Section
           title="Overdue Tasks"
