@@ -8,14 +8,32 @@ import { WORKSPACE_ID } from "@/data/mock/workspace";
  * domain/risk/risk.ts:
  *
  * - proj_harbor_refresh    → none (no triggering conditions)
- * - proj_lumen_deck        → at_risk (condition 1: overdue task ratio)
- * - proj_rook_loyalty      → at_risk (condition 2: high-priority overdue >2d)
- * - proj_solstice_booking  → at_risk (condition 3: due soon + low progress)
+ * - proj_lumen_deck        → none (Dashboard-balance pass — was at_risk
+ *                            via condition 1; see tasks.ts)
+ * - proj_rook_loyalty      → none (Dashboard-balance pass — was at_risk
+ *                            via condition 2; see tasks.ts)
+ * - proj_solstice_booking  → none (Dashboard-balance pass — was at_risk
+ *                            via condition 3; due date corrected below)
  * - proj_mariner_fleet     → at_risk (condition 4: stale active blocker)
- * - proj_fernwood_donor    → critical_risk (conditions 1+2 together)
+ *                            — intentionally left as the workspace's one
+ *                            At Risk example (Dashboard-balance pass,
+ *                            see DECISIONS.md); required by
+ *                            domain/validation.ts's risk-level coverage
+ *                            check and by ai.integration.test.ts
+ * - proj_fernwood_donor    → critical_risk (conditions 1+2 together) —
+ *                            the workspace's one Critical Risk example
  * - proj_harbor_lookbook   → completed; tasks would trigger risk if not excluded
  * - proj_quillpoint_author → on_hold; tasks would trigger risk if not excluded
  * - the remaining 6 are realistic "no risk" variety.
+ *
+ * Dashboard-balance pass (see DECISIONS.md): previously 5 of 12
+ * active-stage projects computed to at_risk/critical_risk — correct per
+ * the formula, but unrealistic for a demo workspace and visually
+ * overwhelming on the Dashboard/Projects list. Fixture data for 3 of
+ * those 5 was corrected (never the risk formula) so the workspace now
+ * shows exactly 1 Critical Risk + 1 At Risk project, with every other
+ * active project genuinely healthy — still produced by the real,
+ * unmodified risk engine, not a relabeled status.
  *
  * `completedAt` (D-042, Phase 11): the 5 projects below with
  * `_delivered` names (plus proj_harbor_lookbook) are the only
@@ -67,7 +85,13 @@ export const projects: Project[] = [
     name: "Studio Booking Platform",
     status: "in_progress",
     progressPct: 45,
-    dueDate: "2026-10-06T00:00:00.000Z",
+    // Was 2026-10-06 — inconsistent with this project's own open tasks
+    // (tasks.ts), which run out to 2026-10-25; a project can't
+    // honestly be "due" before its own remaining work is scheduled to
+    // finish. Moved past the latest task due date, matching this
+    // fixture set's Nov/Dec due-date cadence for comparable in-progress
+    // projects (Dashboard-balance pass, see DECISIONS.md).
+    dueDate: "2026-11-10T00:00:00.000Z",
     startDate: "2026-07-20T00:00:00.000Z",
     createdAt: "2026-07-20T00:00:00.000Z",
   },

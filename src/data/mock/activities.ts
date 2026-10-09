@@ -24,4 +24,7 @@ export const activities: Activity[] = [
   { id: "act_14", workspaceId: WORKSPACE_ID, projectId: "proj_copperfield_listings", taskId: "task_copperfield_02", type: "created", actorUserId: "usr_theo", summary: "Theo created \"Redesign listing card grid\".", occurredAt: "2026-08-06T09:00:00.000Z" },
   { id: "act_15", workspaceId: WORKSPACE_ID, projectId: "proj_brightline_mobile", taskId: "task_brightline_m_02", type: "completed", actorUserId: "usr_maya", summary: "Maya completed \"Write App Store copy\".", occurredAt: "2026-07-01T09:00:00.000Z" },
   { id: "act_16", workspaceId: WORKSPACE_ID, projectId: "proj_solstice_booking", type: "created", actorUserId: "usr_maya", summary: "Maya created the Studio Booking Platform project.", occurredAt: "2026-07-20T09:00:00.000Z" },
+  // Dashboard-balance pass (see DECISIONS.md) — matches task_rook_01's
+  // fixture update in tasks.ts.
+  { id: "act_17", workspaceId: WORKSPACE_ID, projectId: "proj_rook_loyalty", taskId: "task_rook_01", type: "completed", actorUserId: "usr_theo", summary: "Theo completed \"Fix push notification bug\".", occurredAt: "2026-10-03T09:00:00.000Z" },
 ];

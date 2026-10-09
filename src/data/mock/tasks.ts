@@ -23,28 +23,51 @@ export const tasks: Task[] = [
   { id: "task_harbor_refresh_04", workspaceId: WORKSPACE_ID, projectId: "proj_harbor_refresh", title: "Design refreshed packaging mockups", status: "in_progress", priority: "medium", assigneeId: "tm_sana", estimatedHours: 12, dueDate: "2026-11-12T09:00:00.000Z", hasActiveBlocker: false, createdAt: "2026-07-12T09:00:00.000Z" },
   { id: "task_harbor_refresh_05", workspaceId: WORKSPACE_ID, projectId: "proj_harbor_refresh", title: "Coordinate signage vendor (workflow-blocked, no active risk blocker)", status: "blocked", priority: "low", assigneeId: "tm_elena", estimatedHours: 3, dueDate: "2026-11-20T09:00:00.000Z", hasActiveBlocker: false, createdAt: "2026-07-15T09:00:00.000Z" },
 
-  // --- proj_lumen_deck (risk: at_risk — condition 1 only, overdue ratio 50%) ---
+  // --- proj_lumen_deck (risk: none — Dashboard-balance pass, see
+  //     DECISIONS.md: was at_risk via condition 1, overdue ratio 50%
+  //     [2 of 4 open tasks overdue]. task_lumen_02's due date moved
+  //     forward — it's actively in_progress, not abandoned, so an
+  //     upcoming due date is the honest fix, not a status change. Now
+  //     1 of 4 open tasks overdue (task_lumen_01, 25% exactly — at,
+  //     not over, the >25% threshold). ---
   { id: "task_lumen_01", workspaceId: WORKSPACE_ID, projectId: "proj_lumen_deck", title: "Migrate legacy site content", status: "todo", priority: "medium", assigneeId: "tm_theo", estimatedHours: 6, dueDate: "2026-09-25T09:00:00.000Z", hasActiveBlocker: false, createdAt: "2026-08-02T09:00:00.000Z" },
-  { id: "task_lumen_02", workspaceId: WORKSPACE_ID, projectId: "proj_lumen_deck", title: "Finalize investor deck copy", status: "in_progress", priority: "medium", assigneeId: "tm_maya", estimatedHours: 5, dueDate: "2026-09-20T09:00:00.000Z", hasActiveBlocker: false, createdAt: "2026-08-02T09:00:00.000Z" },
+  { id: "task_lumen_02", workspaceId: WORKSPACE_ID, projectId: "proj_lumen_deck", title: "Finalize investor deck copy", status: "in_progress", priority: "medium", assigneeId: "tm_maya", estimatedHours: 5, dueDate: "2026-10-25T09:00:00.000Z", hasActiveBlocker: false, createdAt: "2026-08-02T09:00:00.000Z" },
   { id: "task_lumen_03", workspaceId: WORKSPACE_ID, projectId: "proj_lumen_deck", title: "Build interactive metrics chart", status: "in_progress", priority: "medium", assigneeId: "tm_jordan", estimatedHours: 8, dueDate: "2026-11-01T09:00:00.000Z", hasActiveBlocker: false, createdAt: "2026-08-05T09:00:00.000Z" },
   { id: "task_lumen_04", workspaceId: WORKSPACE_ID, projectId: "proj_lumen_deck", title: "QA responsive layout", status: "todo", priority: "low", assigneeId: "tm_elena", estimatedHours: 4, dueDate: "2026-11-05T09:00:00.000Z", hasActiveBlocker: false, createdAt: "2026-08-05T09:00:00.000Z" },
   { id: "task_lumen_05", workspaceId: WORKSPACE_ID, projectId: "proj_lumen_deck", title: "Archive old deck assets", status: "done", priority: "low", assigneeId: "tm_theo", estimatedHours: 2, hasActiveBlocker: false, createdAt: "2026-08-10T09:00:00.000Z", completedAt: "2026-08-20T09:00:00.000Z" },
 
-  // --- proj_rook_loyalty (risk: at_risk — condition 2 only, high-priority overdue 6d) ---
-  { id: "task_rook_01", workspaceId: WORKSPACE_ID, projectId: "proj_rook_loyalty", title: "Fix push notification bug", status: "todo", priority: "high", assigneeId: "tm_theo", estimatedHours: 4, dueDate: "2026-09-28T09:00:00.000Z", hasActiveBlocker: false, createdAt: "2026-06-16T09:00:00.000Z" },
+  // --- proj_rook_loyalty (risk: none — Dashboard-balance pass, see
+  //     DECISIONS.md: was at_risk via condition 2, a high-priority task
+  //     overdue by 6 days. task_rook_01 is now marked done [Theo fixed
+  //     it] rather than its priority/date edited to dodge the
+  //     condition — a completed task is excluded from "open tasks"
+  //     entirely, the same exclusion every other condition already
+  //     relies on. ---
+  { id: "task_rook_01", workspaceId: WORKSPACE_ID, projectId: "proj_rook_loyalty", title: "Fix push notification bug", status: "done", priority: "high", assigneeId: "tm_theo", estimatedHours: 4, dueDate: "2026-09-28T09:00:00.000Z", hasActiveBlocker: false, createdAt: "2026-06-16T09:00:00.000Z", completedAt: "2026-10-03T09:00:00.000Z" },
   { id: "task_rook_02", workspaceId: WORKSPACE_ID, projectId: "proj_rook_loyalty", title: "Build rewards redemption flow", status: "todo", priority: "medium", assigneeId: "tm_priya", estimatedHours: 10, dueDate: "2026-11-10T09:00:00.000Z", hasActiveBlocker: false, createdAt: "2026-06-20T09:00:00.000Z" },
   { id: "task_rook_03", workspaceId: WORKSPACE_ID, projectId: "proj_rook_loyalty", title: "Write onboarding copy", status: "in_progress", priority: "medium", assigneeId: "tm_marcus", estimatedHours: 5, dueDate: "2026-11-15T09:00:00.000Z", hasActiveBlocker: false, createdAt: "2026-06-20T09:00:00.000Z" },
   { id: "task_rook_04", workspaceId: WORKSPACE_ID, projectId: "proj_rook_loyalty", title: "Set up analytics events", status: "todo", priority: "low", assigneeId: "tm_elena", estimatedHours: 3, dueDate: "2026-11-20T09:00:00.000Z", hasActiveBlocker: false, createdAt: "2026-06-25T09:00:00.000Z" },
   { id: "task_rook_05", workspaceId: WORKSPACE_ID, projectId: "proj_rook_loyalty", title: "Design loyalty tier badges", status: "done", priority: "medium", assigneeId: "tm_sana", estimatedHours: 4, hasActiveBlocker: false, createdAt: "2026-06-16T09:00:00.000Z", completedAt: "2026-07-01T09:00:00.000Z" },
   { id: "task_rook_06", workspaceId: WORKSPACE_ID, projectId: "proj_rook_loyalty", title: "Send weekly loyalty metrics email (due soon)", status: "todo", priority: "low", assigneeId: "tm_elena", estimatedHours: 1, dueDate: "2026-10-06T09:00:00.000Z", hasActiveBlocker: false, createdAt: "2026-09-29T09:00:00.000Z" },
 
-  // --- proj_solstice_booking (risk: at_risk — condition 3 only, due soon + low progress) ---
+  // --- proj_solstice_booking (risk: none — Dashboard-balance pass, see
+  //     DECISIONS.md: was at_risk via condition 3, project due date
+  //     within 3 days + progress <70%. The project's own due date
+  //     (projects.ts) was genuinely inconsistent with its tasks —
+  //     claimed due Oct 6 while its own open tasks run to Oct 25 — so
+  //     the due date was corrected there, not the tasks here. ---
   { id: "task_solstice_01", workspaceId: WORKSPACE_ID, projectId: "proj_solstice_booking", title: "Build class booking calendar", status: "in_progress", priority: "medium", assigneeId: "tm_marcus", estimatedHours: 10, dueDate: "2026-10-15T09:00:00.000Z", hasActiveBlocker: false, createdAt: "2026-07-21T09:00:00.000Z" },
   { id: "task_solstice_02", workspaceId: WORKSPACE_ID, projectId: "proj_solstice_booking", title: "Integrate payment provider", status: "todo", priority: "medium", assigneeId: "tm_elena", estimatedHours: 8, dueDate: "2026-10-20T09:00:00.000Z", hasActiveBlocker: false, createdAt: "2026-07-21T09:00:00.000Z" },
   { id: "task_solstice_03", workspaceId: WORKSPACE_ID, projectId: "proj_solstice_booking", title: "Design instructor profile pages", status: "todo", priority: "low", assigneeId: "tm_theo", estimatedHours: 4, dueDate: "2026-10-25T09:00:00.000Z", hasActiveBlocker: false, createdAt: "2026-07-22T09:00:00.000Z" },
   { id: "task_solstice_04", workspaceId: WORKSPACE_ID, projectId: "proj_solstice_booking", title: "User-test booking flow", status: "done", priority: "medium", assigneeId: "tm_maya", estimatedHours: 3, hasActiveBlocker: false, createdAt: "2026-07-25T09:00:00.000Z", completedAt: "2026-08-05T09:00:00.000Z" },
 
-  // --- proj_mariner_fleet (risk: at_risk — condition 4 only, stale active blocker) ---
+  // --- proj_mariner_fleet (risk: at_risk — condition 4 only, stale
+  //     active blocker — INTENTIONALLY left at_risk, Dashboard-balance
+  //     pass: the workspace's one real At Risk example. Required by
+  //     domain/validation.ts's state-coverage check (every RiskLevel
+  //     must appear at least once) and by
+  //     ai.integration.test.ts's "blocker resolved" test, which
+  //     asserts this exact fixture starts with a stale blocker. ---
   { id: "task_mariner_01", workspaceId: WORKSPACE_ID, projectId: "proj_mariner_fleet", title: "Waiting on client fleet API keys", status: "blocked", priority: "medium", assigneeId: "tm_theo", estimatedHours: 6, dueDate: "2026-11-01T09:00:00.000Z", hasActiveBlocker: true, blockerStartedAt: "2026-10-01T09:00:00.000Z", createdAt: "2026-05-02T09:00:00.000Z" },
   { id: "task_mariner_02", workspaceId: WORKSPACE_ID, projectId: "proj_mariner_fleet", title: "Implement live vehicle tracking map", status: "in_progress", priority: "high", assigneeId: "tm_jordan", dueDate: "2026-11-10T09:00:00.000Z", hasActiveBlocker: false, createdAt: "2026-05-05T09:00:00.000Z" },
   { id: "task_mariner_03", workspaceId: WORKSPACE_ID, projectId: "proj_mariner_fleet", title: "Design dashboard KPI tiles", status: "todo", priority: "medium", assigneeId: "tm_marcus", estimatedHours: 6, dueDate: "2026-11-15T09:00:00.000Z", hasActiveBlocker: false, createdAt: "2026-05-10T09:00:00.000Z" },
