@@ -4,7 +4,12 @@ import {
   getClientsNeedingFollowUpSorted,
   getTeamWorkloadSnapshot,
   getRecentActivities,
+  type AtRiskProjectEntry,
+  type OverdueTaskEntry,
+  type ClientFollowUpEntry,
+  type TeamWorkloadEntry,
 } from "@/domain/selectors";
+import type { Activity } from "@/types/entities";
 
 export type DailyBriefItemKind =
   | "critical_risk"
@@ -25,17 +30,30 @@ export interface DailyBriefItem {
 const DEFAULT_LIMIT = 5;
 
 /**
- * Deterministic, rule-based Daily Brief (Phase 7 §1). Not an AI
- * Assistant and not a real AI API call — this reads the same domain
- * selectors as the rest of the Dashboard and ranks a fixed priority
- * order: Critical Risk > At Risk > most-overdue task > most-stale
- * follow-up > most-overloaded member > most recent activity. Capped
- * at `limit` items (default 5, per the approved "3-5 signals" scope).
+ * The ranking RULE (Critical Risk > At Risk > most-overdue task >
+ * most-stale follow-up > most-overloaded member > most recent
+ * activity) extracted as a pure function of its 5 input arrays — the
+ * actual "business logic" of the Daily Brief, reused unchanged by
+ * both `getDailyBriefItems` (below, reads live mutable state for the
+ * authenticated app) and `domain/landingSnapshot.ts` (reads the
+ * immutable base dataset for the public Landing Page). Neither this
+ * function's ranking rule nor the risk/workload/follow-up formulas it
+ * reads results from ever change based on which caller feeds it —
+ * only the INPUT arrays differ.
  */
-export function getDailyBriefItems(limit: number = DEFAULT_LIMIT): DailyBriefItem[] {
+export function composeDailyBriefItems(
+  limit: number,
+  inputs: {
+    riskEntries: AtRiskProjectEntry[];
+    overdueTasks: OverdueTaskEntry[];
+    followUps: ClientFollowUpEntry[];
+    workload: TeamWorkloadEntry[];
+    recentActivities: Activity[];
+  },
+): DailyBriefItem[] {
+  const { riskEntries, overdueTasks, followUps, workload, recentActivities } = inputs;
   const items: DailyBriefItem[] = [];
 
-  const riskEntries = getAtRiskProjectsSorted();
   for (const entry of riskEntries) {
     if (entry.risk.level !== "critical_risk") continue;
     items.push({
@@ -58,7 +76,6 @@ export function getDailyBriefItems(limit: number = DEFAULT_LIMIT): DailyBriefIte
     });
   }
 
-  const overdueTasks = getOverdueTasksSorted();
   if (overdueTasks.length > 0) {
     const worst = overdueTasks[0]!;
     items.push({
@@ -70,7 +87,6 @@ export function getDailyBriefItems(limit: number = DEFAULT_LIMIT): DailyBriefIte
     });
   }
 
-  const followUps = getClientsNeedingFollowUpSorted();
   if (followUps.length > 0) {
     const stalest = followUps[0]!;
     items.push({
@@ -82,7 +98,6 @@ export function getDailyBriefItems(limit: number = DEFAULT_LIMIT): DailyBriefIte
     });
   }
 
-  const workload = getTeamWorkloadSnapshot();
   const mostOverloaded = workload.find((w) => w.workload.band === "Overloaded");
   if (mostOverloaded) {
     items.push({
@@ -95,7 +110,7 @@ export function getDailyBriefItems(limit: number = DEFAULT_LIMIT): DailyBriefIte
   }
 
   if (items.length < limit) {
-    const [latestActivity] = getRecentActivities(1);
+    const [latestActivity] = recentActivities;
     if (latestActivity) {
       items.push({
         id: `brief_activity_${latestActivity.id}`,
@@ -108,4 +123,22 @@ export function getDailyBriefItems(limit: number = DEFAULT_LIMIT): DailyBriefIte
   }
 
   return items.slice(0, limit);
+}
+
+/**
+ * Deterministic, rule-based Daily Brief (Phase 7 §1) for the
+ * authenticated app. Not an AI Assistant and not a real AI API call —
+ * reads the same live, mutable domain selectors as the rest of the
+ * Dashboard, then ranks them via `composeDailyBriefItems` above.
+ * Capped at `limit` items (default 5, per the approved "3-5 signals"
+ * scope).
+ */
+export function getDailyBriefItems(limit: number = DEFAULT_LIMIT): DailyBriefItem[] {
+  return composeDailyBriefItems(limit, {
+    riskEntries: getAtRiskProjectsSorted(),
+    overdueTasks: getOverdueTasksSorted(),
+    followUps: getClientsNeedingFollowUpSorted(),
+    workload: getTeamWorkloadSnapshot(),
+    recentActivities: getRecentActivities(1),
+  });
 }

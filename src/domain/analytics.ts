@@ -1,6 +1,6 @@
-import type { ProjectStatus, RiskLevel } from "@/types/entities";
+import type { Project, ProjectStatus, RiskLevel } from "@/types/entities";
 import { getDemoDataset } from "@/data/mock";
-import { getProjectRisk, getTeamWorkloadSnapshot } from "@/domain/selectors";
+import { getProjectRisk, getTeamWorkloadSnapshot, type TeamWorkloadEntry } from "@/domain/selectors";
 import type { WorkloadBand } from "@/domain/workload/workload";
 import { demoToday } from "@/lib/demo-clock";
 
@@ -43,7 +43,15 @@ export interface OnTimeDeliveryResult {
  * state, never a 0%/100% that implies a real rate was computed.
  */
 export function getOnTimeDeliveryRate(): OnTimeDeliveryResult | undefined {
-  const { projects } = getDemoDataset();
+  return computeOnTimeDeliveryRate(getDemoDataset().projects);
+}
+
+/**
+ * Pure core of `getOnTimeDeliveryRate`, reused unchanged by
+ * `domain/landingSnapshot.ts` against the immutable base project list
+ * for the public Landing Page — same formula, different input array.
+ */
+export function computeOnTimeDeliveryRate(projects: Project[]): OnTimeDeliveryResult | undefined {
   const scoreable = projects.filter(
     (p) => p.status === "completed" && p.completedAt !== undefined && p.dueDate !== undefined,
   );
@@ -81,7 +89,18 @@ const WORKLOAD_BAND_ORDER: WorkloadBand[] = ["Available", "Healthy", "High", "Ov
  * Dashboard and Team already read. No workload math lives here.
  */
 export function getWorkloadDistribution(): WorkloadDistributionEntry[] {
-  const snapshot = getTeamWorkloadSnapshot();
+  return computeWorkloadDistribution(getTeamWorkloadSnapshot());
+}
+
+/**
+ * Pure core of `getWorkloadDistribution`, reused unchanged by
+ * `domain/landingSnapshot.ts` against an immutable team-workload
+ * snapshot for the public Landing Page — same bucketing, different
+ * input array.
+ */
+export function computeWorkloadDistribution(
+  snapshot: TeamWorkloadEntry[],
+): WorkloadDistributionEntry[] {
   const counts: Record<WorkloadBand, number> = {
     Available: 0,
     Healthy: 0,

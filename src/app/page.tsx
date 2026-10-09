@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
-import { getDailyBriefItems } from "@/domain/dailyBrief";
 import {
-  getAtRiskProjectsSorted,
-  getOverdueTasksSorted,
-  getTeamWorkloadSnapshot,
-  getProjectsWithRisk,
-  getClientsFiltered,
-  getRecentActivities,
-} from "@/domain/selectors";
-import { getOnTimeDeliveryRate, getWorkloadDistribution } from "@/domain/analytics";
-import { executeAIIntent } from "@/domain/ai/executeIntent";
-import { getDemoDataset } from "@/data/mock";
+  getImmutableDailyBriefItems,
+  getImmutableAtRiskProjectsSorted,
+  getImmutableOverdueTasksSorted,
+  getImmutableTeamWorkloadSnapshot,
+  getImmutableProjectsWithRisk,
+  getImmutableClientsWithFollowUp,
+  getImmutableRecentActivities,
+  getImmutableOnTimeDeliveryRate,
+  getImmutableWorkloadDistribution,
+  getImmutableClientsFollowUpAnswer,
+  getImmutableTasks,
+} from "@/domain/landingSnapshot";
 import { MarketingNav } from "@/components/marketing/MarketingNav";
 import { Hero } from "@/components/marketing/Hero";
 import { DashboardShowcase } from "@/components/marketing/DashboardShowcase";
@@ -39,30 +40,38 @@ export const metadata: Metadata = {
 /**
  * Public Landing Page (Phase 13.5) — `/` is now the marketing
  * experience; the real application lives under `/dashboard` and
- * siblings, unchanged. Every product visual on this page is built
- * from the SAME selectors and primitive components the authenticated
- * app uses, reading the current demo workspace's real data — not a
- * separate marketing fixture set (Phase 13.5 §16).
+ * siblings, unchanged.
+ *
+ * Every product visual on this page is built from REAL demo content
+ * (the same `data/mock/*.ts` fixtures and the same risk/workload/
+ * follow-up/Daily-Brief formulas the authenticated app uses) via
+ * `domain/landingSnapshot.ts` — but that module reads only the
+ * IMMUTABLE base dataset (`getBaseDataset()`), never
+ * `getDemoDataset()`/`getDemoStore()` (the shared, request-mutable
+ * registry Server Actions write to). This is a deliberate decoupling,
+ * not an oversight: a demo visitor creating/editing a project,
+ * marking a notification read, changing a preference, or resetting
+ * demo data must never change what this public page shows, and this
+ * page must be safely static-prerenderable (no per-request mutable
+ * read means no hydration-mismatch risk from a cached render window).
+ * The authenticated Dashboard/Projects/Clients/Team/Analytics pages
+ * are untouched and keep reading `getDemoDataset()` exactly as
+ * before — only this page's data source changed.
  */
 export default function LandingPage() {
-  // Real, unmodified domain reads — identical to what the authenticated
-  // app itself calls. Nothing about risk/workload/follow-up computation
-  // changes here or anywhere below.
-  const briefItems = getDailyBriefItems(10);
-  const atRiskEntries = getAtRiskProjectsSorted();
-  const overdueEntries = getOverdueTasksSorted();
-  const workloadEntries = getTeamWorkloadSnapshot();
-  const allProjects = getProjectsWithRisk();
-  const allClients = getClientsFiltered({}, "name");
-  const recentActivities = getRecentActivities(20);
-  const onTimeDelivery = getOnTimeDeliveryRate();
-  const workloadDistribution = getWorkloadDistribution();
+  const briefItems = getImmutableDailyBriefItems(10);
+  const atRiskEntries = getImmutableAtRiskProjectsSorted();
+  const overdueEntries = getImmutableOverdueTasksSorted();
+  const workloadEntries = getImmutableTeamWorkloadSnapshot();
+  const allProjects = getImmutableProjectsWithRisk();
+  const allClients = getImmutableClientsWithFollowUp();
+  const recentActivities = getImmutableRecentActivities(20);
+  const onTimeDelivery = getImmutableOnTimeDeliveryRate();
+  const workloadDistribution = getImmutableWorkloadDistribution();
 
   // Marketing-only CURATION (src/components/marketing/landingCuration.ts)
-  // — selects a representative, mostly-healthy subset of the real data
-  // above for this public page only. The authenticated Dashboard/
-  // Projects/Clients/Team/Analytics pages are untouched and keep using
-  // the real worst-first selector output directly, exactly as before.
+  // — selects a representative, mostly-healthy subset of the real
+  // (immutable) data above for this public page only.
   const heroSnapshot = buildHeroSnapshot({
     allProjects,
     briefItems,
@@ -83,13 +92,13 @@ export default function LandingPage() {
     attentionItem: heroSnapshot.attentionItem,
   });
 
-  const { tasks } = getDemoDataset();
+  const tasks = getImmutableTasks();
   const kanbanColumns = (["todo", "in_progress", "review"] as const).map((status) => ({
     status,
     tasks: tasks.filter((t) => t.status === status).slice(0, 3),
   }));
 
-  const aiAnswer = executeAIIntent("clients_follow_up");
+  const aiAnswer = getImmutableClientsFollowUpAnswer();
 
   return (
     <div className="min-h-dvh bg-[var(--fp-bg-canvas)]">

@@ -30,8 +30,16 @@ let cachedBase: DemoDataset | undefined;
  *
  * Throws on invalid BASE data: an invalid mock dataset is a
  * build-time bug, not a recoverable runtime condition.
+ *
+ * Exported (not just module-private) specifically for
+ * `domain/landingSnapshot.ts` — the public Landing Page intentionally
+ * reads ONLY this immutable base dataset, never `getDemoDataset()`,
+ * so a demo visitor's mutation (via `getDemoStore()`, see
+ * domain/demoStore.ts) can never change what the public marketing
+ * page shows. Every other consumer (the authenticated app) must keep
+ * using `getDemoDataset()` below, not this function.
  */
-function getBaseDataset(): DemoDataset {
+export function getBaseDataset(): DemoDataset {
   if (cachedBase) return cachedBase;
 
   const clients = rawClients.map((client) =>
