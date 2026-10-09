@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!--
+    FlowPilot brand mark, browser-tab icon (Next.js App Router icon
+    convention). Chip background + triangle paths copied exactly from
+    src/components/primitives/BrandMark.tsx — same mark, same 2:1
+    chip:mark proportions, not a redesign. Colors are --fp-accent /
+    --fp-accent-foreground from src/styles/tokens.css (light + dark),
+    inlined as static hex since favicon SVGs can't read CSS custom
+    properties from the page; prefers-color-scheme media query keeps
+    it correct in both browser UI themes.
+  -->
+  <style>
+    .fp-icon-bg { fill: #3a4fe0; }
+    .fp-icon-fg { fill: #ffffff; }
+    @media (prefers-color-scheme: dark) {
+      .fp-icon-bg { fill: #8591f5; }
+      .fp-icon-fg { fill: #1c2140; }
+    }
+  </style>
+  <rect class="fp-icon-bg" width="32" height="32" rx="6" />
+  <g transform="translate(8,8)">
+    <path class="fp-icon-fg" d="M1.5 1.5 L9 8 L1.5 14.5 Z" opacity="0.55" />
+    <path class="fp-icon-fg" d="M6 1.5 L14.5 8 L6 14.5 Z" />
+  </g>
+</svg>
