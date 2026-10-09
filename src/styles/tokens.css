@@ -28,17 +28,34 @@
   --fp-accent-foreground: #ffffff;
 
   /* Semantic base hues (light).
-     --fp-success/--fp-warning/--fp-danger were darkened from
-     #0f9d58/#b54708/#d92d20 during the Phase 7 contrast audit
-     (D-034): at 12px badge text size, the originals measured
-     3.13:1/4.38:1/3.89:1 against their own 10%-tinted badge
-     backgrounds — below the 4.5:1 AA minimum for normal text.
-     Darkened to clear 4.5:1 with a safety margin (measured
-     5.68:1/4.99:1/5.29:1); dark-mode values were already compliant
-     and are unchanged. See DECISIONS.md D-035. */
+     --fp-success/--fp-warning were darkened from #0f9d58/#b54708
+     during the Phase 7 contrast audit (D-034): at 12px badge text
+     size, the originals measured 3.13:1/4.38:1 against their own
+     10%-tinted badge backgrounds — below the 4.5:1 AA minimum for
+     normal text. Darkened to clear 4.5:1 with a safety margin.
+     Dark-mode success was already compliant and is unchanged. See
+     DECISIONS.md D-035.
+
+     --fp-critical (global red-removal pass, see DECISIONS.md): this
+     product has NO red anywhere — Critical Risk, the single most
+     severe state, is a strong, saturated orange, deliberately a
+     different hue from --fp-warning's amber (hue ~32 vs ~15, i.e.
+     "golden amber" vs "deep orange") so the two remain visually
+     distinguishable at a glance, not just by label text. Replaces
+     the former --fp-danger (red #b3251a) token everywhere — "danger"
+     as a token/tone name is retired along with the color, since the
+     name itself implied red to future readers. --fp-warning's first
+     candidate value (#b45309, 5.02:1 against pure white) measured
+     only 4.12:1 against the ACTUAL rendered badge background in
+     practice (a `/10`-opacity tint composited over a table row,
+     #f0e7e2, not pure white) — found via a real axe sweep, not
+     assumed from a plain-white calculation. Darkened further to
+     measure 5.50:1 against that real composited background. Both
+     final values re-verified at 0 axe violations across every route,
+     light and dark. */
   --fp-success: #0a6b3c;
-  --fp-warning: #a84007;
-  --fp-danger: #b3251a;
+  --fp-warning: #8b4c04;
+  --fp-critical: #9a3412;
   --fp-info: #6938c4;
 
   /* Task status (light) */
@@ -50,15 +67,15 @@
 
   /* Project risk (light) */
   --fp-risk-at-risk: var(--fp-warning);
-  --fp-risk-critical: var(--fp-danger);
+  --fp-risk-critical: var(--fp-critical);
 
   /* Team workload (light) */
   --fp-workload-available: var(--fp-text-tertiary);
   --fp-workload-healthy: var(--fp-success);
   --fp-workload-high: var(--fp-warning);
-  /* Red is reserved for Critical Risk only — Overloaded is a
-     warning-tier workload band (visual-balance pass, matches
-     WorkloadBadge.tsx's tone mapping). */
+  /* Critical (strong orange) is reserved for Critical Risk only —
+     Overloaded is a warning-tier workload band (visual-balance pass,
+     matches WorkloadBadge.tsx's tone mapping). */
   --fp-workload-overloaded: var(--fp-warning);
 
   /* Radius scale (D-028: ceiling is --fp-radius-lg, 12px) */
@@ -110,8 +127,8 @@
   --fp-accent-foreground: #1c2140;
 
   --fp-success: #3ec97e;
-  --fp-warning: #f0883e;
-  --fp-danger: #f97066;
+  --fp-warning: #f59e0b;
+  --fp-critical: #f97316;
   --fp-info: #9b8afb;
 
   --fp-shadow-level-1: 0 1px 2px 0 rgb(0 0 0 / 0.4);

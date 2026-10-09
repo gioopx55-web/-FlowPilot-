@@ -22,7 +22,7 @@ export function RiskBadge({ risk }: { risk: ProjectRiskResult }) {
     <div className="flex items-center gap-1.5 self-start">
       <div className="flex flex-col items-start gap-0.5">
         <Badge
-          tone={isCritical ? "danger" : "warning"}
+          tone={isCritical ? "critical" : "warning"}
           // Alert/warning-triangle iconography is reserved for the
           // genuinely critical state only (alert-styling correction) —
           // "At Risk" reads as a plain, calmer badge with no icon.

@@ -84,7 +84,7 @@ export function ProfileSettingsForm({
         </div>
       )}
 
-      {error && <p className="text-xs text-[var(--fp-danger)]">{error}</p>}
+      {error && <p className="text-xs text-[var(--fp-critical)]">{error}</p>}
       {saved && !error && <p className="text-xs text-[var(--fp-success)]">Saved.</p>}
 
       <Button type="submit" size="sm" disabled={isPending}>

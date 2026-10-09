@@ -9,12 +9,15 @@ import { cn } from "@/lib/utils";
  * visually consistent.
  */
 
+// "critical" (strong orange) is the single most severe tone — no
+// "danger"/red tone exists in this product (global red-removal pass,
+// see DECISIONS.md). Keep this the only place a new tone is added.
 export type BadgeTone =
   | "neutral"
   | "accent"
   | "success"
   | "warning"
-  | "danger"
+  | "critical"
   | "info";
 
 const toneClassName: Record<BadgeTone, string> = {
@@ -22,7 +25,7 @@ const toneClassName: Record<BadgeTone, string> = {
   accent: "bg-[var(--fp-accent-subtle-bg)] text-[var(--fp-accent)]",
   success: "bg-[var(--fp-success)]/10 text-[var(--fp-success)]",
   warning: "bg-[var(--fp-warning)]/10 text-[var(--fp-warning)]",
-  danger: "bg-[var(--fp-danger)]/10 text-[var(--fp-danger)]",
+  critical: "bg-[var(--fp-critical)]/10 text-[var(--fp-critical)]",
   info: "bg-[var(--fp-info)]/10 text-[var(--fp-info)]",
 };
 

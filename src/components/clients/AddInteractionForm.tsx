@@ -94,7 +94,7 @@ export function AddInteractionForm({ clientId }: { clientId: string }) {
         </div>
       </div>
 
-      {error && <p className="text-xs text-[var(--fp-danger)]">{error}</p>}
+      {error && <p className="text-xs text-[var(--fp-critical)]">{error}</p>}
 
       <Button type="submit" size="sm" disabled={isPending || !summary.trim()}>
         {isPending ? "Adding…" : "Add interaction"}

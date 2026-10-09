@@ -23,7 +23,7 @@ const ICON_BY_KIND: Record<DailyBriefItemKind, typeof AlertTriangle> = {
 };
 
 const TONE_BY_KIND: Record<DailyBriefItemKind, string> = {
-  critical_risk: "text-[var(--fp-danger)]",
+  critical_risk: "text-[var(--fp-critical)]",
   at_risk: "text-[var(--fp-warning)]",
   overdue_task: "text-[var(--fp-warning)]",
   follow_up: "text-[var(--fp-info)]",
@@ -62,11 +62,11 @@ export function DailyBrief() {
                 // list — everything else stays in the same calm row
                 // treatment, so the page doesn't read as uniformly
                 // alarming (visual-balance pass).
-                isCritical ? "border-s-2 border-s-[var(--fp-danger)]" : ""
+                isCritical ? "border-s-2 border-s-[var(--fp-critical)]" : ""
               }`}
             >
               {isCritical ? (
-                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[var(--fp-danger)]/10 text-[var(--fp-danger)]">
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[var(--fp-critical)]/10 text-[var(--fp-critical)]">
                   <Icon className="size-3.5" aria-hidden="true" />
                 </span>
               ) : (

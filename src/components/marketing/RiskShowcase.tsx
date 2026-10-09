@@ -17,7 +17,7 @@ export function RiskShowcase({ entry }: { entry: AtRiskProjectEntry | undefined 
     <ShowcaseLayout
       eyebrow="Projects"
       eyebrowIcon={ShieldAlert}
-      title="Risk you can explain, not just a red dot."
+      title="Risk you can explain, not just a status dot."
       description="FlowPilot computes project risk from four concrete conditions — overdue task ratio, stale high-priority work, due-soon-with-low-progress, and unresolved blockers — and always shows which ones are true. Never a bare status label."
       bullets={[
         { icon: ListChecks, text: "Four named, always-visible risk conditions" },

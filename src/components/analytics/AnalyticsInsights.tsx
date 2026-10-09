@@ -17,7 +17,7 @@ import type {
 interface Insight {
   id: string;
   icon: LucideIcon;
-  tone: "neutral" | "warning" | "danger" | "success";
+  tone: "neutral" | "warning" | "critical" | "success";
   title: string;
   metric: string;
   description: string;
@@ -26,7 +26,7 @@ interface Insight {
 const TONE_CLASS: Record<Insight["tone"], string> = {
   neutral: "text-muted-foreground bg-muted",
   warning: "text-[var(--fp-warning)] bg-[var(--fp-warning)]/10",
-  danger: "text-[var(--fp-danger)] bg-[var(--fp-danger)]/10",
+  critical: "text-[var(--fp-critical)] bg-[var(--fp-critical)]/10",
   success: "text-[var(--fp-success)] bg-[var(--fp-success)]/10",
 };
 
@@ -36,7 +36,8 @@ const TONE_CLASS: Record<Insight["tone"], string> = {
  * separate AI-generated narrative, still explicitly out of scope),
  * now presented as compact cards: icon, title, the real metric value,
  * and a one-line explanation, instead of a bare bullet list. Only
- * Critical Risk gets the `danger` (red) tone — every other insight
+ * Critical Risk gets the `critical` (strong orange, never red — see
+ * DECISIONS.md global red-removal pass) tone — every other insight
  * here is a warning-tier or neutral signal, matching the rest of the
  * product's semantic-color rules. Each insight only appears when its
  * underlying condition is actually true; no data is invented.
@@ -71,7 +72,7 @@ export function AnalyticsInsights({
     insights.push({
       id: "risk",
       icon: ShieldAlert,
-      tone: "danger",
+      tone: "critical",
       title: "Project health",
       metric: String(critical.count),
       description: `active project${critical.count === 1 ? " is" : "s are"} at Critical Risk right now.`,

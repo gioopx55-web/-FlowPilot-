@@ -74,7 +74,7 @@
      --primary above. Do not conflate the two. */
   --accent: var(--fp-bg-canvas);
   --accent-foreground: var(--fp-text-primary);
-  --destructive: var(--fp-danger);
+  --destructive: var(--fp-critical);
   --border: var(--fp-border-default);
   --input: var(--fp-border-default);
   --ring: var(--fp-accent);
@@ -95,7 +95,7 @@
   --muted-foreground: var(--fp-text-secondary);
   --accent: var(--fp-bg-surface-raised);
   --accent-foreground: var(--fp-text-primary);
-  --destructive: var(--fp-danger);
+  --destructive: var(--fp-critical);
   --border: var(--fp-border-default);
   --input: var(--fp-border-default);
   --ring: var(--fp-accent);

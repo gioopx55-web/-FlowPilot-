@@ -199,7 +199,7 @@ export function ProjectForm({
       </div>
 
       {error && (
-        <p role="alert" className="text-xs text-[var(--fp-danger)]">
+        <p role="alert" className="text-xs text-[var(--fp-critical)]">
           {error}
         </p>
       )}

@@ -34,6 +34,6 @@ export const RISK_LEVEL_LABEL: Record<RiskLevel, string> = {
 export const CHART_ACCENT = "var(--fp-accent)";
 export const CHART_SUCCESS = "var(--fp-success)";
 export const CHART_WARNING = "var(--fp-warning)";
-export const CHART_DANGER = "var(--fp-danger)";
+export const CHART_CRITICAL = "var(--fp-critical)";
 export const CHART_GRID = "var(--fp-border-subtle)";
 export const CHART_AXIS_TEXT = "var(--fp-text-tertiary)";

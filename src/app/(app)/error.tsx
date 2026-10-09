@@ -18,7 +18,7 @@ export default function AppError({
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3 px-6 py-24 text-center">
       <AlertTriangle
-        className="size-6 text-[var(--fp-danger)]"
+        className="size-6 text-[var(--fp-critical)]"
         aria-hidden="true"
       />
       <h2 className="text-sm font-semibold text-foreground">
